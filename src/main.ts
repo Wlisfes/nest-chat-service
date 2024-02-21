@@ -7,14 +7,14 @@ import * as cookieParser from 'cookie-parser'
 
 async function useSwagger(app, opt: { authorize: string }) {
     const options = new DocumentBuilder()
-        .setTitle(`Common基础服务`)
-        .setDescription(`Common基础服务 Api Documentation`)
+        .setTitle(`Chat API服务`)
+        .setDescription(`Chat API Documentation`)
         .setVersion(`1.0.0`)
         .addBearerAuth({ type: 'apiKey', in: 'header', name: opt.authorize }, opt.authorize)
         .build()
     const document = SwaggerModule.createDocument(app, options)
     SwaggerModule.setup('api-doc', app, document, {
-        customSiteTitle: `Common服务端API文档`,
+        customSiteTitle: `Chat 服务API文档`,
         swaggerOptions: {
             defaultModelsExpandDepth: -1,
             defaultModelExpandDepth: 5,
@@ -26,6 +26,8 @@ async function useSwagger(app, opt: { authorize: string }) {
 }
 
 async function bootstrap() {
+    const prot = process.env.APP_PORT ?? 34578
+    const prefix = process.env.APP_PREFIX ?? '/api'
     const app = await NestFactory.create(AppModule)
     //允许跨域
     app.enableCors()
@@ -34,14 +36,14 @@ async function bootstrap() {
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
     //接口前缀
-    app.setGlobalPrefix('/api')
+    app.setGlobalPrefix(prefix)
     //全局注册验证管道
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }))
     //挂载文档
     await useSwagger(app, { authorize: 'authorization' })
     //监听端口服务
-    await app.listen(3000, () => {
-        console.log('Common服务启动:', `http://localhost:3000`, `http://localhost:3000/api-doc`)
+    await app.listen(prot, () => {
+        console.log('Chat服务启动:', `http://localhost:${prot + prefix}`, `http://localhost:${prot}/api-doc`)
     })
 }
 bootstrap()
