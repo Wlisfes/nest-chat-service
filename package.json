@@ -34,13 +34,17 @@
         "dayjs": "^1.11.10",
         "mysql": "^2.18.1",
         "nest-winston": "^1.9.4",
+        "puppeteer": "^22.5.0",
+        "qrcode-terminal": "^0.12.0",
         "reflect-metadata": "^0.1.13",
         "request-ip": "^3.3.0",
         "rxjs": "^7.2.0",
         "swagger-ui-express": "^5.0.0",
         "typeorm": "^0.3.20",
+        "whatsapp-web.js": "^1.23.0",
         "winston": "^3.12.0",
-        "winston-daily-rotate-file": "^4.7.1"
+        "winston-daily-rotate-file": "^4.7.1",
+        "wwebjs-mongo": "^1.1.0"
     },
     "devDependencies": {
         "@nestjs/cli": "^10.3.2",
