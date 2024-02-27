@@ -1,4 +1,4 @@
-import { WebSocketGateway, SubscribeMessage, WebSocketServer } from '@nestjs/websockets'
+import { WebSocketGateway, SubscribeMessage, WebSocketServer, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { Observable } from 'rxjs'
 import { Server, Socket } from 'socket.io'
 
@@ -7,19 +7,22 @@ import { Server, Socket } from 'socket.io'
     transport: ['websocket']
 })
 export class WebSocketEventGateway {
-    afterInit(server: Server) {
+    @WebSocketServer() private readonly server: Server
+
+    afterInit(@ConnectedSocket() client: Socket) {
         console.log('WebSocket服务启动:', `ws://localhost:34577`)
     }
 
-    handleDisconnect(server: Server) {}
+    handleDisconnect(@ConnectedSocket() client: Socket) {}
 
-    handleConnection(server: Server, data) {
-        console.log('客户端已连接:', data)
+    handleConnection(@ConnectedSocket() client: Socket) {
+        console.log('客户端已连接:')
     }
 
     @SubscribeMessage('sender')
-    subscribeSender(server: Server, data: { name: string }) {
-        console.log('body', data)
+    subscribeSender(@ConnectedSocket() client: Socket, @MessageBody() data: { name: string }) {
+        console.log('body:', data)
+        // console.log('client:', client)
         return {
             event: 'sender',
             data: data
