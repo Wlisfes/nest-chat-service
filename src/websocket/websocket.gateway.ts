@@ -1,12 +1,14 @@
-import { WebSocketGateway, SubscribeMessage, WebSocketServer, ConnectedSocket, MessageBody } from '@nestjs/websockets'
-import { Observable } from 'rxjs'
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
+import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { Server, Socket } from 'socket.io'
 
 @WebSocketGateway(34577, {
     cors: { origin: '*' },
-    transport: ['websocket']
+    transport: ['websocket'],
+    pingInterval: 10000,
+    pingTimeout: 15000
 })
-export class WebSocketEventGateway {
+export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer() private readonly server: Server
 
     afterInit(@ConnectedSocket() client: Socket) {
@@ -16,7 +18,7 @@ export class WebSocketEventGateway {
     handleDisconnect(@ConnectedSocket() client: Socket) {}
 
     handleConnection(@ConnectedSocket() client: Socket) {
-        console.log('客户端已连接:')
+        console.log('客户端已连接:', client.id)
     }
 
     @SubscribeMessage('sender')

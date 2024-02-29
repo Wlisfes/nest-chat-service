@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from '@/app.module'
+import { WebsocketAdapter } from '@/websocket/websocket.adapter'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 
@@ -29,6 +30,9 @@ async function bootstrap() {
     const prot = process.env.APP_PORT ?? 34578
     const prefix = process.env.APP_PREFIX ?? '/api'
     const app = await NestFactory.create(AppModule)
+    const adapter = new WebsocketAdapter(app)
+
+    app.useWebSocketAdapter(adapter)
     //允许跨域
     app.enableCors()
     //解析body参数
