@@ -1,6 +1,8 @@
 import { Module, Global } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
+import * as entities from '@/entities/instance'
+export const forEntities = Object.values(entities)
 
 @Global()
 @Module({
@@ -16,10 +18,12 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
                     password: config.get('ORM_PASSWORD'),
                     database: config.get('ORM_DATABASE'),
                     charset: config.get('ORM_CHARSET'),
-                    entities: []
+                    synchronize: true,
+                    entities: forEntities
                 } as TypeOrmModuleOptions
             }
-        })
+        }),
+        TypeOrmModule.forFeature(forEntities)
     ],
     providers: [],
     exports: []
