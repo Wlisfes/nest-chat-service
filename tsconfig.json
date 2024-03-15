@@ -11,7 +11,9 @@
         "outDir": "./dist",
         "baseUrl": "./",
         "paths": {
-            "@/*": ["src/*"]
+            "@/*": ["src/*"],
+            "@web-service/*": ["apps/web-service/src/*"],
+            "@web-socket/*": ["apps/web-socket/src/*"]
         },
         "incremental": true,
         "skipLibCheck": true,
