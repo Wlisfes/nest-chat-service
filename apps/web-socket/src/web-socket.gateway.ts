@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDiscon
 import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { Server, Socket } from 'socket.io'
 
-@WebSocketGateway(34577, {
+@WebSocketGateway({
     cors: { origin: '*' },
     transport: ['websocket'],
     pingInterval: 10000,

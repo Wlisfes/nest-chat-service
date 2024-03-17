@@ -6,7 +6,7 @@ export interface AuthSocket extends Socket {
     user?: any
 }
 
-export class WebsocketAdapter extends IoAdapter {
+export class WebSocketAdapter extends IoAdapter {
     createIOServer(port: number, options?: Record<string, any>) {
         const server = super.createIOServer(port, options)
         server.use(async (socket: AuthSocket, next) => {
