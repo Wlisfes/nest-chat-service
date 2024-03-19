@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common'
-import { AppController } from '@/app.controller'
-import { AppService } from '@/app.service'
 import { ConfigModule } from '@nestjs/config'
-import { WebSocketModule } from '@/websocket/websocket.module'
+import { AppService } from '@web-service/app.service'
+import { AppController } from '@web-service/app.controller'
 import { LoggerModule } from '@/modules/logger.module'
 import { DatabaseModule } from '@/modules/database.module'
 
 @Module({
-    imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, DatabaseModule, WebSocketModule],
+    imports: [ConfigModule.forRoot({ isGlobal: true }), LoggerModule, DatabaseModule],
     controllers: [AppController],
     providers: [AppService]
 })
