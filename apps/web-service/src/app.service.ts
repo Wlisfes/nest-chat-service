@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import { snowflakeId } from 'snowflake-id-maker'
 import { divineIntNumber } from '@/utils/utils-common'
 
 @Injectable()
 export class AppService {
     async httpHello() {
-        console.log(process.pid, await divineIntNumber())
+        console.log(await divineIntNumber(), {
+            pid: process.pid,
+            script: process.env.npm_lifecycle_script
+        })
         return 'Hello World!'
     }
 }
