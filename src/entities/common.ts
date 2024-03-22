@@ -1,7 +1,7 @@
 import { PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty } from 'class-validator'
-import * as day from 'dayjs'
+import { moment } from '@/utils/utils-common'
 
 export class CommonEntier {
     @ApiProperty({ description: '主键ID', example: 1 })
@@ -19,7 +19,7 @@ export class CommonEntier {
         comment: '创建时间',
         update: false,
         transformer: {
-            from: value => day(value).format('YYYY-MM-DD HH:mm:ss'),
+            from: value => moment(value).format('YYYY-MM-DD HH:mm:ss'),
             to: value => value
         }
     })
@@ -29,7 +29,7 @@ export class CommonEntier {
     @UpdateDateColumn({
         comment: '更新时间',
         transformer: {
-            from: value => day(value).format('YYYY-MM-DD HH:mm:ss'),
+            from: value => moment(value).format('YYYY-MM-DD HH:mm:ss'),
             to: value => value
         }
     })
