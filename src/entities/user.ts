@@ -5,6 +5,11 @@ import { CommonEntier } from '@/entities/common'
 
 @Entity({ name: 'user' })
 export class UserEntier extends CommonEntier {
+    @ApiProperty({ description: 'UID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: 'UID 必填' })
+    @Column({ comment: '唯一UUID', nullable: false })
+    uid: string
+
     @ApiProperty({ description: '状态: 禁用-disable、启用-enable', enum: ['disable', 'enable'], example: 'enable' })
     @IsNotEmpty({ message: '状态 必填' })
     @Column({ comment: '状态: 禁用-disable、启用-enable', default: 'enable', nullable: false })

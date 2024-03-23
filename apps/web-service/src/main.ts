@@ -26,7 +26,7 @@ async function useSwagger(app, opt: { authorize: string }) {
 }
 
 async function bootstrap() {
-    const prot = process.env.APP_PORT ?? 34578
+    const prot = Number(process.env.WEB_SERVICE_PORT ?? 34578)
     const app = await NestFactory.create(AppModule)
 
     //允许跨域

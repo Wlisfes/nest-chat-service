@@ -9,11 +9,6 @@ export class CommonEntier {
     @PrimaryGeneratedColumn({ comment: '自增长主键' })
     keyId: number
 
-    @ApiProperty({ description: 'UID', example: '2149446185344106496' })
-    @IsNotEmpty({ message: 'UID 必填' })
-    @Column({ comment: '唯一UUID', nullable: false })
-    uid: string
-
     @ApiProperty({ description: '创建时间', example: '2023-10-26 16:03:38' })
     @CreateDateColumn({
         comment: '创建时间',

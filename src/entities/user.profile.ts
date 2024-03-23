@@ -6,6 +6,11 @@ import { CommonEntier } from '@/entities/common'
 
 @Entity({ name: 'user_profile' })
 export class UserProfileEntier extends CommonEntier {
+    @ApiProperty({ description: 'UID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: 'UID 必填' })
+    @Column({ comment: '唯一UUID', nullable: false })
+    uid: string
+
     @ApiProperty({ description: '昵称', example: '妖雨纯' })
     @IsNotEmpty({ message: '昵称 必填' })
     @Column({ comment: '昵称', nullable: false })
