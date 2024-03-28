@@ -682,6 +682,11 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@juanelas/base64@^1.1.2":
+  version "1.1.5"
+  resolved "https://registry.npmmirror.com/@juanelas/base64/-/base64-1.1.5.tgz#d43b3c78e32e609d9b17a15e4f1b6342c9ca1238"
+  integrity sha512-mjAF27LzwfYobdwqnxZgeucbKT5wRRNvILg3h5OvCWK+3F7mw/A1tnjHnNiTYtLmTvT/bM1jA5AX7eQawDGs1w==
+
 "@ljharb/through@^2.3.11":
   version "2.3.13"
   resolved "https://registry.npmmirror.com/@ljharb/through/-/through-2.3.13.tgz#b7e4766e0b65aa82e529be945ab078de79874edc"
@@ -1769,10 +1774,22 @@ basic-ftp@^5.0.2:
   resolved "https://registry.npmmirror.com/basic-ftp/-/basic-ftp-5.0.5.tgz#14a474f5fffecca1f4f406f1c26b18f800225ac0"
   integrity sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==
 
+bcryptjs@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.npmmirror.com/bcryptjs/-/bcryptjs-2.4.3.tgz#9ab5627b93e60621ff7cdac5da9733027df1d0cb"
+  integrity sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==
+
 big-integer@^1.6.17:
   version "1.6.52"
   resolved "https://registry.npmmirror.com/big-integer/-/big-integer-1.6.52.tgz#60a887f3047614a8e1bffe5d7173490a97dc8c85"
   integrity sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==
+
+bigint-conversion@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.npmmirror.com/bigint-conversion/-/bigint-conversion-2.4.3.tgz#cca2ff59033960be8ff517b8e931db82b6bb24fa"
+  integrity sha512-eM76IXlhXQD6HAoE6A7QLQ3jdC04EJdjH3zrlU1Jtt4/jj+O/pMGjGR5FY8/55FOIBsK25kly0RoG4GA4iKdvg==
+  dependencies:
+    "@juanelas/base64" "^1.1.2"
 
 bignumber.js@9.0.0:
   version "9.0.0"
@@ -5338,6 +5355,13 @@ smart-buffer@^4.2.0:
   version "4.2.0"
   resolved "https://registry.npmmirror.com/smart-buffer/-/smart-buffer-4.2.0.tgz#6e1d71fa4f18c05f7d0ff216dd16a481d0e8d9ae"
   integrity sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==
+
+snowflake-id-maker@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.npmmirror.com/snowflake-id-maker/-/snowflake-id-maker-0.0.10.tgz#2cadeb2195ff452c829b5b6544ae2946e0aa2f02"
+  integrity sha512-CH1gxSQ8yAnSuQXrXQGsYAq3THtLIC6HAF7o8UOFN6g2n6fAmU/Rc6mQsTO6yD0Qx4SaVnOr5tAPn4B2m8MLsg==
+  dependencies:
+    bigint-conversion "^2.4.3"
 
 socket.io-adapter@~2.5.2:
   version "2.5.4"
