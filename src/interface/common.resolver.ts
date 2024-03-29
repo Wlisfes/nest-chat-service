@@ -24,6 +24,6 @@ export class CommonResolver {
 }
 
 export class NoticeResolver {
-    @ApiProperty({ description: 'message', example: '接口提示' })
+    @ApiProperty({ description: 'message', example: '提示信息' })
     message: string
 }
