@@ -12,7 +12,7 @@ export class TransformInterceptor implements NestInterceptor {
                     data: data || null,
                     code: HttpStatus.OK,
                     message: data.message ?? '请求成功',
-                    timestamp: moment().format('YYYY-MM-DD HH:mm:ss UTC+08:00')
+                    timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
                 }
             })
         )

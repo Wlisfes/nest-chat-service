@@ -21,7 +21,7 @@ export class UserProfileEntier extends CommonEntier {
     @Column({ comment: '头像', nullable: false })
     avatar: string
 
-    @ApiProperty({ description: '邮箱', example: 'ucop8dd096@foxmail.com' })
+    @ApiProperty({ description: '邮箱', example: 'limvcfast@gmail.com' })
     @IsNotEmpty({ message: '邮箱 必填' })
     @IsEmail({}, { message: '邮箱 格式错误' })
     @Column({ comment: '邮箱', nullable: false })

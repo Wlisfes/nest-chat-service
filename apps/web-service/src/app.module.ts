@@ -9,6 +9,7 @@ import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
 import { UserService } from '@/services/user/user.service'
+import { CommonService } from '@/services/common/common.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
 import { UserController } from '@web-service/controllers/user.controller'
@@ -22,6 +23,7 @@ import { CommonController } from '@web-service/controllers/common.controller'
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
         AppService,
+        CommonService,
         UserService
     ]
 })
