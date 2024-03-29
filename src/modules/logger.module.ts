@@ -22,7 +22,7 @@ export class LoggerModule {
                             maxSize: '20m', // 设置日志文件的最大大小，m 表示 mb 。
                             maxFiles: '30d', // 保留日志文件的最大天数，此处表示自动删除超过30天的日志文件。
                             format: winston.format.combine(
-                                winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                                winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
                                 winston.format.json(),
                                 //prettier-ignore
                                 winston.format.printf(data => {

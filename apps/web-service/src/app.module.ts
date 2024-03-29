@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common'
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
 import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { LoggerMiddleware } from '@/middleware/logger.middleware'
 import { AuthGuard } from '@/guards/auth.guard'
 import { TransformInterceptor } from '@/interceptor/transform.interceptor'
 import { HttpExceptionFilter } from '@/filter/http-exception.filter'
@@ -29,4 +30,8 @@ import { CommonController } from '@web-service/controllers/common.controller'
         UserService
     ]
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer.apply(LoggerMiddleware).forRoutes('*')
+    }
+}
