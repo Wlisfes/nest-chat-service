@@ -1,7 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsNumber, Min } from 'class-validator'
+import { ApiProperty, PickType } from '@nestjs/swagger'
+import { IsNotEmpty, IsNumber, Min, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { IsOptional } from '@/decorator/common.decorator'
+import * as entities from '@/entities/instance'
+import * as env from '@/interface/instance'
 
 export class CommonResolver {
     @ApiProperty({ description: 'keyId', example: 1 })
@@ -26,4 +28,11 @@ export class CommonResolver {
 export class NoticeResolver {
     @ApiProperty({ description: 'message', example: '提示信息' })
     message: string
+}
+
+export class BodyCommonNodemailer extends PickType(entities.UserProfileEntier, ['email']) {
+    @ApiProperty({ description: '邮件验证码类型', enum: env.EnumMailSource, example: env.EnumMailSource.register })
+    @IsNotEmpty({ message: '类型 必填' })
+    @IsEnum(env.EnumMailSource, { message: '类型错误' })
+    source: string
 }

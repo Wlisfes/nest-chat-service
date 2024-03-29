@@ -12,10 +12,11 @@ import { UserService } from '@/services/user/user.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
 import { UserController } from '@web-service/controllers/user.controller'
+import { CommonController } from '@web-service/controllers/common.controller'
 
 @Module({
     imports: [ConfigerModule, LoggerModule, RedisModule, DatabaseModule, NodemailerModule],
-    controllers: [AppController, UserController],
+    controllers: [AppController, UserController, CommonController],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
