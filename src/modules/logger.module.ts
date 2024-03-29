@@ -29,7 +29,7 @@ export class LoggerModule {
 									const name = chalk.hex('#ff5c93')(`[${option.name}]`)
 									const pid = chalk.green(process.pid)
 									const timestamp = chalk.hex('#fb9300')(`--- ${data.timestamp} ---`)
-									const message = chalk.yellow(`[${data.message}]`)
+									const message = chalk.hex("#d03050")(`[${data.message}]`)
 									const level = data.level === 'error' ?  chalk.red('ERROR') : chalk.green(data.level.toUpperCase())
 									const module = `${name} ${pid} ${timestamp}  ${level}  ${message}`
 									if (typeof data.log === 'string') {
@@ -39,7 +39,7 @@ export class LoggerModule {
 										const text = Object.keys(data.log ?? {}).reduce((current, key) => {
 											return (current += `	"${key.toString()}": ${JSON.stringify(data.log[key.toString()])}, \n`)
 										}, '')
-										if (data.log.url) {
+										if (data.log && data.log.url) {
 											const url = chalk.hex('#fc5404')(`${data.log.url ?? ''}`)
 											const d = chalk.yellow(': ')
 											console[data.level](module + d + url, { ...data.log })
