@@ -26,3 +26,19 @@ export async function divineResolver<T = Partial<Omix<{ message: string; list: A
 ) {
     return data
 }
+
+/**条件链式执行函数**/
+export async function divineHandler(where: boolean | Function, handler: Function) {
+    if (typeof where === 'function') {
+        const value = where()
+        return value && handler ? await handler() : undefined
+    } else if (Boolean(where)) {
+        return handler ? await handler() : undefined
+    }
+    return undefined
+}
+
+/**条件值返回**/
+export async function divineWherer<T>(where: boolean, value: T, defaultValue: T = undefined): Promise<T> {
+    return where ? value : defaultValue
+}
