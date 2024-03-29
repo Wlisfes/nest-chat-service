@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core'
+import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { AuthGuard } from '@/guards/auth.guard'
 import { TransformInterceptor } from '@/interceptor/transform.interceptor'
 import { HttpExceptionFilter } from '@/filter/http-exception.filter'
 import { ConfigerModule } from '@/modules/configer.module'
@@ -16,6 +17,7 @@ import { UserController } from '@web-service/controllers/user.controller'
     imports: [ConfigerModule, LoggerModule, RedisModule, DatabaseModule, NodemailerModule],
     controllers: [AppController, UserController],
     providers: [
+        { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
         AppService,

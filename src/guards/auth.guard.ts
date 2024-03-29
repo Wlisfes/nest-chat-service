@@ -1,6 +1,7 @@
 import { CanActivate, SetMetadata, ExecutionContext, Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { APP_HEADER_AUTHORIZE } from '@/config/web-common.config'
+import { JwtService } from '@nestjs/jwt'
+import { APP_HEADER_AUTHORIZE, APP_JWT_SECRET } from '@/config/web-common.config'
 // import { CustomProvider } from '@/utils/utils-configer'
 // import { divineParseJwtToken } from '@/utils/utils-plugin'
 // import { divineHandler } from '@/utils/utils-common'
@@ -10,16 +11,30 @@ export interface IGuardOption {
     next: boolean
     baseURL?: boolean
 }
+export interface IGuardScoper {
+    code?: number
+    message?: string
+}
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-    constructor(private readonly reflector: Reflector) {}
+    constructor(private readonly reflector: Reflector, private readonly jwtService: JwtService) {}
 
-    public async httpContextAuthorize(next: boolean, { message, code }: Partial<{ message: string; code: number }>) {
+    /**异常拦截处理**/
+    public async httpContextAuthorize(next: boolean, { message, code }: IGuardScoper) {
         if (!next) {
             throw new HttpException(message ?? '登录已失效', code ?? HttpStatus.UNAUTHORIZED)
         }
         return false
+    }
+
+    /**token解析**/
+    public async httpContextJwtTokenParser(token: string, { message, code }: IGuardScoper) {
+        try {
+            return await this.jwtService.verifyAsync(token, { secret: APP_JWT_SECRET })
+        } catch (e) {
+            throw new HttpException(message ?? '身份验证失败', code ?? HttpStatus.UNAUTHORIZED)
+        }
     }
 
     public async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -34,19 +49,13 @@ export class AuthGuard implements CanActivate {
                 //未携带token
                 await this.httpContextAuthorize(scope.next, { message: '未登录' })
             } else {
-				/**解析token**/ //prettier-ignore
-				// const node = await divineParseJwtToken(token, { secret: configer.jwt.secret }).then(async data => {
-				// 	await divineHandler(data.status === 'disable', () => {
-				// 		return this.httpContextAuthorize(state.error, { message: '账户已被禁用', code: HttpStatus.FORBIDDEN })
-				// 	})
-				// 	return data
-				// }).catch(async e => {
-				// 	await this.httpContextAuthorize(state.error, { message: '登录已失效' })
-				// })
-				// request.user = node
-			}
+                /**解析token**/
+                const node = await this.httpContextJwtTokenParser(token, { message: '身份验证失败' }).then(async data => {
+                    return data
+                })
+                request.user = node
+            }
         }
-
         return true
     }
 }
