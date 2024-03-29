@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core'
 import { WebSocketModule } from '@web-socket/web-socket.module'
 import { WebSocketAdapter } from '@web-socket/web-socket.adapter'
+import { APP_PORT } from '@/config/web-socket.config'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 
 async function bootstrap() {
-    const prot = Number(process.env.WEB_SOCKET_PORT ?? 34578)
     const app = await NestFactory.create(WebSocketModule)
     const adapter = new WebSocketAdapter(app)
     app.useWebSocketAdapter(adapter)
@@ -15,6 +15,6 @@ async function bootstrap() {
     app.use(cookieParser())
     app.use(express.json())
     app.use(express.urlencoded({ extended: true }))
-    await app.listen(prot, () => {})
+    await app.listen(APP_PORT, () => {})
 }
 bootstrap()

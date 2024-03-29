@@ -2,19 +2,21 @@ import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from '@web-service/app.module'
+import { APP_HEADER_AUTHORIZE } from '@/config/web-common.config'
+import { APP_PORT, APP_SWAGGER } from '@/config/web-service.config'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 
-async function useSwagger(app, opt: { authorize: string }) {
+async function useSwagger(app) {
     const options = new DocumentBuilder()
-        .setTitle(`Chat API服务`)
-        .setDescription(`Chat API Documentation`)
-        .setVersion(`1.0.0`)
-        .addBearerAuth({ type: 'apiKey', in: 'header', name: opt.authorize }, opt.authorize)
+        .setTitle(APP_SWAGGER.titlle)
+        .setDescription(APP_SWAGGER.description)
+        .setVersion(APP_SWAGGER.version)
+        .addBearerAuth({ type: 'apiKey', in: 'header', name: APP_HEADER_AUTHORIZE }, APP_HEADER_AUTHORIZE)
         .build()
     const document = SwaggerModule.createDocument(app, options)
     SwaggerModule.setup('api-doc', app, document, {
-        customSiteTitle: `Chat 服务API文档`,
+        customSiteTitle: APP_SWAGGER.customSiteTitle,
         swaggerOptions: {
             defaultModelsExpandDepth: -1,
             defaultModelExpandDepth: 5,
@@ -26,7 +28,6 @@ async function useSwagger(app, opt: { authorize: string }) {
 }
 
 async function bootstrap() {
-    const prot = Number(process.env.WEB_SERVICE_PORT ?? 34578)
     const app = await NestFactory.create(AppModule)
 
     //允许跨域
@@ -40,10 +41,10 @@ async function bootstrap() {
     //全局注册验证管道
     app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }))
     //挂载文档
-    await useSwagger(app, { authorize: 'authorization' })
+    await useSwagger(app)
     //监听端口服务
-    await app.listen(prot, () => {
-        console.log('Chat服务启动:', `http://localhost:${prot}/web-service`, `http://localhost:${prot}/api-doc`)
+    await app.listen(APP_PORT, () => {
+        console.log('Chat服务启动:', `http://localhost:${APP_PORT}/web-service`, `http://localhost:${APP_PORT}/api-doc`)
     })
 }
 bootstrap()
