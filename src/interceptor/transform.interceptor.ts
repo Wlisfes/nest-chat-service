@@ -6,12 +6,14 @@ import { moment } from '@/utils/utils-common'
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
     async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
+        const request = context.switchToHttp().getRequest()
+        // console.log('headers:', request.headers)
         return next.handle().pipe(
             map(data => {
                 return {
                     data: data || null,
                     code: HttpStatus.OK,
-                    message: data.message ?? '请求成功',
+                    message: data?.message ?? '请求成功',
                     timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
                 }
             })

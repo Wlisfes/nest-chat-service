@@ -14,7 +14,7 @@ export class UserController {
         operation: { summary: '注册用户' },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpUserRegister(@Headers() headers, @Body() body: env.BodyUserRegister) {
-        return await this.userService.httpUserRegister(body)
+    public async httpUserRegister(@Headers() headers: env.Headers, @Body() body: env.BodyUserRegister) {
+        return await this.userService.httpUserRegister(body, headers)
     }
 }

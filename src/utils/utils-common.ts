@@ -1,8 +1,9 @@
+import { snowflakeId } from 'snowflake-id-maker'
+import { APP_HEADER_REQUESTID, APP_HEADER_STARTTIME } from '@/config/web-common.config'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
 import * as timezone from 'dayjs/plugin/timezone'
-import { snowflakeId } from 'snowflake-id-maker'
-import { Omix } from '@/interface/global.resolver'
+import * as env from '@/interface/instance'
 dayjs.extend(timezone)
 dayjs.extend(utc)
 
@@ -10,7 +11,7 @@ dayjs.extend(utc)
 export const moment = dayjs
 
 /**生成纯数字的雪花ID、随机字符串**/
-export async function divineIntNumber(scope: Partial<Omix<{ worker: number; epoch: number; random: boolean; bit: number }>> = {}) {
+export async function divineIntNumber(scope: Partial<env.Omix<{ worker: number; epoch: number; random: boolean; bit: number }>> = {}) {
     if (scope.random) {
         return Array.from({ length: scope.bit ?? 6 }, x => Math.floor(Math.random() * 9) + 1).join('')
     }
@@ -21,9 +22,9 @@ export async function divineIntNumber(scope: Partial<Omix<{ worker: number; epoc
 }
 
 /**返回包装**/
-export async function divineResolver<T = Partial<Omix<{ message: string; list: Array<Omix>; total: number; page: number; size: number }>>>(
-    data: T
-) {
+export async function divineResolver<
+    T = Partial<env.Omix<{ message: string; list: Array<env.Omix>; total: number; page: number; size: number }>>
+>(data: T) {
     return data
 }
 
@@ -39,6 +40,15 @@ export async function divineHandler(where: boolean | Function, handler: Function
 }
 
 /**条件值返回**/
-export async function divineWherer<T>(where: boolean, value: T, defaultValue: T = undefined): Promise<T> {
+export function divineWherer<T>(where: boolean, value: T, defaultValue: T = undefined): T {
     return where ? value : defaultValue
+}
+
+/**日志聚合**/
+export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix = {}) {
+    return {
+        log,
+        requestId: headers[APP_HEADER_REQUESTID],
+        duration: `${Date.now() - Number(headers[APP_HEADER_STARTTIME])}ms`
+    }
 }
