@@ -15,3 +15,9 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '状态: 禁用-disable、启用-enable', default: 'enable', nullable: false })
     status: string
 }
+
+export class SchemaUser extends UserEntier {
+    @ApiProperty({ description: '验证码', example: '495673' })
+    @IsNotEmpty({ message: '验证码 必填' })
+    code: string
+}

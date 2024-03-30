@@ -20,7 +20,7 @@ export class UserService {
         private readonly redis: RedisService
     ) {}
 
-    /**注册用户**/
+    /**注册账号**/
     public async httpUserRegister(scope: env.BodyUserRegister, headers: env.Headers) {
         try {
             await this.redis.getStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async code => {
@@ -58,5 +58,16 @@ export class UserService {
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
+    }
+
+    /**登录账号**/
+    public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers) {
+        try {
+            // await this.redis.getStore(`${web.WEB_REDIS_GRAPH_CACHE.common}:${scope.email}`).then(async code => {
+            //     return await divineCatchWherer(scope.code !== code, {
+            //         message: '验证码不存在'
+            //     })
+            // })
+        } catch (e) {}
     }
 }

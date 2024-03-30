@@ -1,12 +1,16 @@
-import { ApiProperty, PickType } from '@nestjs/swagger'
+import { ApiProperty, PickType, IntersectionType } from '@nestjs/swagger'
 import { IsNotEmpty, IsNumber, Min, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { IsOptional } from '@/decorator/common.decorator'
 import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance'
 
-export class BodyUserRegister extends PickType(entities.UserProfileEntier, ['nickname', 'email', 'password']) {
-    @ApiProperty({ description: '验证码', example: '495673' })
-    @IsNotEmpty({ message: '验证码 必填' })
-    code: string
-}
+export class BodyUserRegister extends IntersectionType(
+    PickType(entities.SchemaUser, ['code']),
+    PickType(entities.SchemaProfile, ['nickname', 'email', 'password'])
+) {}
+
+export class BodyUserAuthorizer extends IntersectionType(
+    PickType(entities.SchemaUser, ['code']),
+    PickType(entities.SchemaProfile, ['email', 'password'])
+) {}

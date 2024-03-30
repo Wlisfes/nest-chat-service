@@ -14,12 +14,12 @@ import { CustomService } from '@/services/common/custom.service'
 import { UserService } from '@/services/user/user.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
-import { UserController } from '@web-service/controllers/user.controller'
 import { CommonController } from '@web-service/controllers/common.controller'
+import { UserController } from '@web-service/controllers/user.controller'
 
 @Module({
     imports: [ConfigerModule, LoggerModule.forRoot({ name: 'web-service' }), RedisModule, DatabaseModule, NodemailerModule],
-    controllers: [AppController, UserController, CommonController],
+    controllers: [AppController, CommonController, UserController],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

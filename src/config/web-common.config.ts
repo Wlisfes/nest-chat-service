@@ -6,3 +6,5 @@ export const WEB_COMMON_HEADER_AUTHORIZE = 'authorization'
 export const WEB_COMMON_HEADER_REQUESTID = 'requestId'
 /**请求头起始时间标识**/
 export const WEB_COMMON_HEADER_STARTTIME = 'start-time'
+/**请求头图形验证码标识**/
+export const WEB_COMMON_HEADER_CAPHCHA = 'captcha-sid'

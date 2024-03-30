@@ -1,2 +1,2 @@
-export { UserEntier } from '@/entities/user'
-export { UserProfileEntier } from '@/entities/user.profile'
+export * from '@/entities/user'
+export * from '@/entities/user.profile'

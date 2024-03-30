@@ -1,4 +1,9 @@
+/**图形验证码redis存储键**/
+export enum WEB_REDIS_GRAPH_CACHE {
+    common = 'chat:chahe:graph:common'
+}
+
 /**邮箱验证码redis存储键**/
 export enum WEB_REDIS_MAIL_CACHE {
-    register = 'chat:mail:chahe:register'
+    register = 'chat:chahe:mail:register'
 }

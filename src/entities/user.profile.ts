@@ -38,3 +38,5 @@ export class UserProfileEntier extends CommonEntier {
     })
     password: string
 }
+
+export class SchemaProfile extends UserProfileEntier {}
