@@ -30,7 +30,7 @@ export class NoticeResolver {
     message: string
 }
 
-export class BodyCommonNodemailerSender extends PickType(entities.UserProfileEntier, ['email']) {
+export class BodyCommonNodemailerSender extends PickType(entities.SchemaUser, ['email']) {
     @ApiProperty({ description: '邮件验证码类型', enum: env.EnumMailSource, example: env.EnumMailSource.register })
     @IsNotEmpty({ message: '类型 必填' })
     @IsEnum(env.EnumMailSource, { message: '类型错误' })

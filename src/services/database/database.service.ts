@@ -5,8 +5,5 @@ import * as DataBase from '@/entities/instance'
 
 @Injectable()
 export class DataBaseService {
-    constructor(
-        @InjectRepository(DataBase.UserEntier) public readonly tableUser: Repository<DataBase.UserEntier>,
-        @InjectRepository(DataBase.UserProfileEntier) public readonly tableProfile: Repository<DataBase.UserProfileEntier>
-    ) {}
+    constructor(@InjectRepository(DataBase.UserEntier) public readonly tableUser: Repository<DataBase.UserEntier>) {}
 }

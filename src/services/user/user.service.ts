@@ -28,21 +28,19 @@ export class UserService {
                     message: '验证码不存在'
                 })
             })
-            await this.custom.divineNoner(this.dataBase.tableProfile, {
+            await this.custom.divineNoner(this.dataBase.tableUser, {
                 message: '邮箱已注册',
                 where: { email: scope.email }
             })
             return await this.custom.divineWithTransaction(async manager => {
-                const user = this.dataBase.tableUser.create({ uid: await divineIntNumber() })
-                await manager.save(user)
-                const profile = await this.dataBase.tableProfile.create({
-                    uid: user.uid,
+                const user = this.dataBase.tableUser.create({
+                    uid: await divineIntNumber(),
                     email: scope.email,
                     nickname: scope.nickname,
                     password: scope.password,
                     avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
                 })
-                await manager.save(profile)
+                await manager.save(user)
                 return await this.redis.delStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async () => {
                     this.logger.info(
                         [UserService.name, this.httpUserRegister.name].join(':'),
@@ -61,13 +59,20 @@ export class UserService {
     }
 
     /**登录账号**/
-    public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers) {
+    public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers, request: env.Omix) {
         try {
-            // await this.redis.getStore(`${web.WEB_REDIS_GRAPH_CACHE.common}:${scope.email}`).then(async code => {
-            //     return await divineCatchWherer(scope.code !== code, {
-            //         message: '验证码不存在'
-            //     })
-            // })
-        } catch (e) {}
+            const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
+            await this.redis.getStore(`${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`).then(async code => {
+                return await divineCatchWherer(scope.code !== code, {
+                    message: '验证码不存在'
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

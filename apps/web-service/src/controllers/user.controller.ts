@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers } from '@nestjs/common'
+import { Controller, Post, Body, Headers, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from '@/services/user/user.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
@@ -23,7 +23,7 @@ export class UserController {
         operation: { summary: '登录账号' },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpUserAuthorizer(@Headers() headers: env.Headers, @Body() body: env.BodyUserAuthorizer) {
-        return await this.userService.httpUserAuthorizer(body, headers)
+    public async httpUserAuthorizer(@Headers() headers: env.Headers, @Request() request: env.Omix, @Body() body: env.BodyUserAuthorizer) {
+        return await this.userService.httpUserAuthorizer(body, headers, request)
     }
 }

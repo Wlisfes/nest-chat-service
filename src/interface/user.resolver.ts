@@ -5,12 +5,6 @@ import { IsOptional } from '@/decorator/common.decorator'
 import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance'
 
-export class BodyUserRegister extends IntersectionType(
-    PickType(entities.SchemaUser, ['code']),
-    PickType(entities.SchemaProfile, ['nickname', 'email', 'password'])
-) {}
+export class BodyUserRegister extends PickType(entities.SchemaUser, ['nickname', 'email', 'password', 'code']) {}
 
-export class BodyUserAuthorizer extends IntersectionType(
-    PickType(entities.SchemaUser, ['code']),
-    PickType(entities.SchemaProfile, ['email', 'password'])
-) {}
+export class BodyUserAuthorizer extends PickType(entities.SchemaUser, ['email', 'password', 'code']) {}

@@ -15,17 +15,22 @@ export class CustomService {
         })
     }
 
+    /**数据验证:不存在-抛出异常、存在-返回数据模型**/
+    public async divineCheckr<T>(where: boolean, node: T, scope: Partial<env.Omix<{ message: string; status: number }>>) {
+        return await divineCatchWherer(where && Boolean(scope.message), {
+            message: scope.message,
+            status: scope.status ?? HttpStatus.BAD_REQUEST
+        }).then(() => node)
+    }
+
     /**验证数据模型:不存在-抛出异常、存在-返回数据模型**/
     public async divineHaver<T>(
         model: Repository<T>,
-        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; status: number }>
+        scope: Parameters<typeof model.findOne>['0'] & Partial<env.Omix<{ message: string; status: number }>>
     ) {
         try {
             return await model.findOne(scope).then(async node => {
-                return await divineCatchWherer(!node && Boolean(scope.message), {
-                    message: scope.message,
-                    status: scope.status ?? HttpStatus.BAD_REQUEST
-                }).then(() => node)
+                return await this.divineCheckr(!Boolean(node), node, scope)
             })
         } catch (e) {
             throw new HttpException(e.message, e.status)
@@ -35,14 +40,11 @@ export class CustomService {
     /**验证数据模型:存在-抛出异常、不存在-返回空**/
     public async divineNoner<T>(
         model: Repository<T>,
-        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; status: number }>
+        scope: Parameters<typeof model.findOne>['0'] & Partial<env.Omix<{ message: string; status: number }>>
     ) {
         try {
             return await model.findOne(scope).then(async node => {
-                return await divineCatchWherer(node && Boolean(scope.message), {
-                    message: scope.message,
-                    status: scope.status ?? HttpStatus.BAD_REQUEST
-                })
+                return await this.divineCheckr(Boolean(node), node, scope)
             })
         } catch (e) {
             throw new HttpException(e.message, e.status)
