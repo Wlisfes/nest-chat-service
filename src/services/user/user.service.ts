@@ -58,7 +58,7 @@ export class UserService {
         }
     }
 
-    /**登录账号**/ //prettier-ignore
+    /**登录账号**/
     public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers, request: env.Omix) {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
@@ -68,6 +68,7 @@ export class UserService {
                     message: '验证码不存在'
                 })
             })
+            //prettier-ignore
             const node = await this.custom.divineHaver(this.dataBase.tableUser, {
                 where: { email: scope.email },
                 select: { uid: true, email: true, status: true, password: true }
@@ -88,6 +89,32 @@ export class UserService {
                     })
                 )
                 return await divineResolver({ token, expire: 24 * 60 * 60 })
+            })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**账号信息**/
+    public async httpUserResolver(uid: string, headers: env.Headers) {
+        try {
+            const key = `${web.WEB_REDIS_USER_CACHE.resolver}:${uid}`
+            return await this.redis.getStore(key).then(async node => {
+                if (node) {
+                    return await divineResolver(node)
+                }
+                return await this.custom.divineHaver(this.dataBase.tableUser, { where: { uid } }).then(async data => {
+                    await this.redis.setStore(key, data, 24 * 60 * 60)
+                    this.logger.info(
+                        [UserService.name, this.httpUserResolver.name].join(':'),
+                        divineLogger(headers, { message: '账号信息读取成功', user: data })
+                    )
+                    return await divineResolver(data)
+                })
             })
         } catch (e) {
             this.logger.error(

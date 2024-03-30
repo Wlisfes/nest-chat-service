@@ -31,7 +31,7 @@ export class AuthGuard implements CanActivate {
         const baseURL = request.route.path
 
         /**验证登录**/
-        if (scope && scope.check) {
+        if (scope && scope.check && scope.next) {
             const token = request.headers[web.WEB_COMMON_HEADER_AUTHORIZE]
             if (!token) {
                 //未携带token

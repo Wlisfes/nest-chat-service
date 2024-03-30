@@ -10,3 +10,5 @@ export class BodyUserRegister extends PickType(entities.SchemaUser, ['nickname',
 export class BodyUserAuthorizer extends PickType(entities.SchemaUser, ['email', 'password', 'code']) {}
 
 export class RestUserAuthorizer extends PickType(entities.SchemaUser, ['token', 'expire']) {}
+
+export class RestUserResolver extends entities.UserEntier {}
