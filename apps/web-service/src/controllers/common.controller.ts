@@ -14,7 +14,7 @@ export class CommonController {
         operation: { summary: '发送邮件验证码' },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpCommonNodemailerSender(@Body() body: env.BodyCommonNodemailerSender) {
-        return await this.commonService.httpCommonNodemailerSender(body)
+    public async httpCommonNodemailerSender(@Headers() headers: env.Headers, @Body() body: env.BodyCommonNodemailerSender) {
+        return await this.commonService.httpCommonNodemailerSender(body, headers)
     }
 }

@@ -39,11 +39,11 @@ export class LoggerModule {
 									const module = `${name}  ${pid}  ${timestamp}  ${level}  ${requestId}  ${message}`
 									if (typeof data.log === 'string') {
                                         if (data.duration) {
-                                            console[data.level](`${module}  ${duration}`, { log: data.log })
-                                            return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n"log": ${data.log}}`
+                                            console[data.level](`${module}  ${duration}  {\n    log: ${chalk.red(data.log)}\n}`)
+                                            return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n    "log": ${data.log}\n}`
                                         }
-                                        console[data.level](module, { log: data.log })
-                                        return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n"log": ${data.log}}`
+                                        console[data.level](`${module}   {\n    log: ${chalk.red(data.log)}\n}`)
+                                        return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n    "log": ${data.log}\n}`
 									} else {
                                         const text = Object.keys(data.log ?? {}).reduce((current, key) => {
                                             return (current += `	"${key.toString()}": ${JSON.stringify(data.log[key.toString()])}, \n`)

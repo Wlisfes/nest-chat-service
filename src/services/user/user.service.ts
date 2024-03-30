@@ -6,7 +6,7 @@ import { CommonService } from '@/services/common/common.service'
 import { DataBaseService } from '@/services/database/database.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as web from '@/config/instance'
 import * as env from '@/interface/instance'
 
@@ -22,29 +22,41 @@ export class UserService {
 
     /**注册用户**/
     public async httpUserRegister(scope: env.BodyUserRegister, headers: env.Headers) {
-        await this.redis.getStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async code => {
-            return await divineCatchWherer(scope.code !== code, {
-                message: '验证码不存在'
+        try {
+            await this.redis.getStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async code => {
+                return await divineCatchWherer(scope.code !== code, {
+                    message: '验证码不存在'
+                })
             })
-        })
-        await this.custom.divineNoner(this.dataBase.tableProfile, {
-            message: '邮箱已注册',
-            where: { email: scope.email }
-        })
-        return await this.custom.divineWithTransaction(async manager => {
-            const user = this.dataBase.tableUser.create({ uid: await divineIntNumber() })
-            await manager.save(user)
-            const profile = await this.dataBase.tableProfile.create({
-                uid: user.uid,
-                email: scope.email,
-                nickname: scope.nickname,
-                password: scope.password,
-                avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
+            await this.custom.divineNoner(this.dataBase.tableProfile, {
+                message: '邮箱已注册',
+                where: { email: scope.email }
             })
-            await manager.save(profile)
-            return await this.redis.delStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async () => {
-                return await divineResolver({ message: '注册成功' })
+            return await this.custom.divineWithTransaction(async manager => {
+                const user = this.dataBase.tableUser.create({ uid: await divineIntNumber() })
+                await manager.save(user)
+                const profile = await this.dataBase.tableProfile.create({
+                    uid: user.uid,
+                    email: scope.email,
+                    nickname: scope.nickname,
+                    password: scope.password,
+                    avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
+                })
+                await manager.save(profile)
+                return await this.redis.delStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async () => {
+                    this.logger.info(
+                        [UserService.name, this.httpUserRegister.name].join(':'),
+                        divineLogger(headers, { message: '注册成功', user })
+                    )
+                    return await divineResolver({ message: '注册成功' })
+                })
             })
-        })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserRegister.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

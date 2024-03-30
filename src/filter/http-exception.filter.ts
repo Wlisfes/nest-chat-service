@@ -2,6 +2,7 @@ import { Inject, ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nest
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { moment, divineLogger } from '@/utils/utils-common'
+import * as web from '@/config/instance'
 import * as env from '@/interface/instance'
 
 @Catch()
@@ -13,6 +14,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse()
         const request = ctx.getRequest()
         const Result: env.Omix = {
+            [web.WEB_COMMON_HEADER_REQUESTID]: request.headers[web.WEB_COMMON_HEADER_REQUESTID],
             timestamp: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
             url: request.url,
             method: request.method,

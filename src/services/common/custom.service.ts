@@ -18,34 +18,34 @@ export class CustomService {
     /**验证数据模型:不存在-抛出异常、存在-返回数据模型**/
     public async divineHaver<T>(
         model: Repository<T>,
-        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; code: number }>
+        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; status: number }>
     ) {
         try {
             return await model.findOne(scope).then(async node => {
                 return await divineCatchWherer(!node && Boolean(scope.message), {
                     message: scope.message,
-                    code: scope.code ?? HttpStatus.BAD_REQUEST
+                    status: scope.status ?? HttpStatus.BAD_REQUEST
                 }).then(() => node)
             })
         } catch (e) {
-            throw new HttpException(e.message, e.code)
+            throw new HttpException(e.message, e.status)
         }
     }
 
     /**验证数据模型:存在-抛出异常、不存在-返回空**/
     public async divineNoner<T>(
         model: Repository<T>,
-        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; code: number }>
+        scope: Parameters<typeof model.findOne>['0'] & Partial<{ message: string; status: number }>
     ) {
         try {
             return await model.findOne(scope).then(async node => {
                 return await divineCatchWherer(node && Boolean(scope.message), {
                     message: scope.message,
-                    code: scope.code ?? HttpStatus.BAD_REQUEST
+                    status: scope.status ?? HttpStatus.BAD_REQUEST
                 })
             })
         } catch (e) {
-            throw new HttpException(e.message, e.code)
+            throw new HttpException(e.message, e.status)
         }
     }
 

@@ -45,7 +45,7 @@ export function divineWherer<T>(where: boolean, value: T, defaultValue: T = unde
 }
 
 /**日志聚合**/
-export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix = {}) {
+export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix | string = {}) {
     return {
         log,
         requestId: headers[web.WEB_COMMON_HEADER_REQUESTID],
