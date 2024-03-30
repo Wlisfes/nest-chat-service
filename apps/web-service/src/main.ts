@@ -2,21 +2,20 @@ import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from '@web-service/app.module'
-import { APP_HEADER_AUTHORIZE } from '@/config/web-common.config'
-import { APP_PORT, APP_SWAGGER } from '@/config/web-service.config'
+import * as web from '@/config/instance'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 
 async function useSwagger(app) {
     const options = new DocumentBuilder()
-        .setTitle(APP_SWAGGER.titlle)
-        .setDescription(APP_SWAGGER.description)
-        .setVersion(APP_SWAGGER.version)
-        .addBearerAuth({ type: 'apiKey', in: 'header', name: APP_HEADER_AUTHORIZE }, APP_HEADER_AUTHORIZE)
+        .setTitle(web.WEB_SERVICE_SWAGGER.titlle)
+        .setDescription(web.WEB_SERVICE_SWAGGER.description)
+        .setVersion(web.WEB_SERVICE_SWAGGER.version)
+        .addBearerAuth({ type: 'apiKey', in: 'header', name: web.WEB_COMMON_HEADER_AUTHORIZE }, web.WEB_COMMON_HEADER_AUTHORIZE)
         .build()
     const document = SwaggerModule.createDocument(app, options)
     SwaggerModule.setup('api-doc', app, document, {
-        customSiteTitle: APP_SWAGGER.customSiteTitle,
+        customSiteTitle: web.WEB_SERVICE_SWAGGER.customSiteTitle,
         swaggerOptions: {
             defaultModelsExpandDepth: -1,
             defaultModelExpandDepth: 5,
@@ -43,8 +42,12 @@ async function bootstrap() {
     //挂载文档
     await useSwagger(app)
     //监听端口服务
-    await app.listen(APP_PORT, () => {
-        console.log('Chat服务启动:', `http://localhost:${APP_PORT}/web-service`, `http://localhost:${APP_PORT}/api-doc`)
+    await app.listen(web.WEB_SERVICE_PORT, () => {
+        console.log(
+            'Chat服务启动:',
+            `http://localhost:${web.WEB_SERVICE_PORT}/web-service`,
+            `http://localhost:${web.WEB_SERVICE_PORT}/api-doc`
+        )
     })
 }
 bootstrap()

@@ -2,7 +2,7 @@ import { ApiOperationOptions, ApiResponseOptions, getSchemaPath, ApiExtraModels 
 import { ApiOperation, ApiConsumes, ApiProduces, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { applyDecorators, Type } from '@nestjs/common'
 import { ApiGuardBearer } from '@/guards/auth.guard'
-import { APP_HEADER_AUTHORIZE } from '@/config/web-common.config'
+import * as web from '@/config/instance'
 
 export interface OptionDecorator {
     operation: ApiOperationOptions
@@ -51,7 +51,7 @@ export function ApiDecorator(option: Partial<OptionDecorator> = {}) {
 
     /**开启登录验证**/
     if (option.authorize && option.authorize.check) {
-        decorator.push(ApiBearerAuth(APP_HEADER_AUTHORIZE), ApiGuardBearer(option.authorize))
+        decorator.push(ApiBearerAuth(web.WEB_COMMON_HEADER_AUTHORIZE), ApiGuardBearer(option.authorize))
     }
 
     return applyDecorators(...decorator)

@@ -1,5 +1,5 @@
 import { snowflakeId } from 'snowflake-id-maker'
-import { APP_HEADER_REQUESTID, APP_HEADER_STARTTIME } from '@/config/web-common.config'
+import * as web from '@/config/instance'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
 import * as timezone from 'dayjs/plugin/timezone'
@@ -48,7 +48,7 @@ export function divineWherer<T>(where: boolean, value: T, defaultValue: T = unde
 export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix = {}) {
     return {
         log,
-        requestId: headers[APP_HEADER_REQUESTID],
-        duration: `${Date.now() - Number(headers[APP_HEADER_STARTTIME])}ms`
+        requestId: headers[web.WEB_COMMON_HEADER_REQUESTID],
+        duration: `${Date.now() - Number(headers[web.WEB_COMMON_HEADER_STARTTIME])}ms`
     }
 }

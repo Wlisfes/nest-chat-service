@@ -1,7 +1,7 @@
 import { CanActivate, SetMetadata, ExecutionContext, Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
-import { APP_HEADER_AUTHORIZE, APP_JWT_SECRET } from '@/config/web-common.config'
+import * as web from '@/config/instance'
 // import { CustomProvider } from '@/utils/utils-configer'
 // import { divineParseJwtToken } from '@/utils/utils-plugin'
 // import { divineHandler } from '@/utils/utils-common'
@@ -31,7 +31,7 @@ export class AuthGuard implements CanActivate {
     /**token解析**/
     public async httpContextJwtTokenParser(token: string, { message, code }: IGuardScoper) {
         try {
-            return await this.jwtService.verifyAsync(token, { secret: APP_JWT_SECRET })
+            return await this.jwtService.verifyAsync(token, { secret: web.WEB_COMMON_JWT_SECRET })
         } catch (e) {
             throw new HttpException(message ?? '身份验证失败', code ?? HttpStatus.UNAUTHORIZED)
         }
@@ -44,7 +44,7 @@ export class AuthGuard implements CanActivate {
 
         /**验证登录**/
         if (scope && scope.check) {
-            const token = request.headers[APP_HEADER_AUTHORIZE]
+            const token = request.headers[web.WEB_COMMON_HEADER_AUTHORIZE]
             if (!token) {
                 //未携带token
                 await this.httpContextAuthorize(scope.next, { message: '未登录' })

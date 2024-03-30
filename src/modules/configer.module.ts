@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule, JwtService } from '@nestjs/jwt'
-import { APP_JWT_SECRET } from '@/config/web-common.config'
+import * as web from '@/config/instance'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
@@ -21,7 +21,7 @@ export function divineCustomProvider() {
         }),
         JwtModule.register({
             global: true,
-            secret: APP_JWT_SECRET
+            secret: web.WEB_COMMON_JWT_SECRET
         })
     ],
     controllers: [],

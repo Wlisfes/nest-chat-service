@@ -1,9 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CLIENT_TRANSPORT, ClientTransport, readNodemailer, customNodemailer } from '@/services/nodemailer/nodemailer.provider'
-import { Omix, EnumMailSource } from '@/interface/instance'
-export const Events: Omix = {
-    [EnumMailSource.register]: 'Chat | 注册账号'
+import * as env from '@/interface/instance'
+
+export const Events: env.Omix = {
+    [env.EnumMailSource.register]: 'Chat | 注册账号'
 }
 
 @Injectable()
@@ -13,7 +14,7 @@ export class NodemailerService {
     constructor(@Inject(CLIENT_TRANSPORT) private readonly client: ClientTransport, private readonly configService: ConfigService) {}
 
     /**读取自定义模板**/
-    public async httpReadCustomize(source: string, scope: Omix = {}) {
+    public async httpReadCustomize(source: string, scope: env.Omix = {}) {
         return await readNodemailer(source, scope)
     }
 

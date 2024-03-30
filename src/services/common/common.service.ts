@@ -2,7 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
 import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineResolver, divineIntNumber } from '@/utils/utils-common'
-import { WEB_MAIL_CACHE } from '@/config/web-redis.config'
+import * as web from '@/config/instance'
 import * as env from '@/interface/instance'
 
 @Injectable()
@@ -19,7 +19,7 @@ export class CommonService {
                 subject: this.nodemailer.Events[scope.source],
                 html: await this.nodemailer.httpReadCustomize(scope.source + '.html', { code, ttl: '5' })
             })
-            return await this.redis.setStore(WEB_MAIL_CACHE[scope.source] + ':' + scope.email, code, 5 * 60).then(async () => {
+            return await this.redis.setStore(web.WEB_REDIS_MAIL_CACHE[scope.source] + ':' + scope.email, code, 5 * 60).then(async () => {
                 return await divineResolver({ message: '发送成功' })
             })
         } catch (e) {

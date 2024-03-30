@@ -1,7 +1,7 @@
 import { Module, Global, DynamicModule } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
-import { APP_HEADER_REQUESTID } from '@/config/web-common.config'
 import { divineWherer } from '@/utils/utils-common'
+import * as web from '@/config/instance'
 import * as winston from 'winston'
 import * as chalk from 'chalk'
 import 'winston-daily-rotate-file'
@@ -31,7 +31,7 @@ export class LoggerModule {
 									const name = chalk.hex('#ff5c93')(`服务名称:[${option.name}]`)
 									const pid = chalk.hex("#fc5404 ")(`服务进程:[${process.pid}]`)
 									const timestamp = chalk.hex('#fb9300')(`${data.timestamp}`)
-                                    const requestId = chalk.hex("#536dfe")(`请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]`)
+                                    const requestId = chalk.hex("#536dfe")(`请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]`)
 									const message = chalk.hex("#ff3d68")(`执行方法:[${data.message}]`)
                                     const duration = divineWherer(Boolean(data.duration), chalk.hex("#ff3d68")(`耗时:${data.duration ?? '[]'}`), '')
                                     const url = divineWherer(Boolean(data.log?.url), chalk.hex('#fc5404')(`接口地址:[${data.log?.url ?? ''}]`, '')) 
@@ -40,23 +40,23 @@ export class LoggerModule {
 									if (typeof data.log === 'string') {
                                         if (data.duration) {
                                             console[data.level](`${module}  ${duration}`, { log: data.log })
-                                            return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n"log": ${data.log}}`
+                                            return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n"log": ${data.log}}`
                                         }
                                         console[data.level](module, { log: data.log })
-                                        return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n"log": ${data.log}}`
+                                        return `服务名称:[${option.name}] ${process.pid} ${data.timestamp} ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n"log": ${data.log}}`
 									} else {
                                         const text = Object.keys(data.log ?? {}).reduce((current, key) => {
                                             return (current += `	"${key.toString()}": ${JSON.stringify(data.log[key.toString()])}, \n`)
 										}, '')
 										if (data.log && data.log.url) {
 											console[data.level](`${module}  ${url}  ${duration}`, { ...data.log })
-											return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  接口地址:${data.log.url}  耗时:${data.duration}  {\n${text}}`
+											return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  接口地址:${data.log.url}  耗时:${data.duration}  {\n${text}}`
 										} else if(data.duration) {
 											console[data.level](`${module}  ${duration}`, { ...data.log })
-											return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n${text}}`
+											return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  耗时:${data.duration}  {\n${text}}`
 										}
                                         console[data.level](module, { ...data.log })
-										return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[APP_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n${text}}`
+										return `服务名称:[${option.name}]  服务进程:[${process.pid}]  ${data.timestamp}  ${data.level.toUpperCase()}  请求ID:[${data[web.WEB_COMMON_HEADER_REQUESTID] ?? ''}]  执行方法:[${data.message}]  {\n${text}}`
 									}
 								})
                             )
