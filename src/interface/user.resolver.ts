@@ -8,3 +8,5 @@ import * as env from '@/interface/instance'
 export class BodyUserRegister extends PickType(entities.SchemaUser, ['nickname', 'email', 'password', 'code']) {}
 
 export class BodyUserAuthorizer extends PickType(entities.SchemaUser, ['email', 'password', 'code']) {}
+
+export class RestUserAuthorizer extends PickType(entities.SchemaUser, ['token', 'expire']) {}

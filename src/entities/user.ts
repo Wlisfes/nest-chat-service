@@ -48,4 +48,10 @@ export class SchemaUser extends UserEntier {
     @ApiProperty({ description: '验证码', example: '495673' })
     @IsNotEmpty({ message: '验证码 必填' })
     code: string
+
+    @ApiProperty({ description: 'Token', example: '6oIWqrg921mcw95UAwVHZb84PEFSH******' })
+    token: string
+
+    @ApiProperty({ description: 'Token 有效时间', example: 24 * 60 * 60 })
+    expire: number
 }

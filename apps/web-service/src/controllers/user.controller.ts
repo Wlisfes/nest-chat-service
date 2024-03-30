@@ -21,7 +21,7 @@ export class UserController {
     @Post('/authorizer')
     @ApiDecorator({
         operation: { summary: '登录账号' },
-        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+        response: { status: 200, description: 'OK', type: env.RestUserAuthorizer }
     })
     public async httpUserAuthorizer(@Headers() headers: env.Headers, @Request() request: env.Omix, @Body() body: env.BodyUserAuthorizer) {
         return await this.userService.httpUserAuthorizer(body, headers, request)

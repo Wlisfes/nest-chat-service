@@ -58,14 +58,36 @@ export class UserService {
         }
     }
 
-    /**登录账号**/
+    /**登录账号**/ //prettier-ignore
     public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers, request: env.Omix) {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
-            await this.redis.getStore(`${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`).then(async code => {
+            const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
+            await this.redis.getStore(key).then(async code => {
                 return await divineCatchWherer(scope.code !== code, {
                     message: '验证码不存在'
                 })
+            })
+            const node = await this.custom.divineHaver(this.dataBase.tableUser, {
+                where: { email: scope.email },
+                select: { uid: true, email: true, status: true, password: true }
+            }).then(async ({ uid, status, email, password }) => {
+                await divineCatchWherer(status === 'disable', {
+                    message: '账号已被禁用',
+                    status: HttpStatus.FORBIDDEN
+                })
+                return await divineResolver({ uid, status, email, password })
+            })
+            return await this.custom.divineJwtTokenSecretr(node, { expire: 24 * 60 * 60 }).then(async token => {
+                await this.redis.delStore(key)
+                this.logger.info(
+                    [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                    divineLogger(headers, {
+                        message: '登录成功',
+                        user: Object.assign(node, { key, token, expire: 24 * 60 * 60 })
+                    })
+                )
+                return await divineResolver({ token, expire: 24 * 60 * 60 })
             })
         } catch (e) {
             this.logger.error(

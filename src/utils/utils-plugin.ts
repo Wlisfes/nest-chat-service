@@ -4,9 +4,9 @@ import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance'
 
 /**条件捕获、异常抛出**/
-export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; code?: number }>) {
+export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; status?: number }>) {
     return await divineHandler(where, () => {
-        throw new HttpException(scope.message, scope.code ?? HttpStatus.BAD_REQUEST)
+        throw new HttpException(scope.message, scope.status ?? HttpStatus.BAD_REQUEST)
     })
 }
 
