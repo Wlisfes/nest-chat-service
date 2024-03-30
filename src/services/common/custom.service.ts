@@ -1,10 +1,20 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
-import { Repository, DeepPartial, SelectQueryBuilder } from 'typeorm'
+import { Repository, EntityManager, DeepPartial, SelectQueryBuilder } from 'typeorm'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver } from '@/utils/utils-common'
+import * as env from '@/interface/instance'
 
 @Injectable()
 export class CustomService {
+    constructor(private readonly entityManager: EntityManager) {}
+
+    /**typeorm事务**/
+    public async divineWithTransaction<T>(callback: (manager: EntityManager) => Promise<Partial<env.Omix<T>>>) {
+        return await this.entityManager.transaction(async manager => {
+            return await callback(manager)
+        })
+    }
+
     /**验证数据模型:不存在-抛出异常、存在-返回数据模型**/
     public async divineHaver<T>(
         model: Repository<T>,
