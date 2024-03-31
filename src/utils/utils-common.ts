@@ -39,6 +39,17 @@ export async function divineHandler(where: boolean | Function, handler: Function
     return undefined
 }
 
+/**延时方法**/
+export function divineDelay(delay = 100, handler?: Function) {
+    return new Promise(resolve => {
+        const timeout = setTimeout(() => {
+            handler?.()
+            resolve(undefined)
+            clearTimeout(timeout)
+        }, delay)
+    })
+}
+
 /**条件值返回**/
 export function divineWherer<T>(where: boolean, value: T, defaultValue: T = undefined): T {
     return where ? value : defaultValue
