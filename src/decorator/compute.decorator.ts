@@ -1,6 +1,8 @@
 import { ApiOperationOptions, ApiResponseOptions, getSchemaPath, ApiExtraModels } from '@nestjs/swagger'
 import { ApiOperation, ApiConsumes, ApiProduces, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { applyDecorators, Type } from '@nestjs/common'
+import { Throttle, SkipThrottle } from '@nestjs/throttler'
+import { isEmpty } from 'class-validator'
 import { ApiGuardBearer } from '@/guards/auth.guard'
 import * as web from '@/config/instance'
 
@@ -11,6 +13,8 @@ export interface OptionDecorator {
     authorize: { check: boolean; next: boolean; baseURL?: boolean }
     consumes: string[]
     produces: string[]
+    skipThrottle: boolean
+    throttle: keyof typeof web.WEB_THROTTLE | Parameters<typeof Throttle>['0']
 }
 
 export function ApiDecorator(option: Partial<OptionDecorator> = {}) {
@@ -21,6 +25,16 @@ export function ApiDecorator(option: Partial<OptionDecorator> = {}) {
         ApiConsumes(...consumes),
         ApiProduces(...produces)
     ]
+
+    if (option.skipThrottle) {
+        decorator.push(SkipThrottle())
+    } else if (isEmpty(option.throttle)) {
+        decorator.push(Throttle({ default: web.WEB_THROTTLE.default }))
+    } else if (option.throttle && typeof option.throttle === 'string') {
+        decorator.push(Throttle({ [option.throttle]: web.WEB_THROTTLE[option.throttle] }))
+    } else if (typeof option.throttle === 'object') {
+        decorator.push(Throttle(option.throttle))
+    }
 
     if (option.customize) {
         decorator.push(

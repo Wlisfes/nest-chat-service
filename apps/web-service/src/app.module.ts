@@ -6,6 +6,7 @@ import { TransformInterceptor } from '@/interceptor/transform.interceptor'
 import { HttpExceptionFilter } from '@/filter/http-exception.filter'
 import { ConfigerModule } from '@/modules/configer.module'
 import { LoggerModule } from '@/modules/logger.module'
+import { ThrottlerModule } from '@/modules/throttler.module'
 import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
@@ -18,7 +19,14 @@ import { CommonController } from '@web-service/controllers/common.controller'
 import { UserController } from '@web-service/controllers/user.controller'
 
 @Module({
-    imports: [ConfigerModule, LoggerModule.forRoot({ name: 'web-service' }), RedisModule, DatabaseModule, NodemailerModule],
+    imports: [
+        LoggerModule.forRoot({ name: 'web-service' }),
+        ConfigerModule,
+        ThrottlerModule,
+        RedisModule,
+        DatabaseModule,
+        NodemailerModule
+    ],
     controllers: [AppController, CommonController, UserController],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
