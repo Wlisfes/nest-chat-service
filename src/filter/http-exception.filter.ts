@@ -2,8 +2,8 @@ import { Inject, ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nest
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { moment, divineLogger } from '@/utils/utils-common'
-import * as web from '@/config/instance'
-import * as env from '@/interface/instance'
+import * as web from '@/config/instance.config'
+import * as env from '@/interface/instance.resolver'
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

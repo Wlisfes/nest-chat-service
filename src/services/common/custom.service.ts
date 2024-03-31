@@ -3,8 +3,8 @@ import { Repository, EntityManager, DeepPartial, SelectQueryBuilder } from 'type
 import { JwtService } from '@nestjs/jwt'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver } from '@/utils/utils-common'
-import * as web from '@/config/instance'
-import * as env from '@/interface/instance'
+import * as web from '@/config/instance.config'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class CustomService {

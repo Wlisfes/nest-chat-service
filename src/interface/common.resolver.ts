@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, Min, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { IsOptional } from '@/decorator/common.decorator'
 import * as entities from '@/entities/instance'
-import * as env from '@/interface/instance'
+import * as env from '@/interface/instance.resolver'
 
 export class CommonResolver {
     @ApiProperty({ description: 'keyId', example: 1 })

@@ -4,7 +4,7 @@ import { applyDecorators, Type } from '@nestjs/common'
 import { Throttle, SkipThrottle } from '@nestjs/throttler'
 import { isEmpty } from 'class-validator'
 import { ApiGuardBearer } from '@/guards/auth.guard'
-import * as web from '@/config/instance'
+import * as web from '@/config/instance.config'
 
 export interface OptionDecorator {
     operation: ApiOperationOptions

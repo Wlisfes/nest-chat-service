@@ -6,8 +6,8 @@ import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import { divineGrapher } from '@/utils/utils-plugin'
-import * as web from '@/config/instance'
-import * as env from '@/interface/instance'
+import * as web from '@/config/instance.config'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class CommonService {

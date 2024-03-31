@@ -7,8 +7,8 @@ import { DataBaseService } from '@/services/database/database.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
-import * as web from '@/config/instance'
-import * as env from '@/interface/instance'
+import * as web from '@/config/instance.config'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class UserService {

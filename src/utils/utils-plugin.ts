@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 import { create } from 'svg-captcha'
 import { divineHandler } from '@/utils/utils-common'
-import * as env from '@/interface/instance'
+import * as env from '@/interface/instance.resolver'
 
 /**条件捕获、异常抛出**/
 export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; status?: number }>) {

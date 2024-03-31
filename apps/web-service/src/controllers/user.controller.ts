@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Headers, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from '@/services/user/user.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
-import * as env from '@/interface/instance'
+import * as env from '@/interface/instance.resolver'
 
 @ApiTags('用户模块')
 @Controller('user')

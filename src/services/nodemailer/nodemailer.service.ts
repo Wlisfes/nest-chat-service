@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CLIENT_TRANSPORT, ClientTransport, readNodemailer, customNodemailer } from '@/services/nodemailer/nodemailer.provider'
-import * as env from '@/interface/instance'
+import * as env from '@/interface/instance.resolver'
 
 export const Events: env.Omix = {
     [env.EnumMailSource.register]: 'Chat | 注册账号'

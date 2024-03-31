@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from '@web-service/app.module'
-import * as web from '@/config/instance'
+import * as web from '@/config/instance.config'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 

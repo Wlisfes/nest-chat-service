@@ -1,9 +1,9 @@
 import { snowflakeId } from 'snowflake-id-maker'
-import * as web from '@/config/instance'
+import * as web from '@/config/instance.config'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
 import * as timezone from 'dayjs/plugin/timezone'
-import * as env from '@/interface/instance'
+import * as env from '@/interface/instance.resolver'
 dayjs.extend(timezone)
 dayjs.extend(utc)
 

@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { WebSocketModule } from '@web-socket/web-socket.module'
 import { WebSocketAdapter } from '@web-socket/web-socket.adapter'
-import * as web from '@/config/instance'
+import * as web from '@/config/instance.config'
 import * as express from 'express'
 import * as cookieParser from 'cookie-parser'
 
