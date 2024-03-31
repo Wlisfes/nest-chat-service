@@ -7,7 +7,7 @@ import { CommonService } from '@/services/common/common.service'
 import { DataBaseService } from '@/services/database/database.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -65,6 +65,9 @@ export class UserService {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
             await this.redis.getStore(key).then(async code => {
+                await divineHandler(Boolean(sid), async () => {
+                    return await this.redis.delStore(key)
+                })
                 return await divineCatchWherer(scope.code !== code, {
                     message: '验证码不存在'
                 })
@@ -86,7 +89,6 @@ export class UserService {
                 return await divineResolver({ uid, status, email, password })
             })
             return await this.custom.divineJwtTokenSecretr(node, { expire: 24 * 60 * 60 }).then(async token => {
-                await this.redis.delStore(key)
                 this.logger.info(
                     [UserService.name, this.httpUserAuthorizer.name].join(':'),
                     divineLogger(headers, {
