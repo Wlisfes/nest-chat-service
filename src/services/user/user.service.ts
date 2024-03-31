@@ -1,6 +1,7 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { compareSync } from 'bcryptjs'
 import { CustomService } from '@/services/common/custom.service'
 import { CommonService } from '@/services/common/common.service'
 import { DataBaseService } from '@/services/database/database.service'
@@ -70,9 +71,14 @@ export class UserService {
             })
             //prettier-ignore
             const node = await this.custom.divineHaver(this.dataBase.tableUser, {
+                message: '账号不存在',
                 where: { email: scope.email },
                 select: { uid: true, email: true, status: true, password: true }
             }).then(async ({ uid, status, email, password }) => {
+                await divineCatchWherer(!compareSync(scope.password, password), {
+                    message: '账号密码错误',
+                    status: HttpStatus.BAD_REQUEST
+                })
                 await divineCatchWherer(status === 'disable', {
                     message: '账号已被禁用',
                     status: HttpStatus.FORBIDDEN
@@ -88,7 +94,7 @@ export class UserService {
                         user: Object.assign(node, { key, token, expire: 24 * 60 * 60 })
                     })
                 )
-                return await divineResolver({ token, expire: 24 * 60 * 60 })
+                return await divineResolver({ message: '登录成功', token, expire: 24 * 60 * 60 })
             })
         } catch (e) {
             this.logger.error(
