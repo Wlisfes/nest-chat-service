@@ -15,7 +15,7 @@ export class TransformInterceptor implements NestInterceptor {
                     code: HttpStatus.OK,
                     message: data?.message ?? '请求成功',
                     timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
-                    [web.WEB_COMMON_HEADER_CONTEXTID]: request.headers[web.WEB_COMMON_HEADER_CONTEXTID]
+                    requestId: request.headers[web.WEB_COMMON_HEADER_CONTEXTID]
                 }
             })
         )

@@ -14,19 +14,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse()
         const request = ctx.getRequest()
         const Result: env.Omix = {
-            [web.WEB_COMMON_HEADER_CONTEXTID]: request.headers[web.WEB_COMMON_HEADER_CONTEXTID],
+            requestId: request.headers[web.WEB_COMMON_HEADER_CONTEXTID],
             timestamp: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
             url: request.url,
             method: request.method,
             code: exception.status
         }
         if (exception.response && Array.isArray(exception.response.message)) {
-            Result.data = exception.response
             Result.message = exception.response.message[0]
+            Result.data = exception.response
         } else {
             const data = { message: exception.message, status: exception.status ?? HttpStatus.INTERNAL_SERVER_ERROR }
-            Result.data = data
             Result.message = data.message
+            Result.data = data
         }
         this.logger.error(HttpExceptionFilter.name, divineLogger(request.headers, Result))
         response.status(HttpStatus.OK)
