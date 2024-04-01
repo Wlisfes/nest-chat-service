@@ -30,15 +30,21 @@ export class UserService {
             })
             await this.custom.divineNoner(this.custom.tableUser, {
                 message: '邮箱已注册',
-                where: { email: scope.email }
+                dispatch: {
+                    where: { email: scope.email }
+                }
             })
             return await this.custom.divineWithTransaction(async manager => {
-                const user = this.custom.tableUser.create({
-                    uid: await divineIntNumber(),
-                    email: scope.email,
-                    nickname: scope.nickname,
-                    password: scope.password,
-                    avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
+                const user = this.custom.divineCreate(this.custom.tableUser, {
+                    manager: true,
+                    headers,
+                    state: {
+                        uid: await divineIntNumber(),
+                        email: scope.email,
+                        nickname: scope.nickname,
+                        password: scope.password,
+                        avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
+                    }
                 })
                 await manager.save(user)
                 return await this.redis.delStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async () => {
@@ -63,19 +69,22 @@ export class UserService {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
-            await this.redis.getStore<string>(key).then(async code => {
-                await divineHandler(Boolean(sid), async () => {
-                    return await this.redis.delStore(key)
-                })
-                return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
-                    message: '验证码不存在'
-                })
-            })
+            // await this.redis.getStore<string>(key).then(async code => {
+            //     await divineHandler(Boolean(sid), async () => {
+            //         return await this.redis.delStore(key)
+            //     })
+            //     return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
+            //         message: '验证码不存在'
+            //     })
+            // })
             //prettier-ignore
             const node = await this.custom.divineHaver(this.custom.tableUser, {
+                headers,
                 message: '账号不存在',
-                where: { email: scope.email },
-                select: { uid: true, email: true, status: true, password: true }
+                dispatch: {
+                    where: { email: scope.email },
+                    select: { uid: true, email: true, status: true, password: true }
+                }
             }).then(async ({ uid, status, email, password }) => {
                 await divineCatchWherer(!compareSync(scope.password, password), {
                     message: '账号密码错误',
@@ -87,7 +96,11 @@ export class UserService {
                 })
                 return await divineResolver({ uid, status, email, password })
             })
-            return await this.custom.divineJwtTokenSecretr(node, { expire: 24 * 60 * 60 }).then(async token => {
+            //prettier-ignore
+            return await this.custom.divineJwtTokenSecretr(node, {
+                message: '身份验证失败',
+                expire: 24 * 60 * 60
+            }).then(async token => {
                 this.logger.info(
                     [UserService.name, this.httpUserAuthorizer.name].join(':'),
                     divineLogger(headers, {
@@ -114,7 +127,12 @@ export class UserService {
                 if (node) {
                     return await divineResolver(node)
                 }
-                return await this.custom.divineHaver(this.custom.tableUser, { where: { uid } }).then(async data => {
+                //prettier-ignore
+                return await this.custom.divineHaver(this.custom.tableUser, { 
+                    headers,
+                    message: '身份验证失败',
+                    dispatch: { where: { uid } }
+                }).then(async data => {
                     await this.redis.setStore(key, data, 24 * 60 * 60)
                     this.logger.info(
                         [UserService.name, this.httpUserResolver.name].join(':'),
