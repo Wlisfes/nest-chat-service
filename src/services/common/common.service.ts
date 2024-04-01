@@ -4,7 +4,8 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { RedisService } from '@/services/redis/redis.service'
-import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { CustomService } from '@/services/common/custom.service'
+import { divineResolver, divineIntNumber, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineGrapher } from '@/utils/utils-plugin'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -13,6 +14,7 @@ import * as env from '@/interface/instance.resolver'
 export class CommonService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        private readonly custom: CustomService,
         private readonly nodemailer: NodemailerService,
         private readonly redis: RedisService
     ) {}
@@ -44,8 +46,29 @@ export class CommonService {
     /**发送邮件验证码**/
     public async httpCommonNodemailerSender(scope: env.BodyCommonNodemailerSender, headers: env.Headers) {
         try {
-            const code = await divineIntNumber({ random: true, bit: 6 })
-            const key = `${web.WEB_REDIS_MAIL_CACHE[scope.source]}:${scope.email}`
+            /**注册校验**/
+            await divineHandler(env.EnumMailSource.register === scope.source, async () => {
+                return await this.custom.divineNoner(this.custom.tableUser, {
+                    headers,
+                    message: '邮箱已注册',
+                    dispatch: {
+                        where: { email: scope.email }
+                    }
+                })
+            })
+            /**修改数据校验**/
+            await divineHandler([env.EnumMailSource.forget].includes(scope.source), async () => {
+                return await this.custom.divineHaver(this.custom.tableUser, {
+                    headers,
+                    message: '邮箱未注册',
+                    dispatch: {
+                        where: { email: scope.email }
+                    }
+                })
+            })
+            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(code => {
+                return { code, key: `${web.WEB_REDIS_MAIL_CACHE[scope.source]}:${scope.email}` }
+            })
             await this.nodemailer.httpCustomizeNodemailer({
                 from: `"Chat" <${this.nodemailer.fromName}>`,
                 to: scope.email,
