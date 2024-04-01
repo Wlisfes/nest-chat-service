@@ -14,7 +14,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse()
         const request = ctx.getRequest()
         const Result: env.Omix = {
-            [web.WEB_COMMON_HEADER_REQUESTID]: request.headers[web.WEB_COMMON_HEADER_REQUESTID],
+            [web.WEB_COMMON_HEADER_CONTEXTID]: request.headers[web.WEB_COMMON_HEADER_CONTEXTID],
             timestamp: moment().format('YYYY-MM-DD HH:mm:ss.SSS'),
             url: request.url,
             method: request.method,

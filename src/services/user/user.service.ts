@@ -8,6 +8,7 @@ import { DataBaseService } from '@/services/database/database.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import * as entities from '@/entities/instance'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -64,14 +65,15 @@ export class UserService {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
-            await this.redis.getStore(key).then(async code => {
-                await divineHandler(Boolean(sid), async () => {
-                    return await this.redis.delStore(key)
-                })
-                return await divineCatchWherer(scope.code !== code, {
-                    message: '验证码不存在'
-                })
-            })
+            // await this.redis.getStore(key).then(async code => {
+            //     await divineHandler(Boolean(sid), async () => {
+            //         return await this.redis.delStore(key)
+            //     })
+            //     return await divineCatchWherer(scope.code !== code, {
+            //         message: '验证码不存在'
+            //     })
+            // })
+            // console.log(entities.UserEntier.name)
             //prettier-ignore
             const node = await this.custom.divineHaver(this.dataBase.tableUser, {
                 message: '账号不存在',
@@ -93,7 +95,7 @@ export class UserService {
                     [UserService.name, this.httpUserAuthorizer.name].join(':'),
                     divineLogger(headers, {
                         message: '登录成功',
-                        user: Object.assign(node, { key, token, expire: 24 * 60 * 60 })
+                        user: Object.assign(node, { token, expire: 24 * 60 * 60 })
                     })
                 )
                 return await divineResolver({ message: '登录成功', token, expire: 24 * 60 * 60 })

@@ -59,7 +59,7 @@ export function divineWherer<T>(where: boolean, value: T, defaultValue: T = unde
 export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix | string = {}) {
     return {
         log,
-        requestId: headers[web.WEB_COMMON_HEADER_REQUESTID],
-        duration: `${Date.now() - Number(headers[web.WEB_COMMON_HEADER_STARTTIME])}ms`
+        duration: `${Date.now() - Number(headers[web.WEB_COMMON_HEADER_STARTTIME])}ms`,
+        [web.WEB_COMMON_HEADER_CONTEXTID]: headers[web.WEB_COMMON_HEADER_CONTEXTID]
     }
 }

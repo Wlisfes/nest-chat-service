@@ -16,7 +16,7 @@ export class LoggerMiddleware implements NestMiddleware {
         const requestId = await divineIntNumber({ random: true, bit: 32 })
         /**起始日志 startTime**/
         this.logger.info(LoggerMiddleware.name, {
-            [web.WEB_COMMON_HEADER_REQUESTID]: requestId.toString(),
+            [web.WEB_COMMON_HEADER_CONTEXTID]: requestId.toString(),
             duration: '0ms',
             log: {
                 url: baseUrl,
@@ -28,18 +28,17 @@ export class LoggerMiddleware implements NestMiddleware {
                 origin: headers.origin ?? '',
                 referer: headers.referer ?? '',
                 ip: ['localhost', '::1', '::ffff:127.0.0.1'].includes(ip) ? '127.0.0.1' : ip.replace(/^.*:/, ''),
-                [web.WEB_COMMON_HEADER_REQUESTID]: requestId.toString(),
                 ['user-agent']: headers['user-agent'] ?? '',
                 authorization: headers[web.WEB_COMMON_HEADER_AUTHORIZE] ?? ''
             }
         })
 
         request.headers[web.WEB_COMMON_HEADER_STARTTIME] = start.toString()
-        request.headers[web.WEB_COMMON_HEADER_REQUESTID] = requestId.toString()
+        request.headers[web.WEB_COMMON_HEADER_CONTEXTID] = requestId.toString()
         response.on('finish', () => {
             /**结束日志 endTime**/
             this.logger.info(LoggerMiddleware.name, {
-                [web.WEB_COMMON_HEADER_REQUESTID]: requestId.toString(),
+                [web.WEB_COMMON_HEADER_CONTEXTID]: requestId.toString(),
                 duration: `${Date.now() - start}ms`,
                 log: {
                     url: baseUrl,
@@ -51,7 +50,6 @@ export class LoggerMiddleware implements NestMiddleware {
                     origin: headers.origin ?? '',
                     referer: headers.referer ?? '',
                     ip: ['localhost', '::1', '::ffff:127.0.0.1'].includes(ip) ? '127.0.0.1' : ip.replace(/^.*:/, ''),
-                    [web.WEB_COMMON_HEADER_REQUESTID]: requestId.toString(),
                     ['user-agent']: headers['user-agent'] ?? '',
                     authorization: headers[web.WEB_COMMON_HEADER_AUTHORIZE] ?? ''
                 }
