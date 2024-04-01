@@ -20,11 +20,7 @@ export interface OptionDecorator {
 export function ApiDecorator(option: Partial<OptionDecorator> = {}) {
     const consumes = option.consumes ?? ['application/x-www-form-urlencoded', 'application/json']
     const produces = option.produces ?? ['application/json', 'application/xml']
-    const decorator: Array<ClassDecorator | MethodDecorator | PropertyDecorator> = [
-        ApiOperation(option.operation),
-        ApiConsumes(...consumes),
-        ApiProduces(...produces)
-    ]
+    const decorator: Array<any> = [ApiOperation(option.operation), ApiConsumes(...consumes), ApiProduces(...produces)]
 
     if (option.skipThrottle) {
         decorator.push(SkipThrottle())
