@@ -12,5 +12,13 @@ export async function divineCatchWherer(where: boolean, scope: env.Omix<{ messag
 
 /**生成图形验证码**/
 export async function divineGrapher(scope: env.Omix<{ width: number; height: number }>) {
-    return create(Object.assign({ fontSize: 40, size: 4, color: true, noise: 2, inverse: true, charPreset: '123456789' }, scope))
+    return create({
+        fontSize: 40,
+        size: 4,
+        color: true,
+        noise: 2,
+        inverse: true,
+        charPreset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        ...scope
+    })
 }

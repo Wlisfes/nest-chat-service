@@ -2,6 +2,7 @@ import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { compareSync } from 'bcryptjs'
+import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/common/custom.service'
 import { CommonService } from '@/services/common/common.service'
 import { DataBaseService } from '@/services/database/database.service'
@@ -65,15 +66,14 @@ export class UserService {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
-            // await this.redis.getStore(key).then(async code => {
-            //     await divineHandler(Boolean(sid), async () => {
-            //         return await this.redis.delStore(key)
-            //     })
-            //     return await divineCatchWherer(scope.code !== code, {
-            //         message: '验证码不存在'
-            //     })
-            // })
-            // console.log(entities.UserEntier.name)
+            await this.redis.getStore<string>(key).then(async code => {
+                await divineHandler(Boolean(sid), async () => {
+                    return await this.redis.delStore(key)
+                })
+                return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
+                    message: '验证码不存在'
+                })
+            })
             //prettier-ignore
             const node = await this.custom.divineHaver(this.dataBase.tableUser, {
                 message: '账号不存在',
