@@ -1,4 +1,5 @@
 import { snowflakeId } from 'snowflake-id-maker'
+import { isEmpty } from 'class-validator'
 import * as web from '@/config/instance.config'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
@@ -57,9 +58,10 @@ export function divineWherer<T>(where: boolean, value: T, defaultValue: T = unde
 
 /**日志聚合**/
 export function divineLogger(headers: env.Omix<env.Headers>, log: env.Omix | string = {}) {
+    const duration = headers[web.WEB_COMMON_HEADER_STARTTIME]
     return {
         log,
-        duration: `${Date.now() - Number(headers[web.WEB_COMMON_HEADER_STARTTIME])}ms`,
+        duration: divineWherer(isEmpty(duration), null, `${Date.now() - Number(duration)}ms`),
         [web.WEB_COMMON_HEADER_CONTEXTID]: headers[web.WEB_COMMON_HEADER_CONTEXTID]
     }
 }

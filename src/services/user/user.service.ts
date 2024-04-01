@@ -5,11 +5,9 @@ import { compareSync } from 'bcryptjs'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/common/custom.service'
 import { CommonService } from '@/services/common/common.service'
-import { DataBaseService } from '@/services/database/database.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
-import * as entities from '@/entities/instance'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -17,7 +15,6 @@ import * as env from '@/interface/instance.resolver'
 export class UserService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        private readonly dataBase: DataBaseService,
         private readonly custom: CustomService,
         private readonly common: CommonService,
         private readonly redis: RedisService
@@ -31,12 +28,12 @@ export class UserService {
                     message: '验证码不存在'
                 })
             })
-            await this.custom.divineNoner(this.dataBase.tableUser, {
+            await this.custom.divineNoner(this.custom.tableUser, {
                 message: '邮箱已注册',
                 where: { email: scope.email }
             })
             return await this.custom.divineWithTransaction(async manager => {
-                const user = this.dataBase.tableUser.create({
+                const user = this.custom.tableUser.create({
                     uid: await divineIntNumber(),
                     email: scope.email,
                     nickname: scope.nickname,
@@ -75,7 +72,7 @@ export class UserService {
                 })
             })
             //prettier-ignore
-            const node = await this.custom.divineHaver(this.dataBase.tableUser, {
+            const node = await this.custom.divineHaver(this.custom.tableUser, {
                 message: '账号不存在',
                 where: { email: scope.email },
                 select: { uid: true, email: true, status: true, password: true }
@@ -117,7 +114,7 @@ export class UserService {
                 if (node) {
                     return await divineResolver(node)
                 }
-                return await this.custom.divineHaver(this.dataBase.tableUser, { where: { uid } }).then(async data => {
+                return await this.custom.divineHaver(this.custom.tableUser, { where: { uid } }).then(async data => {
                     await this.redis.setStore(key, data, 24 * 60 * 60)
                     this.logger.info(
                         [UserService.name, this.httpUserResolver.name].join(':'),

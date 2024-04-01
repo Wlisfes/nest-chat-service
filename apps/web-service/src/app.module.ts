@@ -11,7 +11,6 @@ import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
 import { CommonService } from '@/services/common/common.service'
-import { CustomService } from '@/services/common/custom.service'
 import { UserService } from '@/services/user/user.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
@@ -34,7 +33,6 @@ import { UserController } from '@web-service/controllers/user.controller'
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
         AppService,
         CommonService,
-        CustomService,
         UserService
     ]
 })

@@ -1,14 +1,23 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { Repository, EntityManager, DeepPartial, SelectQueryBuilder } from 'typeorm'
+import { InjectRepository } from '@nestjs/typeorm'
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
+import { Logger } from 'winston'
 import { JwtService } from '@nestjs/jwt'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver } from '@/utils/utils-common'
+import { divineResolver, divineLogger } from '@/utils/utils-common'
+import * as entities from '@/entities/instance'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class CustomService {
-    constructor(private readonly entityManager: EntityManager, private readonly jwtService: JwtService) {}
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
+        private readonly entityManager: EntityManager,
+        private readonly jwtService: JwtService
+    ) {}
 
     /**jwtToken解析**/
     public async divineJwtTokenParser<T>(token: string, scope: Partial<env.Omix<{ message: string; status: number }>>): Promise<T> {
