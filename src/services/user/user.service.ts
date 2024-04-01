@@ -69,14 +69,14 @@ export class UserService {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
-            // await this.redis.getStore<string>(key).then(async code => {
-            //     await divineHandler(Boolean(sid), async () => {
-            //         return await this.redis.delStore(key)
-            //     })
-            //     return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
-            //         message: '验证码不存在'
-            //     })
-            // })
+            await this.redis.getStore<string>(key).then(async code => {
+                await divineHandler(Boolean(sid), async () => {
+                    return await this.redis.delStore(key)
+                })
+                return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
+                    message: '验证码不存在'
+                })
+            })
             //prettier-ignore
             const node = await this.custom.divineHaver(this.custom.tableUser, {
                 headers,
