@@ -18,7 +18,7 @@ export async function divineGrapher(scope: env.Omix<{ width: number; height: num
         color: true,
         noise: 2,
         inverse: true,
-        charPreset: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        charPreset: 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789',
         ...scope
     })
 }
