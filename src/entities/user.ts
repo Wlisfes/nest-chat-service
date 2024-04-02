@@ -2,6 +2,7 @@ import { Entity, Column } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
+import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/entities/common'
 
 @Entity({ name: 'user' })
@@ -32,6 +33,11 @@ export class UserEntier extends CommonEntier {
     @IsEmail({}, { message: '邮箱格式错误' })
     @Column({ comment: '邮箱', nullable: false })
     email: string
+
+    @ApiProperty({ description: '动态', required: false, example: 'emo' })
+    @IsOptional()
+    @Column({ comment: '动态', nullable: true })
+    comment: string
 
     @ApiProperty({ description: '密码', example: 'MTIzNDU2' })
     @IsNotEmpty({ message: '密码必填' })
