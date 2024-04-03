@@ -3,7 +3,9 @@ import { WsException } from '@nestjs/websockets'
 import { ConfigService } from '@nestjs/config'
 import { Socket } from 'socket.io'
 import { createClient } from 'redis'
+import { Logger } from 'winston'
 import { createAdapter } from '@socket.io/redis-adapter'
+import { CustomService } from '@/services/common/custom.service'
 
 export interface AuthSocket extends Socket {
     user?: any
@@ -11,7 +13,7 @@ export interface AuthSocket extends Socket {
 
 export class WebSocketAdapter extends IoAdapter {
     private adapterConstructor: ReturnType<typeof createAdapter>
-    constructor(app, private readonly config: ConfigService) {
+    constructor(app, private readonly logger: Logger, private readonly config: ConfigService, private readonly custom: CustomService) {
         super(app)
     }
 
@@ -31,9 +33,9 @@ export class WebSocketAdapter extends IoAdapter {
         const server = super.createIOServer(port, options)
         server.use(async (socket: AuthSocket, next) => {
             const { headers, auth } = socket.handshake
-            console.log('Inside Websocket Adapter:')
+            console.log({ headers, auth })
             if (!auth.token) {
-                return next(new Error('Not Authenticated. No cookies were sent'))
+                return next(new Error('Not Authenticated'))
             }
             return next()
         })
