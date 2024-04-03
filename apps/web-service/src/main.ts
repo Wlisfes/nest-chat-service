@@ -44,7 +44,7 @@ async function bootstrap() {
     //监听端口服务
     await app.listen(web.WEB_SERVICE_PORT, () => {
         console.log(
-            'Chat服务启动:',
+            '[web-service]服务启动:',
             `http://localhost:${web.WEB_SERVICE_PORT}/web-service`,
             `http://localhost:${web.WEB_SERVICE_PORT}/api-doc`
         )
