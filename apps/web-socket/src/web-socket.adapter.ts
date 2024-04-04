@@ -5,7 +5,7 @@ import { Socket } from 'socket.io'
 import { createClient } from 'redis'
 import { Logger } from 'winston'
 import { createAdapter } from '@socket.io/redis-adapter'
-import { CustomService } from '@/services/common/custom.service'
+import { CustomService } from '@/services/custom.service'
 
 export interface AuthSocket extends Socket {
     user?: any

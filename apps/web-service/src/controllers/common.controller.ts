@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Headers, Response } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
-import { CommonService } from '@/services/common/common.service'
+import { CommonService } from '@/services/common.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import * as env from '@/interface/instance.resolver'
 
