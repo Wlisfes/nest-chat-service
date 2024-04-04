@@ -12,10 +12,14 @@ import { DatabaseModule } from '@/modules/database.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
 import { CommonService } from '@/services/common.service'
 import { UserService } from '@/services/user.service'
+import { CommunitService } from '@/services/communit.service'
+import { SessionService } from '@/services/session.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
 import { CommonController } from '@web-service/controllers/common.controller'
 import { UserController } from '@web-service/controllers/user.controller'
+import { CommunitController } from '@web-service/controllers/communit.controller'
+import { SessionController } from '@web-service/controllers/session.controller'
 
 @Module({
     imports: [
@@ -26,14 +30,16 @@ import { UserController } from '@web-service/controllers/user.controller'
         DatabaseModule,
         NodemailerModule
     ],
-    controllers: [AppController, CommonController, UserController],
+    controllers: [AppController, CommonController, UserController, CommunitController, SessionController],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
         { provide: APP_FILTER, useClass: HttpExceptionFilter },
         AppService,
         CommonService,
-        UserService
+        UserService,
+        CommunitService,
+        SessionService
     ]
 })
 export class AppModule implements NestModule {
