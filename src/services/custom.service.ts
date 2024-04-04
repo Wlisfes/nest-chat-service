@@ -16,6 +16,7 @@ type CustomOption<T = env.Omix> = {
     expire?: number
     dispatch?: T
     headers?: Partial<env.Headers>
+    cause?: env.Omix<any>
 }
 
 @Injectable()
@@ -64,6 +65,7 @@ export class CustomService {
     public async divineCheckr<T>(where: boolean, node: T, scope: CustomOption) {
         return await divineCatchWherer(where && Boolean(scope.message), {
             message: scope.message,
+            cause: scope.cause,
             status: scope.status ?? HttpStatus.BAD_REQUEST
         }).then(() => node)
     }
@@ -75,6 +77,7 @@ export class CustomService {
                 [CustomService.name, this.divineHaver.name].join(':'),
                 divineLogger(scope.headers, {
                     message: `[${model.metadata.name}]:查询入参`,
+                    cause: scope.cause ?? null,
                     dispatch: scope.dispatch
                 })
             )
@@ -83,13 +86,14 @@ export class CustomService {
                     [CustomService.name, this.divineHaver.name].join(':'),
                     divineLogger(scope.headers, {
                         message: `[${model.metadata.name}]:查询出参`,
+                        cause: scope.cause ?? null,
                         node
                     })
                 )
                 return await this.divineCheckr(!Boolean(node), node, scope)
             })
         } catch (e) {
-            throw new HttpException(e.message, e.status)
+            throw new HttpException(e.response ?? e.message, e.status)
         }
     }
 
@@ -100,21 +104,19 @@ export class CustomService {
                 [CustomService.name, this.divineNoner.name].join(':'),
                 divineLogger(scope.headers, {
                     message: `[${model.metadata.name}]:查询入参`,
+                    cause: scope.cause ?? null,
                     dispatch: scope.dispatch
                 })
             )
             return await model.findOne(scope.dispatch).then(async node => {
                 this.logger.info(
                     [CustomService.name, this.divineHaver.name].join(':'),
-                    divineLogger(scope.headers, {
-                        message: `[${model.metadata.name}]:查询出参`,
-                        node
-                    })
+                    divineLogger(scope.headers, { message: `[${model.metadata.name}]:查询出参`, cause: scope.cause ?? null, node })
                 )
                 return await this.divineCheckr(Boolean(node), node, scope)
             })
         } catch (e) {
-            throw new HttpException(e.message, e.status)
+            throw new HttpException(e.response ?? e.message, e.status)
         }
     }
 
@@ -126,10 +128,7 @@ export class CustomService {
         try {
             this.logger.info(
                 [CustomService.name, this.divineCreate.name].join(':'),
-                divineLogger(scope.headers, {
-                    message: `[${model.metadata.name}]:创建入参`,
-                    state: scope.state
-                })
+                divineLogger(scope.headers, { message: `[${model.metadata.name}]:创建入参`, state: scope.state })
             )
             const state = await model.create(scope.state)
             if (scope.manager) {
@@ -139,16 +138,12 @@ export class CustomService {
             return await model.save(state).then(async node => {
                 this.logger.info(
                     [CustomService.name, this.divineCreate.name].join(':'),
-                    divineLogger(scope.headers, {
-                        message: `[${model.metadata.name}]:创建结果`,
-                        state: scope.state,
-                        node
-                    })
+                    divineLogger(scope.headers, { message: `[${model.metadata.name}]:创建结果`, state: scope.state, node })
                 )
                 return node
             })
         } catch (e) {
-            throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.response ?? e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -183,7 +178,7 @@ export class CustomService {
                 return node
             })
         } catch (e) {
-            throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.response ?? e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 

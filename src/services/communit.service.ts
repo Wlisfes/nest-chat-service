@@ -55,7 +55,6 @@ export class CommunitService {
                 [CommunitService.name, this.httpCommunitCreater.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
-            console.log('11111111111:', e)
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
