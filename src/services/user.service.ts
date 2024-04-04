@@ -35,7 +35,7 @@ export class UserService {
                 }
             })
             return await this.custom.divineWithTransaction(async manager => {
-                const user = this.custom.divineCreate(this.custom.tableUser, {
+                const user = await this.custom.divineCreate(this.custom.tableUser, {
                     manager: true,
                     headers,
                     state: {

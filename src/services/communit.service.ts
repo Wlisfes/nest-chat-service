@@ -78,7 +78,7 @@ export class CommunitService {
                     dispatch: { where: { uid } }
                 }).then(async data => {
                     await divineCatchWherer(communit.members.some(item => item.uid === data.uid), {
-                        message: '已是该社群成员'
+                        message: '社群成员不能再次申请'
                     })
                     /**加入社群**/
                     await communit.members.push(data)
@@ -114,7 +114,8 @@ export class CommunitService {
                 }
             }).then(async data => {
                 await divineCatchWherer(data.members.some(item => scope.invite.includes(item.uid)), {
-                    message: ''
+                    message: '社群成员不能再次申请',
+                    cause: data.members.filter(item => scope.invite.includes(item.uid)).map(item => item.uid)
                 })
                 return await divineResolver(data)
             })
