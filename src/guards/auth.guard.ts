@@ -9,7 +9,7 @@ import * as env from '@/interface/instance.resolver'
 
 export interface IGuardOption {
     check: boolean
-    next: boolean
+    next?: boolean
     baseURL?: boolean
 }
 
@@ -31,11 +31,11 @@ export class AuthGuard implements CanActivate {
         const baseURL = request.route.path
 
         /**验证登录**/
-        if (scope && scope.check && scope.next) {
+        if (scope && scope.check) {
             const token = request.headers[web.WEB_COMMON_HEADER_AUTHORIZE]
             if (!token) {
                 //未携带token
-                await this.httpContextAuthorize(scope.next, { message: '未登录' })
+                await this.httpContextAuthorize(scope.next ?? false, { message: '未登录' })
             } else {
                 /**解析token**/
                 const node = await this.custom.divineJwtTokenParser(token, { message: '身份验证失败' })

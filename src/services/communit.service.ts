@@ -15,4 +15,47 @@ export class CommunitService {
         private readonly custom: CustomService,
         private readonly redis: RedisService
     ) {}
+
+    /**新建社群**/
+    public async httpCommunitCreater(uid: string, scope: env.BodyCommunitCreater, headers: env.Headers) {
+        try {
+            return await this.custom.divineWithTransaction(async manager => {
+                await this.custom.divineNoner(this.custom.tableCommunit, {
+                    headers,
+                    message: '社群名称已存在或被占用',
+                    dispatch: {
+                        where: { name: scope.name }
+                    }
+                })
+                const user = await this.custom.divineHaver(this.custom.tableUser, {
+                    headers,
+                    message: '账号不存在',
+                    dispatch: { where: { uid } }
+                })
+                const communit = await this.custom.divineCreate(this.custom.tableCommunit, {
+                    headers,
+                    manager: true,
+                    state: {
+                        uid: await divineIntNumber(),
+                        name: scope.name,
+                        creator: user,
+                        members: [user]
+                    }
+                })
+                return await manager.save(communit).then(async () => {
+                    this.logger.info(
+                        [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                        divineLogger(headers, { message: '新建社群成功', name: scope.name, creator: user })
+                    )
+                    return await divineResolver({ message: '新建成功' })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 }

@@ -1,9 +1,10 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, ManyToOne } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/entities/common'
+import { CommunitEntier } from '@/entities/instance'
 
 @Entity({ name: 'user' })
 export class UserEntier extends CommonEntier {
@@ -49,6 +50,9 @@ export class UserEntier extends CommonEntier {
         transformer: { from: value => value, to: value => hashSync(value) }
     })
     password: string
+
+    @ManyToOne(type => CommunitEntier, communit => communit.members)
+    communit: CommunitEntier[]
 }
 
 export class SchemaUser extends UserEntier {

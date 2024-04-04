@@ -10,7 +10,7 @@ export interface OptionDecorator {
     operation: ApiOperationOptions
     response: ApiResponseOptions
     customize: { status: number; description: string; type: Type<unknown> }
-    authorize: { check: boolean; next: boolean; baseURL?: boolean }
+    authorize: { check: boolean; next?: boolean; baseURL?: boolean }
     consumes: string[]
     produces: string[]
     skipThrottle: boolean

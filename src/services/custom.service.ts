@@ -23,6 +23,7 @@ export class CustomService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
+        @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
         private readonly entityManager: EntityManager,
         private readonly jwtService: JwtService
     ) {}

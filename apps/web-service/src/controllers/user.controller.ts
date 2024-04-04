@@ -30,7 +30,7 @@ export class UserController {
     @Get('/resolver')
     @ApiDecorator({
         operation: { summary: '账号信息' },
-        authorize: { check: true, next: true },
+        authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.RestUserResolver }
     })
     public async httpUserResolver(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
