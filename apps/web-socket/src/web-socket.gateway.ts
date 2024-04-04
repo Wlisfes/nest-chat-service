@@ -20,6 +20,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
 
     handleConnection(@ConnectedSocket() client: Socket) {
         console.log('客户端已连接:', client.id)
+        // client.emit('connect', { message: '连接成功' })
     }
 
     @SubscribeMessage('sender')
@@ -28,6 +29,21 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
         // console.log('client:', client)
         return {
             event: 'sender',
+            data: data
+        }
+    }
+
+    /**社群消息**/
+    @SubscribeMessage('communit-messager')
+    public fetchCommunitMessager(@ConnectedSocket() client: Socket, @MessageBody() data: { name: string }) {}
+
+    /**私聊消息**/
+    @SubscribeMessage('private-messager')
+    public fetchPrivateMessager(@ConnectedSocket() client: Socket, @MessageBody() data: { name: string }) {
+        console.log('private-sender:', data)
+        // console.log('client:', client)
+        return {
+            event: 'private-sender',
             data: data
         }
     }
