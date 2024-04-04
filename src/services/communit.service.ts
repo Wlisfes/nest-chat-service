@@ -17,7 +17,7 @@ export class CommunitService {
     ) {}
 
     /**新建社群**/
-    public async httpCommunitCreater(uid: string, scope: env.BodyCommunitCreater, headers: env.Headers) {
+    public async httpCommunitCreater(headers: env.Headers, uid: string, scope: env.BodyCommunitCreater) {
         try {
             return await this.custom.divineWithTransaction(async manager => {
                 await this.custom.divineNoner(this.custom.tableCommunit, {
@@ -49,6 +49,109 @@ export class CommunitService {
                     )
                     return await divineResolver({ message: '新建成功' })
                 })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            console.log('11111111111:', e)
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**申请加入社群**/
+    public async httpCommunitJoiner(headers: env.Headers, uid: string, scope: env.BodyCommunitJoiner) {
+        try {
+            return await this.custom.divineWithTransaction(async manager => {
+                const communit = await this.custom.divineHaver(this.custom.tableCommunit, {
+                    headers,
+                    message: '社群不存在',
+                    dispatch: {
+                        where: { uid: scope.uid },
+                        relations: ['members']
+                    }
+                })
+                //prettier-ignore
+                const user = await this.custom.divineHaver(this.custom.tableUser, {
+                    headers,
+                    message: '账号不存在',
+                    dispatch: { where: { uid } }
+                }).then(async data => {
+                    await divineCatchWherer(communit.members.some(item => item.uid === data.uid), {
+                        message: '已是该社群成员'
+                    })
+                    /**加入社群**/
+                    await communit.members.push(data)
+                    return await divineResolver(data)
+                })
+                return await manager.save(communit).then(async () => {
+                    this.logger.info(
+                        [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                        divineLogger(headers, { message: '申请加入社群成功', name: communit.name, uid: communit.uid, user })
+                    )
+                    return await divineResolver({ message: '申请成功' })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**邀请加入社群**/
+    public async httpCommunitInviteJoiner(headers: env.Headers, uid: string, scope: env.BodyCommunitInviteJoiner) {
+        try {
+            //prettier-ignore
+            const communit = await this.custom.divineHaver(this.custom.tableCommunit, {
+                headers,
+                message: '社群不存在',
+                dispatch: {
+                    where: { uid: scope.uid },
+                    relations: ['members']
+                }
+            }).then(async data => {
+                await divineCatchWherer(data.members.some(item => scope.invite.includes(item.uid)), {
+                    message: ''
+                })
+                return await divineResolver(data)
+            })
+
+            const users = await this.custom.divineBuilder(this.custom.tableUser, async qb => {
+                qb.where('t.uid IN (:...invite)', { invite: scope.invite })
+                const [list = [], total = 0] = await qb.getManyAndCount()
+                if (total < scope.invite.length) {
+                    const count = list
+                        .filter(item => !scope.invite.includes(item.uid))
+                        .map(item => {
+                            return {}
+                        })
+                }
+                console.log(total, list)
+
+                return list
+            })
+
+            return await divineResolver({ message: '邀请成功' })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**社群列表**/
+    public async httpCommunitColumn(headers: env.Headers, uid: string) {
+        try {
+            return await this.custom.divineBuilder(this.custom.tableCommunit, async qb => {
+                qb.leftJoinAndSelect('t.creator', 'creator')
+                qb.innerJoin('t.members', 'members', 'members.uid = :uid', { uid })
+                return qb.getMany()
             })
         } catch (e) {
             this.logger.error(

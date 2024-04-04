@@ -1,8 +1,7 @@
-import { Entity, Column, OneToOne, JoinColumn, OneToMany } from 'typeorm'
-import { hashSync } from 'bcryptjs'
+import { Entity, Column, OneToOne, JoinColumn, JoinTable, ManyToMany } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsEmail } from 'class-validator'
-import { IsOptional } from '@/decorator/common.decorator'
+import { IsNotEmpty, Length, IsArray } from 'class-validator'
+import { Type } from 'class-transformer'
 import { CommonEntier } from '@/entities/common'
 import { UserEntier } from '@/entities/instance'
 
@@ -25,9 +24,14 @@ export class CommunitEntier extends CommonEntier {
     creator: UserEntier
 
     /**社群成员列表**/
-    @OneToMany(() => UserEntier, user => user.communit)
-    @JoinColumn()
+    @ManyToMany(() => UserEntier, user => user.communits)
+    @JoinTable()
     members: UserEntier[]
 }
 
-export class SchemaCommunit extends CommunitEntier {}
+export class SchemaCommunit extends CommunitEntier {
+    @ApiProperty({ description: '用户UID', example: ['2149446185344106496'] })
+    @IsArray({ message: '用户UID参数格式错误' })
+    @Type(() => String)
+    invite: string[]
+}

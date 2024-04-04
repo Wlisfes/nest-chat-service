@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne } from 'typeorm'
+import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
@@ -51,8 +51,8 @@ export class UserEntier extends CommonEntier {
     })
     password: string
 
-    @ManyToOne(type => CommunitEntier, communit => communit.members)
-    communit: CommunitEntier[]
+    @ManyToMany(type => CommunitEntier, communit => communit.members)
+    communits: CommunitEntier[]
 }
 
 export class SchemaUser extends UserEntier {
