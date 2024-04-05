@@ -32,6 +32,7 @@ export class ContactService {
                 return await divineCatchWherer(true, { message: '该用户已经是您的联系人了，无法重复添加' })
             } else if (contact && contact.status === 'delete') {
                 await this.custom.divineUpdate(this.custom.tableContact, {
+                    headers,
                     where: { uid: contact.uid },
                     state: { status: 'enable' }
                 })
@@ -65,6 +66,27 @@ export class ContactService {
         } catch (e) {
             this.logger.error(
                 [ContactService.name, this.httpContactCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**联系人列表**/
+    public async httpContactColumner(headers: env.Headers, uid: string) {
+        try {
+            const [list = [], total = 0] = await this.custom.divineBuilder(this.custom.tableContact, async qb => {
+                qb.leftJoin('t.sender', 's1')
+                qb.leftJoin('t.receive', 's2')
+                qb.leftJoinAndSelect('t.sender', 'sender')
+                qb.leftJoinAndSelect('t.receive', 'receive')
+                qb.where('(s1.uid = :sender) OR (s2.uid = :receive)', { sender: uid, receive: uid })
+                return qb.getManyAndCount()
+            })
+            return await divineResolver({ total, list })
+        } catch (e) {
+            this.logger.error(
+                [ContactService.name, this.httpContactColumner.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
