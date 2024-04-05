@@ -17,7 +17,7 @@ export class SessionService {
     ) {}
 
     /**会话列表**/
-    public async httpSessionColumn(headers: env.Headers, uid: string) {
+    public async httpSessionColumner(headers: env.Headers, uid: string) {
         try {
             return await this.custom.divineBuilder(this.custom.tableSession, async qb => {
                 // qb.leftJoinAndSelect('t.members', 'members1')
@@ -27,7 +27,7 @@ export class SessionService {
             })
         } catch (e) {
             this.logger.error(
-                [SessionService.name, this.httpSessionColumn.name].join(':'),
+                [SessionService.name, this.httpSessionColumner.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

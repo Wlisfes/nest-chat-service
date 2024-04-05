@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/entities/common'
-import { CommunitEntier, SessionEntier } from '@/entities/instance'
+import { CommunitEntier, ContactEntier } from '@/entities/instance'
 
 @Entity({ name: 'user' })
 export class UserEntier extends CommonEntier {
@@ -50,14 +50,6 @@ export class UserEntier extends CommonEntier {
         transformer: { from: value => value, to: value => hashSync(value) }
     })
     password: string
-
-    /**群聊列表**/
-    @ManyToMany(type => CommunitEntier, communit => communit.members)
-    communits: CommunitEntier[]
-
-    /**会话列表**/
-    @ManyToMany(type => SessionEntier, session => session.members)
-    sessions: SessionEntier[]
 }
 
 export class SchemaUser extends UserEntier {

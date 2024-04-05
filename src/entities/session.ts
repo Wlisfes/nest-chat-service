@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/entities/common'
-import { UserEntier, CommunitEntier } from '@/entities/instance'
+import { ContactEntier, CommunitEntier } from '@/entities/instance'
 
 @Entity({ name: 'session' })
 export class SessionEntier extends CommonEntier {
@@ -18,13 +18,13 @@ export class SessionEntier extends CommonEntier {
     @Column({ comment: '会话类型: 私聊-private、群聊-communit', nullable: false })
     source: string
 
+    /**私聊对话绑定联系人**/
+    @OneToOne(type => ContactEntier)
+    @JoinColumn()
+    contact: ContactEntier
+
     /**群聊对话绑定社群**/
     @OneToOne(type => CommunitEntier)
     @JoinColumn()
     communit: CommunitEntier
-
-    /**私聊对话人员、最多两个**/
-    @ManyToMany(() => UserEntier, user => user.communits)
-    @JoinTable()
-    members: UserEntier[]
 }

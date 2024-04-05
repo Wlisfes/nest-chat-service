@@ -27,11 +27,6 @@ export class CommunitEntier extends CommonEntier {
     @OneToOne(() => UserEntier, { createForeignKeyConstraints: false })
     @JoinColumn()
     creator: UserEntier
-
-    /**社群成员列表**/
-    @ManyToMany(() => UserEntier, user => user.communits)
-    @JoinTable()
-    members: UserEntier[]
 }
 
 export class SchemaCommunit extends CommunitEntier {
