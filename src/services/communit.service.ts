@@ -68,7 +68,14 @@ export class CommunitService {
                     message: '社群不存在',
                     dispatch: {
                         where: { uid: scope.uid },
-                        relations: ['members']
+                        relations: ['creator', 'members'],
+                        select: {
+                            keyId: true,
+                            uid: true,
+                            name: true,
+                            creator: { keyId: true, uid: true, nickname: true },
+                            members: { keyId: true, uid: true, nickname: true }
+                        }
                     }
                 })
                 //prettier-ignore
@@ -78,7 +85,7 @@ export class CommunitService {
                     dispatch: { where: { uid } }
                 }).then(async data => {
                     await divineCatchWherer(communit.members.some(item => item.uid === data.uid), {
-                        message: '社群成员不能再次申请'
+                        message: '您已经是本群成员，无法再次申请加入'
                     })
                     /**加入社群**/
                     await communit.members.push(data)
@@ -104,38 +111,54 @@ export class CommunitService {
     /**邀请加入社群**/
     public async httpCommunitInviteJoiner(headers: env.Headers, uid: string, scope: env.BodyCommunitInviteJoiner) {
         try {
-            //prettier-ignore
-            const communit = await this.custom.divineHaver(this.custom.tableCommunit, {
-                headers,
-                message: '社群不存在',
-                dispatch: {
-                    where: { uid: scope.uid },
-                    relations: ['members']
-                }
-            }).then(async data => {
-                await divineCatchWherer(data.members.some(item => scope.invite.includes(item.uid)), {
-                    message: '社群成员不能再次申请',
-                    cause: data.members.filter(item => scope.invite.includes(item.uid)).map(item => item.uid)
+            return await this.custom.divineWithTransaction(async manager => {
+                //prettier-ignore
+                const communit = await this.custom.divineHaver(this.custom.tableCommunit, {
+                    headers,
+                    message: '社群不存在',
+                    dispatch: {
+                        where: { uid: scope.uid },
+                        relations: ['creator', 'members'],
+                        select: {
+                            keyId: true,
+                            uid: true,
+                            name: true,
+                            creator: { keyId: true, uid: true, nickname: true },
+                            members: { keyId: true, uid: true, nickname: true }
+                        }
+                    }
+                }).then(async data => {
+                    await divineCatchWherer(data.creator.uid !== uid, {
+                        message: '只有群主才能邀请新成员加入本群'
+                    })
+                    await divineCatchWherer(data.members.some(item => scope.invite.includes(item.uid)), {
+                        message: '群成员无法再次加入社群',
+                        cause: data.members.filter(item => scope.invite.includes(item.uid)).map(item => item.uid)
+                    })
+                    return await divineResolver(data)
                 })
-                return await divineResolver(data)
-            })
-
-            const users = await this.custom.divineBuilder(this.custom.tableUser, async qb => {
-                qb.where('t.uid IN (:...invite)', { invite: scope.invite })
-                const [list = [], total = 0] = await qb.getManyAndCount()
-                if (total < scope.invite.length) {
-                    const count = list
-                        .filter(item => !scope.invite.includes(item.uid))
-                        .map(item => {
-                            return {}
+                //prettier-ignore
+                const users = await this.custom.divineBuilder(this.custom.tableUser, async qb => {
+                    qb.where('t.uid IN (:...invite)', { invite: scope.invite })
+                    const list = await qb.getMany()
+                    await divineHandler(list.length !== scope.invite.length, async () => {
+                        return await divineCatchWherer(true, {
+                            message: '账号不存在',
+                            cause: list.filter(item => !scope.invite.includes(item.uid)).map(item => item.uid)
                         })
-                }
-                console.log(total, list)
-
-                return list
+                    })
+                    return await divineResolver(list)
+                })
+                /**加入社群**/
+                await communit.members.push(...users)
+                return await manager.save(communit).then(async () => {
+                    this.logger.info(
+                        [CommunitService.name, this.httpCommunitCreater.name].join(':'),
+                        divineLogger(headers, { message: '邀请加入社群成功', name: communit.name, uid: communit.uid, users: users })
+                    )
+                    return await divineResolver({ message: '邀请成功' })
+                })
             })
-
-            return await divineResolver({ message: '邀请成功' })
         } catch (e) {
             this.logger.error(
                 [CommunitService.name, this.httpCommunitCreater.name].join(':'),
