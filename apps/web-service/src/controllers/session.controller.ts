@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, Response } from '@nestjs/common'
+import { Controller, Get, Post, Body, Headers, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { SessionService } from '@/services/session.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
@@ -12,7 +12,10 @@ export class SessionController {
     @Get('/column')
     @ApiDecorator({
         operation: { summary: '会话列表' },
+        authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpSessionColumn(@Headers() headers: env.Headers) {}
+    public async httpSessionColumn(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
+        return await this.session.httpSessionColumn(headers, request.user.uid)
+    }
 }

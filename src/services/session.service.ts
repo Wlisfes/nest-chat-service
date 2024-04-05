@@ -15,4 +15,22 @@ export class SessionService {
         private readonly custom: CustomService,
         private readonly redis: RedisService
     ) {}
+
+    /**会话列表**/
+    public async httpSessionColumn(headers: env.Headers, uid: string) {
+        try {
+            return await this.custom.divineBuilder(this.custom.tableSession, async qb => {
+                // qb.leftJoinAndSelect('t.members', 'members1')
+                qb.leftJoinAndSelect('t.communit', 'communit')
+                qb.innerJoin('t.members', 'members', 'members.uid = :uid', { uid })
+                return qb.getMany()
+            })
+        } catch (e) {
+            this.logger.error(
+                [SessionService.name, this.httpSessionColumn.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 }

@@ -18,6 +18,11 @@ export class CommunitEntier extends CommonEntier {
     @Column({ comment: '社群名称', nullable: false })
     name: string
 
+    @ApiProperty({ description: '社群封面', example: '妖雨纯' })
+    @IsNotEmpty({ message: '社群封面必填' })
+    @Column({ comment: '社群封面', nullable: false })
+    poster: string
+
     /**社群创建者**/
     @OneToOne(() => UserEntier, { createForeignKeyConstraints: false })
     @JoinColumn()

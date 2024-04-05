@@ -25,6 +25,7 @@ export class CustomService {
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
+        @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
         private readonly entityManager: EntityManager,
         private readonly jwtService: JwtService
     ) {}
