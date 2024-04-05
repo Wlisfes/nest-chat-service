@@ -1,9 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common'
+import { Cron } from '@nestjs/schedule'
 import { CLIENT_REDIS, ClientRedis } from '@/services/redis/redis.provider'
 
 @Injectable()
 export class RedisService {
     constructor(@Inject(CLIENT_REDIS) public readonly client: ClientRedis) {}
+
+    @Cron('45 * * * * *')
+    public async divineCronHandler() {
+        return await this.client.ping()
+    }
 
     /**redis存储**/
     public async setStore(key: string, data: any, seconds?: number) {

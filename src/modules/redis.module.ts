@@ -1,11 +1,12 @@
 import { Module, Global } from '@nestjs/common'
+import { ScheduleModule } from '@nestjs/schedule'
 import { ConfigService } from '@nestjs/config'
 import { CLIENT_REDIS, createRedisConnect } from '@/services/redis/redis.provider'
 import { RedisService } from '@/services/redis/redis.service'
 
 @Global()
 @Module({
-    imports: [],
+    imports: [ScheduleModule.forRoot()],
     controllers: [],
     providers: [
         {
