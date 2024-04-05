@@ -11,7 +11,7 @@ import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
 type CustomOption<T = env.Omix> = {
-    message: string
+    message?: string
     status?: number
     expire?: number
     dispatch?: T
@@ -25,6 +25,7 @@ export class CustomService {
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
+        @InjectRepository(entities.ContactEntier) public readonly tableContact: Repository<entities.ContactEntier>,
         @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
         private readonly entityManager: EntityManager,
         private readonly jwtService: JwtService
