@@ -1,5 +1,6 @@
 import { Module, Global } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { AliyunService } from '@/services/aliyun/aliyun.service'
 import { OSS_CLIENT, OSS_STS_CLIENT, createClient, createClientAuthorize } from '@/services/aliyun/aliyun.provider'
 
 @Global()
@@ -30,8 +31,9 @@ import { OSS_CLIENT, OSS_STS_CLIENT, createClient, createClientAuthorize } from 
                     accessKeySecret: config.get('OSS_ACCESSKEYSECRET')
                 })
             }
-        }
+        },
+        AliyunService
     ],
-    exports: []
+    exports: [AliyunService]
 })
 export class AliYunModule {}
