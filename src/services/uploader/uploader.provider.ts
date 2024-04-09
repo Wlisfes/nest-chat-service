@@ -3,13 +3,13 @@ export const OSS_CLIENT = Symbol('ALIYUN_OSS_CLIENT')
 export const OSS_STS_CLIENT = Symbol('ALIYUN_OSS_STS_CLIENT')
 import * as env from '@/interface/instance.resolver'
 export type Client = env.PromiseType<ReturnType<typeof createClient>>
-export type ClientAuthorize = env.PromiseType<ReturnType<typeof createClientAuthorize>>
+export type AuthClient = env.PromiseType<ReturnType<typeof createAuthClient>>
 
-export interface ClientAuthorizeOption {
+export interface AuthClientOption {
     accessKeyId: string
     accessKeySecret: string
 }
-export interface ClientOption extends ClientAuthorizeOption {
+export interface ClientOption extends AuthClientOption {
     region: string
     endpoint: string
     bucket: string
@@ -35,7 +35,7 @@ export async function createClient(option: ClientOption) {
 }
 
 /**OSS授权实例**/
-export async function createClientAuthorize(option: ClientAuthorizeOption) {
+export async function createAuthClient(option: AuthClientOption) {
     return new OSS.STS({
         accessKeyId: option.accessKeyId,
         accessKeySecret: option.accessKeySecret
