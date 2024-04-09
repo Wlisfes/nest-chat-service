@@ -36,4 +36,4 @@ import { OSS_CLIENT, OSS_STS_CLIENT, createClient, createAuthClient } from '@/se
     ],
     exports: [UploaderService]
 })
-export class AliYunModule {}
+export class UploaderModule {}

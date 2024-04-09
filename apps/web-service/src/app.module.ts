@@ -10,6 +10,7 @@ import { ThrottlerModule } from '@/modules/throttler.module'
 import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
+import { UploaderModule } from '@/modules/uploader.module'
 import { CommonService } from '@/services/common.service'
 import { UserService } from '@/services/user.service'
 import { CommunitService } from '@/services/communit.service'
@@ -22,6 +23,7 @@ import { UserController } from '@web-service/controllers/user.controller'
 import { CommunitController } from '@web-service/controllers/communit.controller'
 import { ContactController } from '@web-service/controllers/contact.controller'
 import { SessionController } from '@web-service/controllers/session.controller'
+import { UploaderController } from '@web-service/controllers/uploader.controller'
 
 @Module({
     imports: [
@@ -30,9 +32,18 @@ import { SessionController } from '@web-service/controllers/session.controller'
         ThrottlerModule,
         RedisModule,
         DatabaseModule,
-        NodemailerModule
+        NodemailerModule,
+        UploaderModule
     ],
-    controllers: [AppController, CommonController, UserController, CommunitController, ContactController, SessionController],
+    controllers: [
+        AppController,
+        CommonController,
+        UserController,
+        CommunitController,
+        ContactController,
+        SessionController,
+        UploaderController
+    ],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },

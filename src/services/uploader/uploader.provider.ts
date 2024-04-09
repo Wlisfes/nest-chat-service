@@ -1,4 +1,4 @@
-import OSS from 'ali-oss'
+import * as OSS from 'ali-oss'
 export const OSS_CLIENT = Symbol('ALIYUN_OSS_CLIENT')
 export const OSS_STS_CLIENT = Symbol('ALIYUN_OSS_STS_CLIENT')
 import * as env from '@/interface/instance.resolver'
