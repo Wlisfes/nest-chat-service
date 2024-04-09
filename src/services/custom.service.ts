@@ -5,19 +5,10 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { JwtService } from '@nestjs/jwt'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineLogger, divineWherer } from '@/utils/utils-common'
+import { divineResolver, divineLogger } from '@/utils/utils-common'
 import * as entities from '@/entities/instance'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
-
-type CustomOption<T = env.Omix> = {
-    message?: string
-    status?: number
-    expire?: number
-    dispatch?: T
-    headers?: Partial<env.Headers>
-    cause?: env.Omix<any>
-}
 
 @Injectable()
 export class CustomService {
@@ -32,7 +23,7 @@ export class CustomService {
     ) {}
 
     /**jwtToken解析**/
-    public async divineJwtTokenParser<T>(token: string, scope: CustomOption): Promise<T> {
+    public async divineJwtTokenParser<T>(token: string, scope: env.DivineCustomOption<T>): Promise<T> {
         try {
             return (await this.jwtService.verifyAsync(token, { secret: web.WEB_COMMON_JWT_SECRET })) as T
         } catch (e) {
@@ -41,7 +32,7 @@ export class CustomService {
     }
 
     /**jwtToken加密**/
-    public async divineJwtTokenSecretr<T>(node: env.Omix<T>, scope: CustomOption): Promise<string> {
+    public async divineJwtTokenSecretr<T>(node: env.Omix<T>, scope: env.DivineCustomOption<T>): Promise<string> {
         try {
             if (scope.expire) {
                 return await this.jwtService.signAsync(Object.assign(node, {}), {
@@ -64,7 +55,7 @@ export class CustomService {
     }
 
     /**数据验证:不存在-抛出异常、存在-返回数据模型**/
-    public async divineCheckr<T>(where: boolean, node: T, scope: CustomOption) {
+    public async divineCheckr<T>(where: boolean, node: T, scope: env.DivineCustomOption<T>) {
         return await divineCatchWherer(where && Boolean(scope.message), {
             message: scope.message,
             cause: scope.cause,
@@ -73,7 +64,7 @@ export class CustomService {
     }
 
     /**验证数据模型:不存在-抛出异常、存在-返回数据模型**/
-    public async divineHaver<T>(model: Repository<T>, scope: CustomOption<Parameters<typeof model.findOne>['0']>) {
+    public async divineHaver<T>(model: Repository<T>, scope: env.DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
         try {
             this.logger.info(
                 [CustomService.name, this.divineHaver.name].join(':'),
@@ -92,7 +83,7 @@ export class CustomService {
                         node
                     })
                 )
-                return await this.divineCheckr(!Boolean(node), node, scope)
+                return await this.divineCheckr(!Boolean(node), node, scope as never)
             })
         } catch (e) {
             throw new HttpException(e.response ?? e.message, e.status)
@@ -100,7 +91,7 @@ export class CustomService {
     }
 
     /**验证数据模型:存在-抛出异常、不存在-返回空**/
-    public async divineNoner<T>(model: Repository<T>, scope: CustomOption<Parameters<typeof model.findOne>['0']>) {
+    public async divineNoner<T>(model: Repository<T>, scope: env.DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
         try {
             this.logger.info(
                 [CustomService.name, this.divineNoner.name].join(':'),
@@ -115,7 +106,7 @@ export class CustomService {
                     [CustomService.name, this.divineHaver.name].join(':'),
                     divineLogger(scope.headers, { message: `[${model.metadata.name}]:查询出参`, cause: scope.cause ?? null, node })
                 )
-                return await this.divineCheckr(Boolean(node), node, scope)
+                return await this.divineCheckr(Boolean(node), node, scope as never)
             })
         } catch (e) {
             throw new HttpException(e.response ?? e.message, e.status)
