@@ -1,32 +1,29 @@
 import { HttpException, HttpStatus, ParseFilePipe, FileTypeValidator, MaxFileSizeValidator } from '@nestjs/common'
-import * as env from '@/interface/instance.resolver'
 
 /**文件类型配置**/
-interface FileTypeOption extends env.CustomExceptionOption {
+export interface FileTypeOption {
     fileType: RegExp
+    message: string
+    status?: number
 }
 /**文件Size配置**/
-interface FileSizeOption extends env.CustomExceptionOption {
+export interface FileSizeOption extends Pick<FileTypeOption, 'message' | 'status'> {
     maxSize: number
 }
-type CustomOptionUploader = FileTypeOption | FileSizeOption
 
-/**文件验证聚合**/
-export function CustomUploaderValidator(rules: Array<CustomOptionUploader> = []) {
-    const pipes = rules.map(rule => {
-        if ('fileType' in rule) {
-            return new ParseFilePipe({
-                validators: [new FileTypeValidator({ fileType: rule.fileType })],
-                exceptionFactory: error => new HttpException(rule.message, rule.status ?? HttpStatus.BAD_REQUEST)
-            })
-        } else if ('maxSize' in rule) {
-            return new ParseFilePipe({
-                validators: [new MaxFileSizeValidator({ maxSize: rule.maxSize })],
-                errorHttpStatusCode: HttpStatus.BAD_REQUEST,
-                exceptionFactory: error => new HttpException(rule.message, rule.status ?? HttpStatus.BAD_REQUEST)
-            })
-        }
-        return null
-    })
-    return pipes.filter(Boolean)
+/**自定义文件验证**/
+export function CustomCheckUploader(scope: FileTypeOption | FileSizeOption) {
+    if ('fileType' in scope) {
+        return new ParseFilePipe({
+            validators: [new FileTypeValidator({ fileType: scope.fileType })],
+            exceptionFactory: error => new HttpException(scope.message, scope.status ?? HttpStatus.BAD_REQUEST)
+        })
+    } else if ('maxSize' in scope) {
+        return new ParseFilePipe({
+            validators: [new MaxFileSizeValidator({ maxSize: scope.maxSize })],
+            errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+            exceptionFactory: error => new HttpException(scope.message, scope.status ?? HttpStatus.BAD_REQUEST)
+        })
+    }
+    return undefined
 }

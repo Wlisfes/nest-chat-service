@@ -10,6 +10,15 @@ import * as entities from '@/entities/instance'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
+export interface DivineCustomOption<T> extends env.Omix {
+    message?: string
+    status?: number
+    expire?: number
+    dispatch?: env.Omix<T>
+    headers?: Partial<env.Omix<Headers>>
+    cause?: env.Omix
+}
+
 @Injectable()
 export class CustomService {
     constructor(
@@ -23,7 +32,7 @@ export class CustomService {
     ) {}
 
     /**jwtToken解析**/
-    public async divineJwtTokenParser<T>(token: string, scope: env.DivineCustomOption<T>): Promise<T> {
+    public async divineJwtTokenParser<T>(token: string, scope: DivineCustomOption<T>): Promise<T> {
         try {
             return (await this.jwtService.verifyAsync(token, { secret: web.WEB_COMMON_JWT_SECRET })) as T
         } catch (e) {
@@ -32,7 +41,7 @@ export class CustomService {
     }
 
     /**jwtToken加密**/
-    public async divineJwtTokenSecretr<T>(node: env.Omix<T>, scope: env.DivineCustomOption<T>): Promise<string> {
+    public async divineJwtTokenSecretr<T>(node: env.Omix<T>, scope: DivineCustomOption<T>): Promise<string> {
         try {
             if (scope.expire) {
                 return await this.jwtService.signAsync(Object.assign(node, {}), {
@@ -55,7 +64,7 @@ export class CustomService {
     }
 
     /**数据验证:不存在-抛出异常、存在-返回数据模型**/
-    public async divineCheckr<T>(where: boolean, node: T, scope: env.DivineCustomOption<T>) {
+    public async divineCheckr<T>(where: boolean, node: T, scope: DivineCustomOption<T>) {
         return await divineCatchWherer(where && Boolean(scope.message), {
             message: scope.message,
             cause: scope.cause,
@@ -64,7 +73,7 @@ export class CustomService {
     }
 
     /**验证数据模型:不存在-抛出异常、存在-返回数据模型**/
-    public async divineHaver<T>(model: Repository<T>, scope: env.DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
+    public async divineHaver<T>(model: Repository<T>, scope: DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
         try {
             this.logger.info(
                 [CustomService.name, this.divineHaver.name].join(':'),
@@ -91,7 +100,7 @@ export class CustomService {
     }
 
     /**验证数据模型:存在-抛出异常、不存在-返回空**/
-    public async divineNoner<T>(model: Repository<T>, scope: env.DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
+    public async divineNoner<T>(model: Repository<T>, scope: DivineCustomOption<Parameters<typeof model.findOne>['0']>) {
         try {
             this.logger.info(
                 [CustomService.name, this.divineNoner.name].join(':'),

@@ -9,4 +9,8 @@ export class BodyUploaderFile {
     @ApiProperty({ type: 'string', format: 'binary' })
     @IsNotEmpty({ message: 'file文件不能为空' })
     file: File
+
+    @ApiProperty({ description: '文件类型', example: '1' })
+    @IsNotEmpty({ message: '文件类型必填' })
+    type: string
 }
