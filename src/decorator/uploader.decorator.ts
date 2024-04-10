@@ -12,7 +12,7 @@ export interface FileSizeOption extends Pick<FileTypeOption, 'message' | 'status
 }
 
 /**自定义文件验证**/
-export function CustomCheckUploader(scope: FileTypeOption | FileSizeOption) {
+export function CustomizeValidator(scope: FileTypeOption | FileSizeOption) {
     if ('fileType' in scope) {
         return new ParseFilePipe({
             validators: [new FileTypeValidator({ fileType: scope.fileType })],

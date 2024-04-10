@@ -4,7 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { Express } from 'express'
 import { UploaderService } from '@/services/uploader/uploader.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
-import { CustomCheckUploader } from '@/decorator/uploader.decorator'
+import { CustomizeValidator } from '@/decorator/uploader.decorator'
 import * as env from '@/interface/instance.resolver'
 
 @ApiTags('文件存储模块')
@@ -26,8 +26,8 @@ export class UploaderController {
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
         @Body() body: env.BodyUploaderFile,
         @UploadedFile(
-            CustomCheckUploader({ fileType: RegExp('^image/'), message: '文件类型错误' }),
-            CustomCheckUploader({ maxSize: 1024 * 1024 * 5, message: '文件大小不能超过5MB' })
+            CustomizeValidator({ fileType: RegExp('^image/'), message: '文件类型错误' }),
+            CustomizeValidator({ maxSize: 1024 * 1024 * 5, message: '文件大小不能超过5MB' })
         )
         file: Express.Multer.File
     ) {
