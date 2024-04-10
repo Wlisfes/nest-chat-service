@@ -5,12 +5,14 @@ import { IsOptional } from '@/decorator/common.decorator'
 import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance.resolver'
 
-export class BodyUploaderFile {
+export class BodyBaseUploader {
+    @ApiProperty({ description: '上传类型: ', enum: ['avatar'], example: 'avatar' })
+    @IsNotEmpty({ message: '上传类型必填' })
+    folder: string
+}
+
+export class BodyOneUploader extends BodyBaseUploader {
     @ApiProperty({ type: 'string', format: 'binary' })
     @IsNotEmpty({ message: 'file文件不能为空' })
     file: File
-
-    @ApiProperty({ description: '文件类型', example: '1' })
-    @IsNotEmpty({ message: '文件类型必填' })
-    type: string
 }

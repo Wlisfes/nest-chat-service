@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Headers, Request, UploadedFile, UseInterceptors } from '@nestjs/common'
 import { ApiTags, ApiBody } from '@nestjs/swagger'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { Express } from 'express'
 import { UploaderService } from '@/services/uploader/uploader.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import { CustomizeValidator } from '@/decorator/uploader.decorator'
@@ -19,19 +18,18 @@ export class UploaderController {
         consumes: ['multipart/form-data'],
         authorize: { check: true, next: false }
     })
-    @ApiBody({ type: env.BodyUploaderFile })
+    @ApiBody({ type: env.BodyOneUploader })
     @UseInterceptors(FileInterceptor('file'))
     public async httpUploaderPicturer(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
-        @Body() body: env.BodyUploaderFile,
+        @Body() body: env.BodyBaseUploader,
         @UploadedFile(
             CustomizeValidator({ fileType: RegExp('^image/'), message: '文件类型错误' }),
             CustomizeValidator({ maxSize: 1024 * 1024 * 5, message: '文件大小不能超过5MB' })
         )
         file: Express.Multer.File
     ) {
-        console.log(body, body.type)
-        return await this.uploader.httpUploaderPicturer(headers, request.user.uid, file)
+        return await this.uploader.httpUploaderPicturer(headers, request.user.uid, body, file)
     }
 }
