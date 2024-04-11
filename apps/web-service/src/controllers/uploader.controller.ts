@@ -11,7 +11,7 @@ import * as env from '@/interface/instance.resolver'
 export class UploaderController {
     constructor(private readonly uploader: UploaderService) {}
 
-    @Post('')
+    @Post('/stream')
     @ApiDecorator({
         operation: { summary: '上传图片文件' },
         response: { status: 200, description: 'OK' },
@@ -28,7 +28,14 @@ export class UploaderController {
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
         @Body() body: env.BodyBaseUploader,
-        @UploadedFile(new CustomizeEnumUploadValidator({}))
+        @UploadedFile(
+            new CustomizeEnumUploadValidator({
+                avatar: { maxSize: 3, fileType: ['jpg', 'jpeg', 'png', 'webp'] },
+                image: { maxSize: 10, fileType: ['jpg', 'jpeg', 'png', 'webp', 'gif'] },
+                audio: { maxSize: 10, fileType: ['mp3'] },
+                video: { maxSize: 20, fileType: ['mp4'] }
+            })
+        )
         file: Express.Multer.File
     ) {
         return await this.uploader.httpStreamUploader(headers, request.user.uid, body, file)

@@ -2,7 +2,7 @@ import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { OSS_CLIENT, OSS_STS_CLIENT, Client, AuthClient } from '@/services/uploader/uploader.provider'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import { divineBufferToStream } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
 import * as path from 'path'
@@ -31,7 +31,7 @@ export class UploaderService {
             return await this.client.putStream(folder, stream).then(async ({ name: fieldName, url }: any) => {
                 this.logger.info(
                     [UploaderService.name, this.putStream.name].join(':'),
-                    divineLogger(headers, { message: '上传成功', result: { fileId, folder, fileName, fileSize } })
+                    divineLogger(headers, { message: '上传成功', result: { fileId, folder, fileName, fileSize, fieldName, url } })
                 )
                 return await divineResolver({ message: '上传成功', fileId, folder, fileName, fieldName, url })
             })
@@ -47,8 +47,7 @@ export class UploaderService {
     /**文件上传**/
     public async httpStreamUploader(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
         try {
-            // return await this.putStream(headers, file, scope.folder)
-            return { message: '上传成功' }
+            return await this.putStream(headers, file, scope.folder as keyof typeof env.EnumUploadFolder)
         } catch (e) {
             this.logger.error(
                 [UploaderService.name, this.httpStreamUploader.name].join(':'),

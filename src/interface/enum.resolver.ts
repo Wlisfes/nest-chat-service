@@ -6,9 +6,9 @@ export enum EnumMailSource {
 
 /**文件上传类型**/
 export enum EnumUploadFolder {
-    avatar = 'avatars',
-    image = 'images',
-    document = 'documents',
-    audio = 'audios',
-    video = 'videos'
+    avatar = 'avatar',
+    image = 'image',
+    document = 'document',
+    audio = 'audio',
+    video = 'video'
 }
