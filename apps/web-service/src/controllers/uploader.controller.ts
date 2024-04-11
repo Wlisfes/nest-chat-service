@@ -28,7 +28,7 @@ export class UploaderController {
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
         @Body() body: env.BodyBaseUploader,
-        @UploadedFile(new CustomizeEnumUploadValidator())
+        @UploadedFile(new CustomizeEnumUploadValidator({}))
         file: Express.Multer.File
     ) {
         return await this.uploader.httpStreamUploader(headers, request.user.uid, body, file)

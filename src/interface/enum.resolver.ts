@@ -10,6 +10,5 @@ export enum EnumUploadFolder {
     image = 'images',
     document = 'documents',
     audio = 'audios',
-    video = 'videos',
-    other = 'others'
+    video = 'videos'
 }
