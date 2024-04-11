@@ -6,9 +6,9 @@ import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance.resolver'
 
 export class BodyBaseUploader {
-    @ApiProperty({ description: '上传类型: ', enum: ['avatar'], example: 'avatar' })
+    @ApiProperty({ description: '上传类型: ', enum: env.EnumUploadFolder, example: 'avatar' })
     @IsNotEmpty({ message: '上传类型必填' })
-    folder: string
+    folder: keyof typeof env.EnumUploadFolder
 }
 
 export class BodyOneUploader extends BodyBaseUploader {

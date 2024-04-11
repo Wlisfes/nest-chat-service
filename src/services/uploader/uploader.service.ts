@@ -16,7 +16,7 @@ export class UploaderService {
     ) {}
 
     /**上传文件到阿里云OSS**/
-    private async putStream(headers, file: Express.Multer.File, fileFolder: string) {
+    private async putStream(headers, file: Express.Multer.File, fileFolder: keyof typeof env.EnumUploadFolder) {
         try {
             const suffix = path.extname(file.originalname).toLowerCase()
             const fileId = await divineIntNumber({ random: true, bit: 32 })
@@ -25,10 +25,7 @@ export class UploaderService {
             const fileName = file.originalname
             this.logger.info(
                 [UploaderService.name, this.putStream.name].join(':'),
-                divineLogger(headers, {
-                    message: '开始上传',
-                    result: { fileId, folder, fileName, fileSize }
-                })
+                divineLogger(headers, { message: '开始上传', result: { fileId, folder, fileName, fileSize } })
             )
             const stream = await divineBufferToStream(file.buffer)
             return await this.client.putStream(folder, stream).then(async ({ name: fieldName, url }: any) => {
@@ -47,13 +44,14 @@ export class UploaderService {
         }
     }
 
-    /**上传图片文件**/
-    public async httpUploaderPicturer(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
+    /**文件上传**/
+    public async httpStreamUploader(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
         try {
-            return await this.putStream(headers, file, 'avatars')
+            // return await this.putStream(headers, file, scope.folder)
+            return { message: '上传成功' }
         } catch (e) {
             this.logger.error(
-                [UploaderService.name, this.httpUploaderPicturer.name].join(':'),
+                [UploaderService.name, this.httpStreamUploader.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
