@@ -4,6 +4,7 @@ import { Logger } from 'winston'
 import { OSS_CLIENT, OSS_STS_CLIENT, Client, AuthClient } from '@/services/uploader/uploader.provider'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import { divineBufferToStream } from '@/utils/utils-plugin'
+import request from 'axios'
 import * as env from '@/interface/instance.resolver'
 import * as path from 'path'
 
@@ -16,7 +17,15 @@ export class UploaderService {
     ) {}
 
     /**上传文件到阿里云OSS**/
-    private async putStream(headers, file: Express.Multer.File, fileFolder: keyof typeof env.EnumUploadFolder) {
+    private async putStream(
+        headers,
+        scope: {
+            fileFolder: keyof typeof env.EnumUploadFolder
+            buffer: Buffer
+            fileName: string
+            fileSize: number
+        }
+    ) {
         try {
             const suffix = path.extname(file.originalname).toLowerCase()
             const fileId = await divineIntNumber({ random: true, bit: 32 })
@@ -44,10 +53,36 @@ export class UploaderService {
         }
     }
 
+    /**拉取远程文件**/
+    public async httpStreamRemoter(headers: env.Headers, fileURL: string) {
+        try {
+            const response = await request.get(fileURL, { responseType: 'arraybuffer' })
+            if (response.status === HttpStatus.OK) {
+                const buffer = Buffer.from(response.data)
+                const fileSize = buffer.length
+                const fileName = response.request.path.split('/').pop()
+                this.logger.info(
+                    [UploaderService.name, this.httpStreamRemoter.name].join(':'),
+                    divineLogger(headers, { message: '远程文件拉取成功', fileURL, fileName, fileSize })
+                )
+                return await divineResolver({ buffer, fileName, fileSize })
+            }
+            throw new HttpException('远程文件拉取失败', response.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        } catch (e) {
+            this.logger.error(
+                [UploaderService.name, this.httpStreamRemoter.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
     /**文件上传**/
     public async httpStreamUploader(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
         try {
-            return await this.putStream(headers, file, scope.folder as keyof typeof env.EnumUploadFolder)
+            await this.httpStreamRemoter(headers, `http://cdn.u2.huluxia.com/g3/M02/31/D4/wKgBOVwNb4iAKEluAABJ-mVGzTI80.jpeg`)
+
+            // return await this.putStream(headers, file, scope.folder as keyof typeof env.EnumUploadFolder)
         } catch (e) {
             this.logger.error(
                 [UploaderService.name, this.httpStreamUploader.name].join(':'),
