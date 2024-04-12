@@ -12,6 +12,12 @@ export class BodyBaseUploader {
     folder: string
 }
 
+export class BodyPutStream extends BodyBaseUploader {
+    buffer: Buffer
+    name: string
+    size: number
+}
+
 export class BodyOneUploader extends BodyBaseUploader {
     @ApiProperty({ type: 'string', format: 'binary' })
     @IsNotEmpty({ message: 'file文件不能为空' })

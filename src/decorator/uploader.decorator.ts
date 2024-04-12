@@ -15,7 +15,7 @@ export class CustomizeEnumUploadValidator implements PipeTransform {
     constructor(private readonly rules: UploadRuleOption) {}
     transform(file: env.Omix<Express.Multer.File>, metadata: ArgumentMetadata) {
         const folder = file.body.folder
-        const { fileType = [], maxSize = 0 } = this.rules[folder] as never
+        const { fileType = [], maxSize = 0 } = (this.rules[folder] ?? {}) as never
         if (Object.values(this.rules).length === 0) {
             throw new HttpException('未配置文件上传规则', HttpStatus.INTERNAL_SERVER_ERROR)
         }
