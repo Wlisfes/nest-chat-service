@@ -9,7 +9,7 @@ import * as env from '@/interface/instance.resolver'
 export class BodyCommunitCreater extends PickType(entities.SchemaCommunit, ['name']) {}
 
 /**申请加入社群**/
-export class BodyCommunitJoiner extends PickType(entities.SchemaCommunit, ['uid']) {}
+export class BodyCommunitJoiner extends PickType(entities.SchemaCommunit, ['csid']) {}
 
 /**邀请加入社群**/
-export class BodyCommunitInviteJoiner extends PickType(entities.SchemaCommunit, ['uid', 'invite']) {}
+export class BodyCommunitInviteJoiner extends PickType(entities.SchemaCommunit, ['csid', 'invite']) {}

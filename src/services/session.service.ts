@@ -43,45 +43,45 @@ export class SessionService {
                         const node = await qb.getOne()
                         return await divineCatchWherer(Boolean(node), { message: '该联系人会话已存在' })
                     })
-                    const session = await this.custom.divineCreate(this.custom.tableSession, {
-                        headers,
-                        manager: true,
-                        state: { sid: await divineIntNumber(), source: scope.source, contact, creator }
-                    })
-                    return await manager.save(session).then(async () => {
-                        this.logger.info(
-                            [SessionService.name, this.httpSessionCreater.name].join(':'),
-                            divineLogger(headers, { message: '新建会话成功', source: scope.source, creator, contact })
-                        )
-                        return await divineResolver({ message: '新建成功' })
-                    })
+                    // const session = await this.custom.divineCreate(this.custom.tableSession, {
+                    //     headers,
+                    //     manager: true,
+                    //     state: { sid: await divineIntNumber(), source: scope.source, contact, creator }
+                    // })
+                    // return await manager.save(session).then(async () => {
+                    //     this.logger.info(
+                    //         [SessionService.name, this.httpSessionCreater.name].join(':'),
+                    //         divineLogger(headers, { message: '新建会话成功', source: scope.source, creator, contact })
+                    //     )
+                    //     return await divineResolver({ message: '新建成功' })
+                    // })
                 } else if (scope.source === 'communit') {
                     const communit = await this.custom.divineHaver(this.custom.tableCommunit, {
                         headers,
                         message: '社群不存在',
                         dispatch: {
-                            where: { uid: scope.communit },
-                            select: { keyId: true, name: true, uid: true }
+                            where: { csid: scope.communit },
+                            select: { keyId: true, name: true, csid: true }
                         }
                     })
                     await this.custom.divineBuilder(this.custom.tableSession, async qb => {
                         qb.innerJoin('t.communit', 's1')
-                        qb.where('s1.uid = :communit', { contact: communit.uid })
+                        qb.where('s1.uid = :communit', { contact: communit.csid })
                         const node = await qb.getOne()
                         return await divineCatchWherer(Boolean(node), { message: '该社群会话已存在' })
                     })
-                    const session = await this.custom.divineCreate(this.custom.tableSession, {
-                        headers,
-                        manager: true,
-                        state: { sid: await divineIntNumber(), source: scope.source, communit, creator }
-                    })
-                    return await manager.save(session).then(async () => {
-                        this.logger.info(
-                            [SessionService.name, this.httpSessionCreater.name].join(':'),
-                            divineLogger(headers, { message: '新建会话成功', source: scope.source, creator, communit })
-                        )
-                        return await divineResolver({ message: '新建成功' })
-                    })
+                    // const session = await this.custom.divineCreate(this.custom.tableSession, {
+                    //     headers,
+                    //     manager: true,
+                    //     state: { sid: await divineIntNumber(), source: scope.source, communit, creator }
+                    // })
+                    // return await manager.save(session).then(async () => {
+                    //     this.logger.info(
+                    //         [SessionService.name, this.httpSessionCreater.name].join(':'),
+                    //         divineLogger(headers, { message: '新建会话成功', source: scope.source, creator, communit })
+                    //     )
+                    //     return await divineResolver({ message: '新建成功' })
+                    // })
                 }
                 throw new HttpException('会话类型错误', HttpStatus.BAD_REQUEST)
             })

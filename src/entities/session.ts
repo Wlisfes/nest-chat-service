@@ -18,20 +18,20 @@ export class SessionEntier extends CommonEntier {
     @Column({ comment: '会话类型: 私聊-private、群聊-communit', nullable: false })
     source: string
 
-    /**会话绑定用户**/
-    @OneToOne(type => UserEntier)
-    @JoinColumn()
-    creator: UserEntier
+    // /**会话绑定用户**/
+    // @OneToOne(type => UserEntier)
+    // @JoinColumn()
+    // creator: UserEntier
 
-    /**私聊对话绑定联系人**/
-    @OneToOne(type => ContactEntier)
-    @JoinColumn()
-    contact: ContactEntier
+    // /**私聊对话绑定联系人**/
+    // @OneToOne(type => ContactEntier)
+    // @JoinColumn()
+    // contact: ContactEntier
 
-    /**群聊对话绑定社群**/
-    @OneToOne(type => CommunitEntier)
-    @JoinColumn()
-    communit: CommunitEntier
+    // /**群聊对话绑定社群**/
+    // @OneToOne(type => CommunitEntier)
+    // @JoinColumn()
+    // communit: CommunitEntier
 }
 
 export class SchemaSession extends SessionEntier {}

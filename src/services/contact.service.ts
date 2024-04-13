@@ -61,9 +61,9 @@ export class ContactService {
                     manager: true,
                     state: {
                         uid: await divineIntNumber(),
-                        status: 'enable',
-                        sender,
-                        receive
+                        status: 'enable'
+                        // sender,
+                        // receive
                     }
                 })
                 return await manager.save(node).then(async () => {

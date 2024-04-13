@@ -3,14 +3,13 @@ import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsArray } from 'class-validator'
 import { Type } from 'class-transformer'
 import { CommonEntier } from '@/entities/common'
-import { UserEntier } from '@/entities/instance'
 
 @Entity({ name: 'communit' })
 export class CommunitEntier extends CommonEntier {
-    @ApiProperty({ description: '社群UID', example: '2149446185344106496' })
-    @IsNotEmpty({ message: 'UID必填' })
-    @Column({ comment: '唯一UUID', nullable: false })
-    uid: string
+    @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '社群ID必填' })
+    @Column({ comment: '社群ID', nullable: false })
+    csid: string
 
     @ApiProperty({ description: '社群名称', example: '妖雨纯' })
     @IsNotEmpty({ message: '社群名称必填' })
@@ -23,10 +22,10 @@ export class CommunitEntier extends CommonEntier {
     @Column({ comment: '社群封面', nullable: false })
     poster: string
 
-    /**社群创建者**/
-    @OneToOne(() => UserEntier, { createForeignKeyConstraints: false })
-    @JoinColumn()
-    creator: UserEntier
+    // /**社群创建者**/
+    // @OneToOne(() => UserEntier, { createForeignKeyConstraints: false })
+    // @JoinColumn()
+    // creator: UserEntier
 }
 
 export class SchemaCommunit extends CommunitEntier {

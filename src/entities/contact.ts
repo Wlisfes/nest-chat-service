@@ -16,13 +16,13 @@ export class ContactEntier extends CommonEntier {
     @Column({ comment: '联系人状态: 删除-delete、启用-enable', default: 'enable', nullable: false })
     status: string
 
-    @OneToOne(type => UserEntier)
-    @JoinColumn()
-    sender: UserEntier
+    // @OneToOne(type => UserEntier)
+    // @JoinColumn()
+    // sender: UserEntier
 
-    @OneToOne(type => UserEntier)
-    @JoinColumn()
-    receive: UserEntier
+    // @OneToOne(type => UserEntier)
+    // @JoinColumn()
+    // receive: UserEntier
 }
 
 export class SchemaContact extends ContactEntier {}
