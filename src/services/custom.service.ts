@@ -1,5 +1,5 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
-import { Repository, EntityManager, DeepPartial, SelectQueryBuilder } from 'typeorm'
+import { Repository, EntityManager, DataSource, QueryRunner, DeepPartial, SelectQueryBuilder } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
@@ -26,8 +26,10 @@ export class CustomService {
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
         @InjectRepository(entities.ContactEntier) public readonly tableContact: Repository<entities.ContactEntier>,
+        @InjectRepository(entities.NotificationEntier) public readonly tableNotification: Repository<entities.NotificationEntier>,
         @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
         private readonly entityManager: EntityManager,
+        private readonly dataSource: DataSource,
         private readonly jwtService: JwtService
     ) {}
 
@@ -54,6 +56,16 @@ export class CustomService {
         } catch (e) {
             throw new HttpException(scope.message ?? '身份验证失败', scope.status ?? HttpStatus.UNAUTHORIZED)
         }
+    }
+
+    /**typeorm事务**/
+    public async divineConnectTransaction<T>(start: boolean = true) {
+        const queryRunner = this.dataSource.createQueryRunner()
+        await queryRunner.connect()
+        if (start) {
+            await queryRunner.startTransaction()
+        }
+        return queryRunner
     }
 
     /**typeorm事务**/
