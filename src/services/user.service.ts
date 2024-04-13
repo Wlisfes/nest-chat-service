@@ -4,10 +4,11 @@ import { Logger } from 'winston'
 import { compareSync } from 'bcryptjs'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
+import { UploaderService } from '@/services/uploader/uploader.service'
 import { CommonService } from '@/services/common.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { request, divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -16,12 +17,13 @@ export class UserService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly custom: CustomService,
+        private readonly uploader: UploaderService,
         private readonly common: CommonService,
         private readonly redis: RedisService
     ) {}
 
     /**注册账号**/
-    public async httpUserRegister(scope: env.BodyUserRegister, headers: env.Headers) {
+    public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
             await this.redis.getStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async code => {
                 return await divineCatchWherer(scope.code !== code, {
@@ -29,10 +31,23 @@ export class UserService {
                 })
             })
             await this.custom.divineNoner(this.custom.tableUser, {
+                headers,
                 message: '邮箱已注册',
                 dispatch: {
                     where: { email: scope.email }
                 }
+            })
+            /**拉取远程随机头像**/ //prettier-ignore
+            const { url } = await this.uploader.httpStreamRemoter(
+                headers,
+                `https://api.uomg.com/api/rand.avatar?sort=女&format=images`
+            ).then(async ({buffer, name, size}) => {
+                return await this.uploader.putStream(headers, {
+                    buffer,
+                    name,
+                    size,
+                    folder: env.EnumUploadFolder.avatar
+                })
             })
             return await this.custom.divineWithTransaction(async manager => {
                 const user = await this.custom.divineCreate(this.custom.tableUser, {
@@ -43,7 +58,7 @@ export class UserService {
                         email: scope.email,
                         nickname: scope.nickname,
                         password: scope.password,
-                        avatar: 'https://oss.lisfes.cn/cloud/avatar/2021-08/1628499170684.png'
+                        avatar: url
                     }
                 })
                 await manager.save(user)
@@ -65,7 +80,7 @@ export class UserService {
     }
 
     /**登录账号**/
-    public async httpUserAuthorizer(scope: env.BodyUserAuthorizer, headers: env.Headers, request: env.Omix) {
+    public async httpUserAuthorizer(headers: env.Headers, request: env.Omix, scope: env.BodyUserAuthorizer) {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
@@ -120,7 +135,7 @@ export class UserService {
     }
 
     /**账号信息**/
-    public async httpUserResolver(uid: string, headers: env.Headers) {
+    public async httpUserResolver(headers: env.Headers, uid: string) {
         try {
             const key = `${web.WEB_REDIS_USER_CACHE.resolver}:${uid}`
             return await this.redis.getStore(key).then(async node => {

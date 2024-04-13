@@ -14,7 +14,7 @@ export class UploaderService {
     ) {}
 
     /**上传文件到阿里云OSS**/
-    private async putStream(headers, { buffer, name: fileName, size, folder: path }: env.BodyPutStream) {
+    public async putStream(headers, { buffer, name: fileName, size, folder: path }: env.BodyPutStream) {
         try {
             const suffix = fileName.split('.').pop().toLowerCase()
             const fileId = await divineIntNumber({ random: true, bit: 32 })
@@ -46,8 +46,8 @@ export class UploaderService {
             const { status, data, request: t } = await request.get(fileURL, { responseType: 'arraybuffer' })
             if (status === HttpStatus.OK) {
                 const buffer = Buffer.from(data)
-                const fileSize = await divineBytefor(buffer.length)
-                const fileName = t.path.split('/').pop()
+                const fileSize: string = await divineBytefor(buffer.length)
+                const fileName: string = t.path.split('/').pop()
                 this.logger.info(
                     [UploaderService.name, this.httpStreamRemoter.name].join(':'),
                     divineLogger(headers, { message: '远程文件拉取成功', fileURL, fileName, fileSize })
@@ -67,20 +67,7 @@ export class UploaderService {
     /**文件上传**/
     public async httpStreamUploader(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
         try {
-            // const { buffer, name, size } = await this.httpStreamRemoter(
-            //     headers,
-            //     `http://cdn.u2.huluxia.com/g3/M02/31/D4/wKgBOVwNb4iAKEluAABJ-mVGzTI80.jpeg`
-            // )
-            // return await this.putStream(headers, { buffer, size, name, folder: scope.folder })
-            // buffer: file.buffer,
-            // name: file.originalname,
-            // size: file.size
-            return await this.putStream(headers, {
-                buffer: file.buffer,
-                name: file.originalname,
-                size: file.size,
-                folder: scope.folder
-            })
+            return await this.putStream(headers, { buffer: file.buffer, name: file.originalname, size: file.size, folder: scope.folder })
         } catch (e) {
             this.logger.error(
                 [UploaderService.name, this.httpStreamUploader.name].join(':'),

@@ -15,7 +15,7 @@ export class UserController {
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
     public async httpUserRegister(@Headers() headers: env.Headers, @Body() body: env.BodyUserRegister) {
-        return await this.userService.httpUserRegister(body, headers)
+        return await this.userService.httpUserRegister(headers, body)
     }
 
     @Post('/authorizer')
@@ -24,7 +24,7 @@ export class UserController {
         response: { status: 200, description: 'OK', type: env.RestUserAuthorizer }
     })
     public async httpUserAuthorizer(@Headers() headers: env.Headers, @Request() request: env.Omix, @Body() body: env.BodyUserAuthorizer) {
-        return await this.userService.httpUserAuthorizer(body, headers, request)
+        return await this.userService.httpUserAuthorizer(headers, request, body)
     }
 
     @Get('/resolver')
@@ -34,6 +34,6 @@ export class UserController {
         response: { status: 200, description: 'OK', type: env.RestUserResolver }
     })
     public async httpUserResolver(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
-        return await this.userService.httpUserResolver(request.user.uid, headers)
+        return await this.userService.httpUserResolver(headers, request.user.uid)
     }
 }
