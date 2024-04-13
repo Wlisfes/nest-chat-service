@@ -39,7 +39,7 @@ export class CommonService {
                 [CommonService.name, this.httpCommonGrapher.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
-            throw new HttpException(e.message, e.code ?? HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -87,7 +87,7 @@ export class CommonService {
                 [CommonService.name, this.httpCommonNodemailerSender.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
-            throw new HttpException(e.message, e.code ?? HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 }

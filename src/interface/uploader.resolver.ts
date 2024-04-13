@@ -6,10 +6,10 @@ import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance.resolver'
 
 export class BodyBaseUploader {
-    @ApiProperty({ description: '上传类型: ', enum: env.EnumUploadFolder, example: 'avatar' })
+    @ApiProperty({ description: '上传类型: ', enum: env.EnumUploadFolder, example: env.EnumUploadFolder.avatar })
     @IsNotEmpty({ message: '上传类型必填' })
     @IsEnum(env.EnumUploadFolder, { message: '上传类型错误' })
-    folder: string
+    folder: env.EnumUploadFolder
 }
 
 export class BodyPutStream extends BodyBaseUploader {
