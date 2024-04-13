@@ -2,7 +2,7 @@ import { Entity, Column, OneToOne, JoinColumn, JoinTable, ManyToMany } from 'typ
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsArray } from 'class-validator'
 import { Type } from 'class-transformer'
-import { CommonEntier } from '@/entities/common'
+import { CommonEntier } from '@/utils/utils-typeorm'
 
 @Entity({ name: 'communit' })
 export class CommunitEntier extends CommonEntier {

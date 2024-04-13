@@ -1,8 +1,7 @@
 import { Entity, Column, OneToOne, JoinColumn } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty } from 'class-validator'
-import { CommonEntier } from '@/entities/common'
-import { UserEntier } from '@/entities/instance'
+import { CommonEntier } from '@/utils/utils-typeorm'
 
 @Entity({ name: 'notification' })
 export class NotificationEntier extends CommonEntier {

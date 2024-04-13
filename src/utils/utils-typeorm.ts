@@ -1,11 +1,11 @@
-import { PrimaryGeneratedColumn, Column, UpdateDateColumn, CreateDateColumn } from 'typeorm'
+import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty } from 'class-validator'
 import { moment } from '@/utils/utils-common'
 
 export class CommonEntier {
     @ApiProperty({ description: '主键ID', example: 1 })
-    @IsNotEmpty({ message: 'UID 主键ID' })
+    @IsNotEmpty({ message: '主键ID必填' })
     @PrimaryGeneratedColumn({ comment: '自增长主键' })
     keyId: number
 

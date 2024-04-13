@@ -3,8 +3,7 @@ import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
-import { CommonEntier } from '@/entities/common'
-import { CommunitEntier, ContactEntier } from '@/entities/instance'
+import { CommonEntier } from '@/utils/utils-typeorm'
 
 @Entity({ name: 'user' })
 export class UserEntier extends CommonEntier {
