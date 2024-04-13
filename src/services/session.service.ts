@@ -97,16 +97,16 @@ export class SessionService {
     /**会话列表**/
     public async httpSessionColumner(headers: env.Headers, uid: string) {
         try {
-            const [list = [], total = 0] = await this.custom.divineBuilder(this.custom.tableSession, async qb => {
-                qb.leftJoinAndSelect('t.creator', 'creator')
-                qb.leftJoinAndSelect('t.contact', 'contact')
-                qb.leftJoinAndSelect('contact.sender', 'sender')
-                qb.leftJoinAndSelect('contact.receive', 'receive')
-                qb.leftJoinAndSelect('t.communit', 'communit')
-                qb.where('creator.uid = :uid', { uid })
-                return qb.getManyAndCount()
-            })
-            return await divineResolver({ total, list })
+            // const [list = [], total = 0] = await this.custom.divineBuilder(this.custom.tableSession, async qb => {
+            //     qb.leftJoinAndSelect('t.creator', 'creator')
+            //     qb.leftJoinAndSelect('t.contact', 'contact')
+            //     qb.leftJoinAndSelect('contact.sender', 'sender')
+            //     qb.leftJoinAndSelect('contact.receive', 'receive')
+            //     qb.leftJoinAndSelect('t.communit', 'communit')
+            //     qb.where('creator.uid = :uid', { uid })
+            //     return qb.getManyAndCount()
+            // })
+            return await divineResolver({ total: 0, list: [] })
         } catch (e) {
             this.logger.error(
                 [SessionService.name, this.httpSessionColumner.name].join(':'),
