@@ -9,7 +9,7 @@ import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
-import { UserEntier } from '@/entities/user'
+import * as entities from '@/entities/instance'
 
 @Injectable()
 export class NotificationService {
@@ -115,19 +115,20 @@ export class NotificationService {
         }
     }
 
-    /**通知列表**/ //prettier-ignore
+    /**通知列表**/
     public async httpNotificationColumn(headers: env.Headers, userId: string) {
         try {
             return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
-                qb.leftJoinAndMapOne('t.user', UserEntier, 'user', 'user.uid = t.userId')
-                qb.leftJoinAndMapOne('t.nive', UserEntier, 'nive', 'nive.uid = t.niveId')
+                qb.leftJoinAndMapOne('t.user', entities.UserEntier, 'user', 'user.uid = t.userId')
+                qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
                 qb.select([
-                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source', 'userId', 'niveId', 'communitId', 'status']),
+                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime']),
+                    ...divineSelection('t', ['source', 'userId', 'niveId', 'communitId', 'status']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status'])
                 ])
                 qb.where('t.userId = :userId OR t.niveId = :userId', { userId })
-                return await qb.getManyAndCount().then(async ([total = 0, list = []]) => {
+                return await qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({ total, list })
                 })
             })

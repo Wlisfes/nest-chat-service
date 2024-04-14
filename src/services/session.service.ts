@@ -6,27 +6,30 @@ import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
+import * as entities from '@/entities/instance'
 
 @Injectable()
 export class SessionService {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly customService: CustomService) {}
 
     /**会话列表**/
-    public async httpSessionColumner(headers: env.Headers, uid: string) {
+    public async httpSessionColumn(headers: env.Headers, userId: string) {
         try {
-            // const [list = [], total = 0] = await this.custom.divineBuilder(this.custom.tableSession, async qb => {
-            //     qb.leftJoinAndSelect('t.creator', 'creator')
-            //     qb.leftJoinAndSelect('t.contact', 'contact')
-            //     qb.leftJoinAndSelect('contact.sender', 'sender')
-            //     qb.leftJoinAndSelect('contact.receive', 'receive')
-            //     qb.leftJoinAndSelect('t.communit', 'communit')
-            //     qb.where('creator.uid = :uid', { uid })
-            //     return qb.getManyAndCount()
-            // })
-            return await divineResolver({ total: 0, list: [] })
+            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                // qb.leftJoinAndSelect('t.creator', 'creator')
+                // qb.leftJoinAndSelect('t.contact', 'contact')
+                // qb.leftJoinAndSelect('contact.sender', 'sender')
+                // qb.leftJoinAndSelect('contact.receive', 'receive')
+                // qb.leftJoinAndSelect('t.communit', 'communit')
+                // qb.where('creator.uid = :uid', { uid })
+                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    return await divineResolver({ total, list })
+                })
+            })
         } catch (e) {
             this.logger.error(
-                [SessionService.name, this.httpSessionColumner.name].join(':'),
+                [SessionService.name, this.httpSessionColumn.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
