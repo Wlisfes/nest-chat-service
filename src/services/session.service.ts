@@ -3,6 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
+import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -16,13 +17,16 @@ export class SessionService {
     public async httpSessionColumn(headers: env.Headers, userId: string) {
         try {
             return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                // qb.leftJoinAndSelect('t.creator', 'creator')
-                // qb.leftJoinAndSelect('t.contact', 'contact')
-                // qb.leftJoinAndSelect('contact.sender', 'sender')
-                // qb.leftJoinAndSelect('contact.receive', 'receive')
-                // qb.leftJoinAndSelect('t.communit', 'communit')
-                // qb.where('creator.uid = :uid', { uid })
-                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                qb.innerJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                qb.leftJoinAndMapOne('contact.user', entities.UserEntier, 'user', 'user.uid = contact.userId')
+                qb.leftJoinAndMapOne('contact.nive', entities.UserEntier, 'nive', 'nive.uid = contact.niveId')
+                qb.select([
+                    ...divineSelection('t', ['keyId', 'sid', 'source', 'contactId', 'communitId']),
+                    ...divineSelection('contact', ['keyId', 'uid', 'status', 'userId', 'niveId']),
+                    ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
+                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status'])
+                ])
+                qb.where('contact.userId = :userId OR contact.niveId = :userId', { userId })
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({ total, list })
                 })
