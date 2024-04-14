@@ -3,7 +3,7 @@ import { Response } from 'express'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
-import { ContactService } from '@/services/contact.service'
+import { SessionService } from '@/services/session.service'
 import { divineResolver, divineIntNumber, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
@@ -15,16 +15,16 @@ import { UserEntier } from '@/entities/user'
 export class NotificationService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        @Inject(forwardRef(() => ContactService)) private readonly contactService: ContactService,
-        private readonly CustomService: CustomService
+        private readonly customService: CustomService,
+        private readonly sessionService: SessionService
     ) {}
 
     /**更新通知状态**/
     public async httpNotificationUpdate(headers: env.Headers, userId: string, scope: env.BodyNotificationUpdate) {
-        const connect = await this.CustomService.divineConnectTransaction()
+        const connect = await this.customService.divineConnectTransaction()
         try {
             //prettier-ignore
-            const data = await this.CustomService.divineHaver(this.CustomService.tableNotification, {
+            const data = await this.customService.divineHaver(this.customService.tableNotification, {
                 headers,
                 message: 'UID不存在',
                 dispatch: { where: { uid: scope.uid, niveId: userId } }
@@ -38,59 +38,70 @@ export class NotificationService {
                 return await divineResolver(node)
             })
             /**更新通知状态**/
-            await this.CustomService.divineUpdate(this.CustomService.tableNotification, {
+            await this.customService.divineUpdate(this.customService.tableNotification, {
                 headers,
                 where: { uid: scope.uid },
                 state: { status: scope.status }
             })
+            /**好友申请**/
             if (data.source === 'contact' && scope.status === 'resolve') {
-                /**好友申请**/
-                return await this.CustomService.divineBuilder(this.CustomService.tableContact, async qb => {
+                const node = await this.customService.divineBuilder(this.customService.tableContact, async qb => {
                     qb.where('(t.userId = :userId AND t.niveId = :niveId) OR (t.userId = :niveId AND t.userId = :userId)', {
                         userId: data.userId,
                         niveId: data.niveId
                     })
-                    return qb.getOne().then(async node => {
-                        if (node) {
-                            this.logger.info(
-                                [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
-                                divineLogger(headers, { message: '存在好友关联记录', node })
-                            )
-                            /**存在好友关联记录、好友状态切换到启用-enable**/
-                            await this.CustomService.divineUpdate(this.CustomService.tableContact, {
-                                headers,
-                                where: { keyId: node.keyId },
-                                state: { status: 'enable', userId: data.userId, niveId: data.niveId }
-                            })
-                            return await connect.commitTransaction().then(async () => {
-                                this.logger.info(
-                                    [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
-                                    divineLogger(headers, { message: '添加好友成功', userId: data.userId, niveId: data.niveId })
-                                )
-                                return await divineResolver({ message: '添加成功' })
-                            })
-                        }
-                        /**不存在好友关联记录、新增一条记录**/
-                        await this.CustomService.divineCreate(this.CustomService.tableContact, {
-                            headers,
-                            state: {
-                                uid: await divineIntNumber(),
-                                status: 'enable',
-                                userId: data.userId,
-                                niveId: data.niveId
-                            }
-                        })
-                        return await connect.commitTransaction().then(async () => {
-                            this.logger.info(
-                                [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
-                                divineLogger(headers, { message: '添加好友成功', userId: data.userId, niveId: data.niveId })
-                            )
-                            return await divineResolver({ message: '添加成功' })
-                        })
+                    return qb.getOne()
+                })
+                /**存在好友关联记录**/
+                if (node) {
+                    this.logger.info(
+                        [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
+                        divineLogger(headers, { message: '存在好友关联记录', node })
+                    )
+                    /**好友状态切换到启用-enable**/
+                    await this.customService.divineUpdate(this.customService.tableContact, {
+                        headers,
+                        where: { keyId: node.keyId },
+                        state: { status: 'enable', userId: data.userId, niveId: data.niveId }
+                    })
+                    /**新建私聊会话**/
+                    await this.sessionService.httpSessionContactCreater(headers, {
+                        contactId: node.uid
+                    })
+                    return await connect.commitTransaction().then(async () => {
+                        this.logger.info(
+                            [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
+                            divineLogger(headers, { message: '添加好友成功', userId: data.userId, niveId: data.niveId })
+                        )
+                        return await divineResolver({ message: '添加成功' })
+                    })
+                }
+                /**不存在好友关联记录、新增一条记录**/ //prettier-ignore
+                await this.customService.divineCreate(this.customService.tableContact, {
+                    headers,
+                    state: {
+                        uid: await divineIntNumber(),
+                        status: 'enable',
+                        userId: data.userId,
+                        niveId: data.niveId
+                    }
+                }).then(async result => {
+                    /**新建私聊会话**/
+                    return await this.sessionService.httpSessionContactCreater(headers, {
+                        contactId: result.uid
                     })
                 })
-            } else if (data.source === 'communit' && scope.status === 'resolve') {
-                /**群聊申请**/
+                return await connect.commitTransaction().then(async () => {
+                    this.logger.info(
+                        [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
+                        divineLogger(headers, { message: '添加好友成功', userId: data.userId, niveId: data.niveId })
+                    )
+                    return await divineResolver({ message: '添加成功' })
+                })
+            }
+
+            /**群聊申请**/
+            if (data.source === 'communit' && scope.status === 'resolve') {
             }
         } catch (e) {
             await connect.rollbackTransaction()
@@ -107,7 +118,7 @@ export class NotificationService {
     /**通知列表**/ //prettier-ignore
     public async httpNotificationColumn(headers: env.Headers, userId: string) {
         try {
-            return await this.CustomService.divineBuilder(this.CustomService.tableNotification, async qb => {
+            return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 qb.leftJoinAndMapOne('t.user', UserEntier, 'user', 'user.uid = t.userId')
                 qb.leftJoinAndMapOne('t.nive', UserEntier, 'nive', 'nive.uid = t.niveId')
                 qb.select([

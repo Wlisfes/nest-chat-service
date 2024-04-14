@@ -37,11 +37,11 @@ export class NotificationEntier extends CommonEntier {
 
     @ApiProperty({ description: '接收用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '接收用户ID必填' })
-    @Column({ comment: '接收用户ID', nullable: false })
+    @Column({ comment: '接收用户ID', nullable: true })
     niveId: string
 
-    @ApiProperty({ description: '社群ID', required: false })
-    @IsOptional()
+    @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '社群ID必填' })
     @Column({ comment: '社群ID', nullable: true })
     communitId: string
 

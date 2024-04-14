@@ -1,9 +1,15 @@
 import { Entity, Column, ManyToMany, JoinTable, OneToOne, JoinColumn } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsEmail } from 'class-validator'
+import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
+
+/**会话记录表: 会话类型**/
+export enum EnumSessionSource {
+    contact = 'contact',
+    communit = 'communit'
+}
 
 @Entity({ name: 'session' })
 export class SessionEntier extends CommonEntier {
@@ -12,25 +18,21 @@ export class SessionEntier extends CommonEntier {
     @Column({ comment: '会话SID', nullable: false })
     sid: string
 
-    @ApiProperty({ description: '会话类型: 私聊-private、群聊-communit', enum: ['private', 'communit'], example: 'private' })
+    @ApiProperty({ description: '会话类型: 私聊-contact、群聊-communit', enum: EnumSessionSource })
     @IsNotEmpty({ message: '会话类型必填' })
-    @Column({ comment: '会话类型: 私聊-private、群聊-communit', nullable: false })
+    @IsEnum(EnumSessionSource, { message: '会话类型错误' })
+    @Column({ comment: '会话类型: 私聊-contact、群聊-communit', nullable: false })
     source: string
 
-    // /**会话绑定用户**/
-    // @OneToOne(type => UserEntier)
-    // @JoinColumn()
-    // creator: UserEntier
+    @ApiProperty({ description: '好友绑定关系ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '好友绑定关系ID必填' })
+    @Column({ comment: '好友绑定关系ID', nullable: true })
+    contactId: string
 
-    // /**私聊对话绑定好友**/
-    // @OneToOne(type => ContactEntier)
-    // @JoinColumn()
-    // contact: ContactEntier
-
-    // /**群聊对话绑定社群**/
-    // @OneToOne(type => CommunitEntier)
-    // @JoinColumn()
-    // communit: CommunitEntier
+    @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '社群ID必填' })
+    @Column({ comment: '社群ID', nullable: true })
+    communitId: string
 }
 
 export class SchemaSession extends SessionEntier {}
