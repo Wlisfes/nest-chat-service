@@ -1,10 +1,9 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, forwardRef, HttpException, HttpStatus } from '@nestjs/common'
 import { Response } from 'express'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
-import { RedisService } from '@/services/redis/redis.service'
 import { CustomService } from '@/services/custom.service'
+import { ContactService } from '@/services/contact.service'
 import { divineResolver, divineIntNumber, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
@@ -14,14 +13,18 @@ import { UserEntier } from '@/entities/user'
 
 @Injectable()
 export class NotificationService {
-    constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly custom: CustomService) {}
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject(forwardRef(() => ContactService)) private readonly contactService: ContactService,
+        private readonly CustomService: CustomService
+    ) {}
 
     /**更新通知状态**/
     public async httpNotificationUpdate(headers: env.Headers, userId: string, scope: env.BodyNotificationUpdate) {
-        const connect = await this.custom.divineConnectTransaction()
+        const connect = await this.CustomService.divineConnectTransaction()
         try {
             //prettier-ignore
-            const data = await this.custom.divineHaver(this.custom.tableNotification, {
+            const data = await this.CustomService.divineHaver(this.CustomService.tableNotification, {
                 headers,
                 message: 'UID不存在',
                 dispatch: { where: { uid: scope.uid, niveId: userId } }
@@ -35,14 +38,14 @@ export class NotificationService {
                 return await divineResolver(node)
             })
             /**更新通知状态**/
-            await this.custom.divineUpdate(this.custom.tableNotification, {
+            await this.CustomService.divineUpdate(this.CustomService.tableNotification, {
                 headers,
                 where: { uid: scope.uid },
                 state: { status: scope.status }
             })
             if (data.source === 'contact' && scope.status === 'resolve') {
                 /**好友申请**/
-                return await this.custom.divineBuilder(this.custom.tableContact, async qb => {
+                return await this.CustomService.divineBuilder(this.CustomService.tableContact, async qb => {
                     qb.where('(t.userId = :userId AND t.niveId = :niveId) OR (t.userId = :niveId AND t.userId = :userId)', {
                         userId: data.userId,
                         niveId: data.niveId
@@ -54,7 +57,7 @@ export class NotificationService {
                                 divineLogger(headers, { message: '存在好友关联记录', node })
                             )
                             /**存在好友关联记录、好友状态切换到启用-enable**/
-                            await this.custom.divineUpdate(this.custom.tableContact, {
+                            await this.CustomService.divineUpdate(this.CustomService.tableContact, {
                                 headers,
                                 where: { keyId: node.keyId },
                                 state: { status: 'enable', userId: data.userId, niveId: data.niveId }
@@ -68,7 +71,7 @@ export class NotificationService {
                             })
                         }
                         /**不存在好友关联记录、新增一条记录**/
-                        await this.custom.divineCreate(this.custom.tableContact, {
+                        await this.CustomService.divineCreate(this.CustomService.tableContact, {
                             headers,
                             state: {
                                 uid: await divineIntNumber(),
@@ -104,7 +107,7 @@ export class NotificationService {
     /**通知列表**/ //prettier-ignore
     public async httpNotificationColumn(headers: env.Headers, userId: string) {
         try {
-            return await this.custom.divineBuilder(this.custom.tableNotification, async qb => {
+            return await this.CustomService.divineBuilder(this.CustomService.tableNotification, async qb => {
                 qb.leftJoinAndMapOne('t.user', UserEntier, 'user', 'user.uid = t.userId')
                 qb.leftJoinAndMapOne('t.nive', UserEntier, 'nive', 'nive.uid = t.niveId')
                 qb.select([

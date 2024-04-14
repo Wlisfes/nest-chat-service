@@ -23,20 +23,6 @@ export class ContactController {
         return await this.contact.httpContactInvite(headers, request.user.uid, body)
     }
 
-    @Post('/creater')
-    @ApiDecorator({
-        operation: { summary: '新增好友' },
-        authorize: { check: true, next: false },
-        response: { status: 200, description: 'OK', type: env.NoticeResolver }
-    })
-    public async httpContactCreater(
-        @Headers() headers: env.Headers,
-        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
-        @Body() body: env.BodyContactCreater
-    ) {
-        return await this.contact.httpContactCreater(headers, request.user.uid, body)
-    }
-
     @Get('/columner')
     @ApiDecorator({
         operation: { summary: '好友列表' },
