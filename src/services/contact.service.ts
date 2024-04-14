@@ -19,24 +19,23 @@ export class ContactService {
         private readonly session: SessionService
     ) {}
 
-    /**申请添加联系人**/
+    /**申请添加好友**/
     public async httpContactInvite(headers: env.Headers, userId: string, { niveId }: env.BodyContactInvite) {
         const manager = await this.custom.divineConnectTransaction()
         try {
-            await divineCatchWherer(userId === niveId, { message: '不能申请自己添加联系人' })
-            /**验证是否存在绑定联系人关系、以及申请目标用户是否存在**/
+            await divineCatchWherer(userId === niveId, { message: '不能申请自己添加好友' })
+            /**验证是否存在绑定好友关系、以及申请目标用户是否存在**/
             await this.custom.divineBuilder(this.custom.tableContact, async qb => {
-                qb.where('t.userId = :userId AND t.niveId = :niveId', { userId, niveId })
-                qb.orWhere('t.userId = :niveId AND t.userId = :userId', { userId, niveId })
+                qb.where('(t.userId = :userId AND t.niveId = :niveId) OR (t.userId = :niveId AND t.userId = :userId)', { userId, niveId })
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
                             [ContactService.name, this.httpContactInvite.name].join(':'),
-                            divineLogger(headers, { message: '存在联系人', node })
+                            divineLogger(headers, { message: '存在好友', node })
                         )
                     }
                     return await divineCatchWherer(node && node.status === 'enable', {
-                        message: '该用户已经是您的联系人了，无法重复添加'
+                        message: '该用户已经是您的好友了，无法重复添加'
                     }).then(async () => {
                         return await this.custom.divineHaver(this.custom.tableUser, {
                             headers,
@@ -48,7 +47,10 @@ export class ContactService {
             })
             /**处理申请记录**/
             return await this.custom.divineBuilder(this.custom.tableNotification, async qb => {
-                qb.where('t.userId = :userId AND t.niveId = :niveId', { userId, niveId })
+                qb.where(
+                    '(t.userId = :userId AND t.niveId = :niveId AND t.source = :source) OR (t.userId = :niveId AND t.niveId = :userId AND t.source = :source)',
+                    { source: 'contact', userId, niveId }
+                )
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
@@ -59,12 +61,12 @@ export class ContactService {
                         await this.custom.divineUpdate(this.custom.tableNotification, {
                             headers,
                             where: { keyId: node.keyId },
-                            state: { status: 'waitze' }
+                            state: { userId, niveId, status: 'waitze' }
                         })
                         return await manager.commitTransaction().then(async () => {
                             this.logger.info(
                                 [ContactService.name, this.httpContactInvite.name].join(':'),
-                                divineLogger(headers, { message: '申请联系人成功', userId, niveId })
+                                divineLogger(headers, { message: '申请好友成功', userId, niveId })
                             )
                             return await divineResolver({ message: '申请成功' })
                         })
@@ -72,12 +74,18 @@ export class ContactService {
                         /**不存在申请记录、新增一条申请记录**/
                         const data = await this.custom.divineCreate(this.custom.tableNotification, {
                             headers,
-                            state: { source: 'contact', status: 'waitze', userId, niveId }
+                            state: {
+                                uid: await divineIntNumber(),
+                                source: 'contact',
+                                status: 'waitze',
+                                userId,
+                                niveId
+                            }
                         })
                         return await manager.commitTransaction().then(async () => {
                             this.logger.info(
                                 [ContactService.name, this.httpContactInvite.name].join(':'),
-                                divineLogger(headers, { message: '申请联系人成功', node: data })
+                                divineLogger(headers, { message: '申请好友成功', node: data })
                             )
                             return await divineResolver({ message: '申请成功' })
                         })
@@ -96,7 +104,7 @@ export class ContactService {
         }
     }
 
-    /**新增联系人**/
+    /**新增好友**/
     public async httpContactCreater(headers: env.Headers, uid: string, scope: env.BodyContactCreater) {
         try {
             // const contact = await this.custom.divineBuilder(this.custom.tableContact, async qb => {
@@ -107,7 +115,7 @@ export class ContactService {
             //     return qb.getOne()
             // })
             // if (contact && contact.status === 'enable') {
-            //     return await divineCatchWherer(true, { message: '该用户已经是您的联系人了，无法重复添加' })
+            //     return await divineCatchWherer(true, { message: '该用户已经是您的好友了，无法重复添加' })
             // } else if (contact && contact.status === 'delete') {
             //     await this.custom.divineUpdate(this.custom.tableContact, {
             //         headers,
@@ -146,7 +154,7 @@ export class ContactService {
             //     return await manager.save(node).then(async () => {
             //         this.logger.info(
             //             [ContactService.name, this.httpContactCreater.name].join(':'),
-            //             divineLogger(headers, { message: '新增联系人成功', sender, receive })
+            //             divineLogger(headers, { message: '新增好友成功', sender, receive })
             //         )
             //         return await divineResolver({ message: '新增成功' })
             //     })
@@ -160,7 +168,7 @@ export class ContactService {
         }
     }
 
-    /**联系人列表**/
+    /**好友列表**/
     public async httpContactColumner(headers: env.Headers, uid: string) {
         try {
             const [list = [], total = 0] = await this.custom.divineBuilder(this.custom.tableContact, async qb => {

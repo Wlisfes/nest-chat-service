@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { CustomService } from '@/services/custom.service'
 import * as entities from '@/entities/instance'
-export const forEntities = Object.values(entities)
+const { UserEntier, ContactEntier, CommunitEntier, SessionEntier, NotificationEntier } = entities
+export const forEntities = [UserEntier, ContactEntier, CommunitEntier, SessionEntier, NotificationEntier]
 
 @Global()
 @Module({

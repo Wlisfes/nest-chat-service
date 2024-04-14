@@ -7,7 +7,7 @@ import * as env from '@/interface/instance.resolver'
 
 /**新建会话**/
 export class BodySessionCreater extends PickType(entities.SchemaSession, ['source']) {
-    @ApiProperty({ description: '联系人绑定关系UID', required: false, example: '2149446185344106496' })
+    @ApiProperty({ description: '好友绑定关系UID', required: false, example: '2149446185344106496' })
     @IsOptional()
     @IsNotEmpty({ message: '绑定关系UID必填' })
     contact?: string

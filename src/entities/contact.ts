@@ -5,14 +5,14 @@ import { CommonEntier } from '@/utils/utils-typeorm'
 
 @Entity({ name: 'contact' })
 export class ContactEntier extends CommonEntier {
-    @ApiProperty({ description: '联系人绑定关系ID', example: '2149446185344106496' })
-    @IsNotEmpty({ message: '联系人绑定关系ID必填' })
-    @Column({ comment: '联系人绑定关系ID', nullable: false })
+    @ApiProperty({ description: '好友绑定关系ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '好友绑定关系ID必填' })
+    @Column({ comment: '好友绑定关系ID', nullable: false })
     uid: string
 
-    @ApiProperty({ description: '联系人状态: 删除-delete、启用-enable', enum: ['delete', 'enable'], example: 'enable' })
-    @IsNotEmpty({ message: '联系人状态必填' })
-    @Column({ comment: '联系人状态: 删除-delete、启用-enable', default: 'enable', nullable: false })
+    @ApiProperty({ description: '好友状态: 删除-delete、启用-enable', enum: ['delete', 'enable'], example: 'enable' })
+    @IsNotEmpty({ message: '好友状态必填' })
+    @Column({ comment: '好友状态: 删除-delete、启用-enable', default: 'enable', nullable: false })
     status: string
 
     @ApiProperty({ description: '申请用户ID', example: '2149446185344106496' })

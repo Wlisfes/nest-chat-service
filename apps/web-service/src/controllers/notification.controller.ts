@@ -9,6 +9,20 @@ import * as env from '@/interface/instance.resolver'
 export class NotificationController {
     constructor(private readonly notification: NotificationService) {}
 
+    @Post('/update')
+    @ApiDecorator({
+        operation: { summary: '更新通知状态' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpNotificationUpdate(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyNotificationUpdate
+    ) {
+        return await this.notification.httpNotificationUpdate(headers, request.user.uid, body)
+    }
+
     @Get('/column')
     @ApiDecorator({
         operation: { summary: '通知列表' },

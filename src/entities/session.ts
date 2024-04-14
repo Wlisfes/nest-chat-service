@@ -22,7 +22,7 @@ export class SessionEntier extends CommonEntier {
     // @JoinColumn()
     // creator: UserEntier
 
-    // /**私聊对话绑定联系人**/
+    // /**私聊对话绑定好友**/
     // @OneToOne(type => ContactEntier)
     // @JoinColumn()
     // contact: ContactEntier

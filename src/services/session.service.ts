@@ -31,7 +31,7 @@ export class SessionService {
                 if (scope.source === 'private') {
                     const contact = await this.custom.divineHaver(this.custom.tableContact, {
                         headers,
-                        message: '联系人不存在',
+                        message: '好友不存在',
                         dispatch: {
                             where: { uid: scope.contact, status: 'enable' },
                             select: { keyId: true, uid: true }
@@ -41,7 +41,7 @@ export class SessionService {
                         qb.innerJoin('t.contact', 's1')
                         qb.where('s1.uid = :contact', { contact: contact.uid })
                         const node = await qb.getOne()
-                        return await divineCatchWherer(Boolean(node), { message: '该联系人会话已存在' })
+                        return await divineCatchWherer(Boolean(node), { message: '该好友会话已存在' })
                     })
                     // const session = await this.custom.divineCreate(this.custom.tableSession, {
                     //     headers,

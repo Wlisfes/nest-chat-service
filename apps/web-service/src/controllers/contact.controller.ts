@@ -4,14 +4,14 @@ import { ContactService } from '@/services/contact.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import * as env from '@/interface/instance.resolver'
 
-@ApiTags('联系人模块')
+@ApiTags('好友模块')
 @Controller('contact')
 export class ContactController {
     constructor(private readonly contact: ContactService) {}
 
     @Post('/invite')
     @ApiDecorator({
-        operation: { summary: '申请添加联系人' },
+        operation: { summary: '申请添加好友' },
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
@@ -25,7 +25,7 @@ export class ContactController {
 
     @Post('/creater')
     @ApiDecorator({
-        operation: { summary: '新增联系人' },
+        operation: { summary: '新增好友' },
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
@@ -39,7 +39,7 @@ export class ContactController {
 
     @Get('/columner')
     @ApiDecorator({
-        operation: { summary: '联系人列表' },
+        operation: { summary: '好友列表' },
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
