@@ -16,6 +16,7 @@ import { UserService } from '@/services/user.service'
 import { CommunitService } from '@/services/communit.service'
 import { ContactService } from '@/services/contact.service'
 import { SessionService } from '@/services/session.service'
+import { NotificationService } from '@/services/notification.service'
 import { AppService } from '@web-service/app.service'
 import { AppController } from '@web-service/app.controller'
 import { CommonController } from '@web-service/controllers/common.controller'
@@ -24,6 +25,7 @@ import { CommunitController } from '@web-service/controllers/communit.controller
 import { ContactController } from '@web-service/controllers/contact.controller'
 import { SessionController } from '@web-service/controllers/session.controller'
 import { UploaderController } from '@web-service/controllers/uploader.controller'
+import { NotificationController } from '@web-service/controllers/notification.controller'
 
 @Module({
     imports: [
@@ -42,7 +44,8 @@ import { UploaderController } from '@web-service/controllers/uploader.controller
         CommunitController,
         ContactController,
         SessionController,
-        UploaderController
+        UploaderController,
+        NotificationController
     ],
     providers: [
         { provide: APP_GUARD, useClass: AuthGuard },
@@ -53,7 +56,8 @@ import { UploaderController } from '@web-service/controllers/uploader.controller
         UserService,
         CommunitService,
         ContactService,
-        SessionService
+        SessionService,
+        NotificationService
     ]
 })
 export class AppModule implements NestModule {

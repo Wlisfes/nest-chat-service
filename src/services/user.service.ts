@@ -138,7 +138,7 @@ export class UserService {
     public async httpUserResolver(headers: env.Headers, uid: string) {
         try {
             const key = `${web.WEB_REDIS_USER_CACHE.resolver}:${uid}`
-            return await this.redis.getStore(key).then(async node => {
+            return await this.redis.getStore(key, null, headers).then(async node => {
                 if (node) {
                     return await divineResolver(node)
                 }

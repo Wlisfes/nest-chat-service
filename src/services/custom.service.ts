@@ -1,5 +1,5 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
-import { Repository, EntityManager, DataSource, QueryRunner, DeepPartial, SelectQueryBuilder } from 'typeorm'
+import { Repository, EntityManager, DataSource, DeepPartial, SelectQueryBuilder } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'

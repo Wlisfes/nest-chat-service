@@ -1,6 +1,6 @@
 import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty } from 'class-validator'
+import { IsNotEmpty, isNotEmpty } from 'class-validator'
 import { moment } from '@/utils/utils-common'
 
 export class CommonEntier {
@@ -29,4 +29,9 @@ export class CommonEntier {
         }
     })
     updateTime: Date
+}
+
+/**字段输出控制**/
+export function divineSelection(alias: string, fields: string[]) {
+    return (fields ?? []).map(field => (isNotEmpty(alias) ? `${alias}.${field}` : field))
 }

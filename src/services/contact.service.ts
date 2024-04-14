@@ -23,6 +23,8 @@ export class ContactService {
     public async httpContactInvite(headers: env.Headers, uid: string, { cuid }: env.BodyContactInvite) {
         const manager = await this.custom.divineConnectTransaction()
         try {
+            await divineCatchWherer(uid === cuid, { message: '不能申请自己添加联系人' })
+            /**验证是否存在绑定联系人关系、以及申请目标用户是否存在**/
             await this.custom.divineBuilder(this.custom.tableContact, async qb => {
                 qb.where('t.uid = :uid AND t.cuid = :cuid', { uid, cuid })
                 qb.orWhere('t.uid = :cuid AND t.uid = :uid', { uid, cuid })
@@ -44,6 +46,7 @@ export class ContactService {
                     })
                 })
             })
+            /**处理申请记录**/
             return await this.custom.divineBuilder(this.custom.tableNotification, async qb => {
                 qb.where('t.uid = :uid AND t.cuid = :cuid', { uid, cuid })
                 return qb.getOne().then(async node => {
