@@ -15,17 +15,20 @@ import { UserEntier } from '@/entities/user'
 export class NotificationService {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly custom: CustomService) {}
 
+    /**更新通知状态**/
+    public async httpNotificationUpdate(headers: env.Headers, uid: string) {}
+
     /**通知列表**/
-    public async httpNotificationColumn(headers: env.Headers, uid: string) {
+    public async httpNotificationColumn(headers: env.Headers, userId: string) {
         return await this.custom.divineBuilder(this.custom.tableNotification, async qb => {
-            qb.leftJoinAndMapOne('t.sender', UserEntier, 'sender', 'sender.uid = t.uid')
-            qb.leftJoinAndMapOne('t.receive', UserEntier, 'receive', 'receive.uid = t.cuid')
+            qb.leftJoinAndMapOne('t.user', UserEntier, 'user', 'user.uid = t.userId')
+            qb.leftJoinAndMapOne('t.nive', UserEntier, 'nive', 'nive.uid = t.niveId')
             qb.select([
-                ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'source', 'uid', 'cuid', 'csid', 'status']),
-                ...divineSelection('sender', ['uid', 'nickname', 'avatar', 'status']),
-                ...divineSelection('receive', ['uid', 'nickname', 'avatar', 'status'])
+                ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source', 'userId', 'niveId', 'communitId', 'status']),
+                ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
+                ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status'])
             ])
-            qb.where('t.uid = :uid OR t.cuid = :uid', { uid })
+            qb.where('t.userId = :userId OR t.niveId = :userId', { userId })
             return await qb.getManyAndCount().then(async ([total = 0, list = []]) => {
                 return await divineResolver({ total, list })
             })

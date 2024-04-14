@@ -20,14 +20,14 @@ export class ContactService {
     ) {}
 
     /**申请添加联系人**/
-    public async httpContactInvite(headers: env.Headers, uid: string, { cuid }: env.BodyContactInvite) {
+    public async httpContactInvite(headers: env.Headers, userId: string, { niveId }: env.BodyContactInvite) {
         const manager = await this.custom.divineConnectTransaction()
         try {
-            await divineCatchWherer(uid === cuid, { message: '不能申请自己添加联系人' })
+            await divineCatchWherer(userId === niveId, { message: '不能申请自己添加联系人' })
             /**验证是否存在绑定联系人关系、以及申请目标用户是否存在**/
             await this.custom.divineBuilder(this.custom.tableContact, async qb => {
-                qb.where('t.uid = :uid AND t.cuid = :cuid', { uid, cuid })
-                qb.orWhere('t.uid = :cuid AND t.uid = :uid', { uid, cuid })
+                qb.where('t.userId = :userId AND t.niveId = :niveId', { userId, niveId })
+                qb.orWhere('t.userId = :niveId AND t.userId = :userId', { userId, niveId })
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
@@ -41,14 +41,14 @@ export class ContactService {
                         return await this.custom.divineHaver(this.custom.tableUser, {
                             headers,
                             message: '账号不存在',
-                            dispatch: { where: { uid: cuid } }
+                            dispatch: { where: { uid: niveId } }
                         })
                     })
                 })
             })
             /**处理申请记录**/
             return await this.custom.divineBuilder(this.custom.tableNotification, async qb => {
-                qb.where('t.uid = :uid AND t.cuid = :cuid', { uid, cuid })
+                qb.where('t.userId = :userId AND t.niveId = :niveId', { userId, niveId })
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
@@ -64,7 +64,7 @@ export class ContactService {
                         return await manager.commitTransaction().then(async () => {
                             this.logger.info(
                                 [ContactService.name, this.httpContactInvite.name].join(':'),
-                                divineLogger(headers, { message: '申请联系人成功', uid, cuid })
+                                divineLogger(headers, { message: '申请联系人成功', userId, niveId })
                             )
                             return await divineResolver({ message: '申请成功' })
                         })
@@ -72,7 +72,7 @@ export class ContactService {
                         /**不存在申请记录、新增一条申请记录**/
                         const data = await this.custom.divineCreate(this.custom.tableNotification, {
                             headers,
-                            state: { source: 'contact', status: 'waitze', uid, cuid }
+                            state: { source: 'contact', status: 'waitze', userId, niveId }
                         })
                         return await manager.commitTransaction().then(async () => {
                             this.logger.info(
