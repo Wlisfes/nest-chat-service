@@ -17,16 +17,28 @@ export class SessionService {
     public async httpSessionColumn(headers: env.Headers, userId: string) {
         try {
             return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.innerJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                /**私聊会话联查**/
+                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
                 qb.leftJoinAndMapOne('contact.user', entities.UserEntier, 'user', 'user.uid = contact.userId')
                 qb.leftJoinAndMapOne('contact.nive', entities.UserEntier, 'nive', 'nive.uid = contact.niveId')
+                /**群聊会话联查**/
+                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne(
+                    'communit.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = communit.uid AND member.userId = :userId',
+                    { userId }
+                )
                 qb.select([
                     ...divineSelection('t', ['keyId', 'sid', 'source', 'contactId', 'communitId']),
                     ...divineSelection('contact', ['keyId', 'uid', 'status', 'userId', 'niveId']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
-                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status'])
+                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
+                    ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment', 'speak']),
+                    ...divineSelection('member', ['communitId', 'userId', 'role', 'status', 'speak'])
                 ])
-                qb.where('contact.userId = :userId OR contact.niveId = :userId', { userId })
+                qb.where('(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)', { userId })
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({ total, list })
                 })
