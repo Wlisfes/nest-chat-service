@@ -5,7 +5,7 @@ import { Logger } from 'winston'
 import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { CustomService } from '@/services/custom.service'
-import { divineResolver, divineIntNumber, divineHandler, divineLogger } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineKeyCompose, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineGrapher } from '@/utils/utils-plugin'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -24,7 +24,7 @@ export class CommonService {
         try {
             const { text, data } = await divineGrapher({ width: 120, height: 40 })
             const sid = await divineIntNumber()
-            const key = `${web.CHAT_CHAHE_GRAPH_COMMON}:${sid}`
+            const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
             return await this.redis.setStore(key, text, 3 * 60).then(async () => {
                 this.logger.info(
                     [CommonService.name, this.httpCommonGrapher.name].join(':'),
@@ -66,9 +66,9 @@ export class CommonService {
                     }
                 })
             })
-            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(code => {
+            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(async code => {
                 if (scope.source === 'register') {
-                    return { code, key: `${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}` }
+                    return { code, key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email) }
                 }
             })
             await this.nodemailer.httpCustomizeNodemailer({

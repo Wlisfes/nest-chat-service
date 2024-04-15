@@ -79,3 +79,8 @@ export async function divineBytefor(byte: number, dec: number = 2) {
     const i = Math.floor(Math.log(byte) / Math.log(k))
     return parseFloat((byte / Math.pow(k, i)).toFixed(dm)) + sizes[i]
 }
+
+/**redis存储键组合方法**/
+export async function divineKeyCompose(namespaces: string, ...args: string[]) {
+    return [namespaces, ...args].filter(key => !isEmpty(key)).join(':')
+}

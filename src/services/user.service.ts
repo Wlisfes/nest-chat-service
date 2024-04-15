@@ -8,7 +8,7 @@ import { UploaderService } from '@/services/uploader/uploader.service'
 import { CommonService } from '@/services/common.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { request, divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { request, divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -25,7 +25,8 @@ export class UserService {
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
-            await this.redis.getStore(`${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}`).then(async code => {
+            const key = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email)
+            await this.redis.getStore(key).then(async code => {
                 return await divineCatchWherer(scope.code !== code, {
                     message: '验证码不存在'
                 })
@@ -62,7 +63,7 @@ export class UserService {
                     }
                 })
                 await manager.save(user)
-                return await this.redis.delStore(`${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}`).then(async () => {
+                return await this.redis.delStore(key).then(async () => {
                     this.logger.info(
                         [UserService.name, this.httpUserRegister.name].join(':'),
                         divineLogger(headers, { message: '注册成功', user })
@@ -83,7 +84,8 @@ export class UserService {
     public async httpUserAuthorizer(headers: env.Headers, request: env.Omix, scope: env.BodyUserAuthorizer) {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
-            const key = `${web.CHAT_CHAHE_GRAPH_COMMON}:${sid ?? ''}`
+            const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
+
             await this.redis.getStore<string>(key).then(async code => {
                 await divineHandler(Boolean(sid), async () => {
                     return await this.redis.delStore(key)
@@ -135,9 +137,9 @@ export class UserService {
     }
 
     /**账号信息**/
-    public async httpUserResolver(headers: env.Headers, uid: string) {
+    public async httpUserResolver(headers: env.Headers, userId: string) {
         try {
-            const key = `${web.CHAT_CHAHE_USER_RESOLVER}:${uid}`
+            const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
             return await this.redis.getStore(key, null, headers).then(async node => {
                 if (node) {
                     return await divineResolver(node)
@@ -146,7 +148,7 @@ export class UserService {
                 return await this.custom.divineHaver(this.custom.tableUser, { 
                     headers,
                     message: '身份验证失败',
-                    dispatch: { where: { uid } }
+                    dispatch: { where: { uid: userId } }
                 }).then(async data => {
                     await this.redis.setStore(key, data, 24 * 60 * 60)
                     this.logger.info(
