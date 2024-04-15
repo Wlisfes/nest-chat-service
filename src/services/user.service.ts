@@ -25,7 +25,7 @@ export class UserService {
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
-            await this.redis.getStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async code => {
+            await this.redis.getStore(`${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}`).then(async code => {
                 return await divineCatchWherer(scope.code !== code, {
                     message: '验证码不存在'
                 })
@@ -62,7 +62,7 @@ export class UserService {
                     }
                 })
                 await manager.save(user)
-                return await this.redis.delStore(`${web.WEB_REDIS_MAIL_CACHE.register}:${scope.email}`).then(async () => {
+                return await this.redis.delStore(`${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}`).then(async () => {
                     this.logger.info(
                         [UserService.name, this.httpUserRegister.name].join(':'),
                         divineLogger(headers, { message: '注册成功', user })
@@ -83,7 +83,7 @@ export class UserService {
     public async httpUserAuthorizer(headers: env.Headers, request: env.Omix, scope: env.BodyUserAuthorizer) {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
-            const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid ?? ''}`
+            const key = `${web.CHAT_CHAHE_GRAPH_COMMON}:${sid ?? ''}`
             await this.redis.getStore<string>(key).then(async code => {
                 await divineHandler(Boolean(sid), async () => {
                     return await this.redis.delStore(key)
@@ -137,7 +137,7 @@ export class UserService {
     /**账号信息**/
     public async httpUserResolver(headers: env.Headers, uid: string) {
         try {
-            const key = `${web.WEB_REDIS_USER_CACHE.resolver}:${uid}`
+            const key = `${web.CHAT_CHAHE_USER_RESOLVER}:${uid}`
             return await this.redis.getStore(key, null, headers).then(async node => {
                 if (node) {
                     return await divineResolver(node)

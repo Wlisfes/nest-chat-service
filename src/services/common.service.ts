@@ -24,7 +24,7 @@ export class CommonService {
         try {
             const { text, data } = await divineGrapher({ width: 120, height: 40 })
             const sid = await divineIntNumber()
-            const key = `${web.WEB_REDIS_GRAPH_CACHE.common}:${sid}`
+            const key = `${web.CHAT_CHAHE_GRAPH_COMMON}:${sid}`
             return await this.redis.setStore(key, text, 3 * 60).then(async () => {
                 this.logger.info(
                     [CommonService.name, this.httpCommonGrapher.name].join(':'),
@@ -67,7 +67,9 @@ export class CommonService {
                 })
             })
             const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(code => {
-                return { code, key: `${web.WEB_REDIS_MAIL_CACHE[scope.source]}:${scope.email}` }
+                if (scope.source === 'register') {
+                    return { code, key: `${web.CHAT_CHAHE_MAIL_REGISTER}:${scope.email}` }
+                }
             })
             await this.nodemailer.httpCustomizeNodemailer({
                 from: `"Chat" <${this.nodemailer.fromName}>`,

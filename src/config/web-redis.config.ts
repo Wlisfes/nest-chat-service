@@ -1,14 +1,10 @@
 /**图形验证码redis存储键**/
-export enum WEB_REDIS_GRAPH_CACHE {
-    common = 'chat:chahe:graph:common'
-}
+export const CHAT_CHAHE_GRAPH_COMMON = 'chat:chahe:graph:common'
 
-/**邮箱验证码redis存储键**/
-export enum WEB_REDIS_MAIL_CACHE {
-    register = 'chat:chahe:mail:register'
-}
+/**邮箱注册验证码redis存储键**/
+export const CHAT_CHAHE_MAIL_REGISTER = 'chat:chahe:mail:register'
+/**邮箱密码重置验证码redis存储键**/
+export const CHAT_CHAHE_MAIL_FORGET = 'chat:chahe:mail:forget'
 
-/**用户相关redis存储键**/
-export enum WEB_REDIS_USER_CACHE {
-    resolver = 'chat:chahe:user:resolver'
-}
+/**用户信息redis存储键**/
+export const CHAT_CHAHE_USER_RESOLVER = 'chat:chahe:user:resolver'
