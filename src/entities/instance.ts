@@ -1,5 +1,6 @@
 export * from '@/entities/user'
 export * from '@/entities/communit'
+export * from '@/entities/communit.member'
 export * from '@/entities/session'
 export * from '@/entities/contact'
 export * from '@/entities/notification'
