@@ -3,7 +3,7 @@ import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websocke
 import { Server, Socket } from 'socket.io'
 import * as web from '@/config/instance.config'
 
-@WebSocketGateway({
+@WebSocketGateway(web.WEB_SOCKET_PORT, {
     cors: { origin: '*' },
     transport: ['websocket'],
     pingInterval: 10000,
@@ -13,7 +13,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @WebSocketServer() private readonly server: Server
 
     afterInit(@ConnectedSocket() client: Socket) {
-        console.log('WebSocket服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
+        console.log('[web-socket]服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
     }
 
     handleDisconnect(@ConnectedSocket() client: Socket) {}
