@@ -7,3 +7,6 @@ import * as env from '@/interface/instance.resolver'
 
 /**新建私聊会话**/
 export class BodySessionContactCreater extends PickType(entities.SchemaSession, ['contactId']) {}
+
+/**新建群聊会话**/
+export class BodySessionCommunitCreater extends PickType(entities.SchemaSession, ['communitId']) {}

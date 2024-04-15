@@ -44,17 +44,20 @@ export class SessionService {
     public async httpSessionContactCreater(headers: env.Headers, scope: env.BodySessionContactCreater) {
         try {
             await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.where('t.contactId = :contactId AND t.source = :source', { source: 'contact', contactId: scope.contactId })
+                qb.where('t.contactId = :contactId AND t.source = :source', {
+                    source: 'contact',
+                    contactId: scope.contactId
+                })
                 return qb.getOne().then(async node => {
                     if (node) {
-                        /**存在会话记录**/
+                        /**存在私聊会话记录**/
                         this.logger.info(
                             [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                            divineLogger(headers, { message: '存在会话记录', node })
+                            divineLogger(headers, { message: '存在私聊会话记录', node })
                         )
                         return await divineResolver(node)
                     }
-                    /**不存在会话记录、新建一条记录**/ //prettier-ignore
+                    /**不存在私聊会话记录、新建一条记录**/ //prettier-ignore
                     return await this.customService.divineCreate(this.customService.tableSession, {
                         headers,
                         state: {
@@ -65,7 +68,7 @@ export class SessionService {
                     }).then(async result => {
                         this.logger.info(
                             [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                            divineLogger(headers, { message: '会话记录创建成功', node: result })
+                            divineLogger(headers, { message: '私聊会话记录创建成功', node: result })
                         )
                         return await divineResolver(result)
                     })
@@ -74,6 +77,49 @@ export class SessionService {
         } catch (e) {
             this.logger.error(
                 [SessionService.name, this.httpSessionContactCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**新建群聊会话**/
+    public async httpSessionCommunitCreater(headers: env.Headers, scope: env.BodySessionCommunitCreater) {
+        try {
+            await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                qb.where('t.communitId = :communitId AND t.source = :source', {
+                    source: 'communit',
+                    communitId: scope.communitId
+                })
+                return qb.getOne().then(async node => {
+                    if (node) {
+                        /**存在群聊会话记录**/
+                        this.logger.info(
+                            [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
+                            divineLogger(headers, { message: '存在群聊会话记录', node })
+                        )
+                        return await divineResolver(node)
+                    }
+                    /**不存在群聊会话记录、新建一条记录**/ //prettier-ignore
+                    return await this.customService.divineCreate(this.customService.tableSession, {
+                        headers,
+                        state: {
+                            source: 'communit',
+                            communitId: scope.communitId,
+                            sid: await divineIntNumber()
+                        }
+                    }).then(async result => {
+                        this.logger.info(
+                            [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
+                            divineLogger(headers, { message: '群聊会话记录创建成功', node: result })
+                        )
+                        return await divineResolver(result)
+                    })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

@@ -6,10 +6,10 @@ import * as entities from '@/entities/instance'
 import * as env from '@/interface/instance.resolver'
 
 /**新建社群**/
-export class BodyCommunitCreater extends PickType(entities.SchemaCommunit, ['name']) {}
+export class BodyCommunitCreater extends PickType(entities.SchemaCommunit, ['name', 'poster', 'comment']) {}
 
 /**申请加入社群**/
-export class BodyCommunitJoiner extends PickType(entities.SchemaCommunit, ['csid']) {}
+export class BodyCommunitJoiner extends PickType(entities.SchemaCommunit, []) {}
 
 /**邀请加入社群**/
-export class BodyCommunitInviteJoiner extends PickType(entities.SchemaCommunit, ['csid', 'invite']) {}
+export class BodyCommunitInviteJoiner extends PickType(entities.SchemaCommunit, ['invite']) {}
