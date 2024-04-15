@@ -8,8 +8,8 @@ import {
     CommunitEntier,
     CommunitMemberEntier,
     SessionEntier,
-    SessionReducerEntier,
-    NotificationEntier
+    NotificationEntier,
+    MessagerEntier
 } from '@/entities/instance'
 
 export const forEntities = [
@@ -18,7 +18,7 @@ export const forEntities = [
     CommunitEntier,
     CommunitMemberEntier,
     SessionEntier,
-    SessionReducerEntier,
+    MessagerEntier,
     NotificationEntier
 ]
 
