@@ -9,7 +9,7 @@ export enum EnumContactStatus {
     enable = 'enable'
 }
 
-@Entity({ name: 'contact' })
+@Entity({ name: 'contact', comment: '好友记录表' })
 export class ContactEntier extends CommonEntier {
     @ApiProperty({ description: '好友绑定关系ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '好友绑定关系ID必填' })

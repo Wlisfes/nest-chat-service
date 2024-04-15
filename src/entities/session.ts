@@ -1,8 +1,6 @@
-import { Entity, Column, ManyToMany, JoinTable, OneToOne, JoinColumn } from 'typeorm'
-import { hashSync } from 'bcryptjs'
+import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
-import { IsOptional } from '@/decorator/common.decorator'
+import { IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**会话记录表: 会话类型**/
@@ -11,7 +9,7 @@ export enum EnumSessionSource {
     communit = 'communit'
 }
 
-@Entity({ name: 'session' })
+@Entity({ name: 'session', comment: '会话记录表' })
 export class SessionEntier extends CommonEntier {
     @ApiProperty({ description: '会话SID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '会话SID必填' })

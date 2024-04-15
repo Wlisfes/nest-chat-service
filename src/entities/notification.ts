@@ -17,7 +17,7 @@ export enum EnumNotificationStatus {
     reject = 'reject'
 }
 
-@Entity({ name: 'notification' })
+@Entity({ name: 'notification', comment: '通知记录表' })
 export class NotificationEntier extends CommonEntier {
     @ApiProperty({ description: '通知记录ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '通知记录ID必填' })

@@ -5,7 +5,7 @@ import { IsNotEmpty, Length, IsEmail } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
-@Entity({ name: 'user' })
+@Entity({ name: 'user', comment: '用户表' })
 export class UserEntier extends CommonEntier {
     @ApiProperty({ description: 'UID', example: '2149446185344106496' })
     @IsNotEmpty({ message: 'UID必填' })

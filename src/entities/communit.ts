@@ -9,7 +9,7 @@ export enum EnumCommunitStatus {
     dissolve = 'dissolve'
 }
 
-@Entity({ name: 'communit' })
+@Entity({ name: 'communit', comment: '社群记录表' })
 export class CommunitEntier extends CommonEntier {
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })

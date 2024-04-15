@@ -17,7 +17,7 @@ export enum EnumCommunitMemberRole {
     masses = 'masses'
 }
 
-@Entity({ name: 'communit_member' })
+@Entity({ name: 'communit_member', comment: '社群成员表' })
 export class CommunitMemberEntier extends CommonEntier {
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })
