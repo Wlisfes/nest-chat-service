@@ -1,10 +1,9 @@
 import { NestFactory } from '@nestjs/core'
 import { Transport, MicroserviceOptions } from '@nestjs/microservices'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
-import { ConfigService } from '@nestjs/config'
 import { WebSocketModule } from '@web-socket/web-socket.module'
 import { WebSocketAdapter } from '@web-socket/web-socket.adapter'
-import { CustomService } from '@/services/custom.service'
+import { RedisService } from '@/services/redis/redis.service'
 
 async function bootstrap() {
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(WebSocketModule, {
@@ -15,8 +14,7 @@ async function bootstrap() {
             password: process.env.REDIS_PASSWORD
         }
     })
-    const adapter = new WebSocketAdapter(app, app.get(WINSTON_MODULE_PROVIDER), app.get(ConfigService), app.get(CustomService))
-    await adapter.createRedisConnect()
+    const adapter = new WebSocketAdapter(app, app.get(WINSTON_MODULE_PROVIDER), app.get(RedisService))
     app.useWebSocketAdapter(adapter)
     await app.listen()
 }
