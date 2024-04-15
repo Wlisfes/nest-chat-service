@@ -1,7 +1,13 @@
 import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty } from 'class-validator'
+import { IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
+
+/**好友状态**/
+export enum EnumContactStatus {
+    delete = 'delete',
+    enable = 'enable'
+}
 
 @Entity({ name: 'contact' })
 export class ContactEntier extends CommonEntier {
@@ -10,8 +16,9 @@ export class ContactEntier extends CommonEntier {
     @Column({ comment: '好友绑定关系ID', nullable: false })
     uid: string
 
-    @ApiProperty({ description: '好友状态: 删除-delete、启用-enable', enum: ['delete', 'enable'], example: 'enable' })
+    @ApiProperty({ description: '好友状态: 删除-delete、启用-enable', enum: EnumContactStatus })
     @IsNotEmpty({ message: '好友状态必填' })
+    @IsEnum(EnumContactStatus, { message: '好友状态参数格式错误' })
     @Column({ comment: '好友状态: 删除-delete、启用-enable', default: 'enable', nullable: false })
     status: string
 

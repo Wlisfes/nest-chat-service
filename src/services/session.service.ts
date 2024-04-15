@@ -80,7 +80,7 @@ export class SessionService {
                     }).then(async result => {
                         this.logger.info(
                             [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                            divineLogger(headers, { message: '私聊会话记录创建成功', node: result })
+                            divineLogger(headers, { message: '创建私聊会话记录', node: result })
                         )
                         return await divineResolver(result)
                     })

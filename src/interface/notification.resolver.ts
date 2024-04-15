@@ -7,3 +7,9 @@ import * as env from '@/interface/instance.resolver'
 
 /**更新通知状态**/
 export class BodyNotificationUpdate extends PickType(entities.SchemaNotification, ['uid', 'status']) {}
+
+/**更新好友申请通知状态**/
+export class BodyNotificationContactUpdate extends PickType(entities.SchemaNotification, ['status', 'userId', 'niveId']) {}
+
+/**更新社群申请通知状态**/
+export class BodyNotificationCommunitUpdate extends PickType(entities.SchemaNotification, ['status', 'userId', 'communitId']) {}

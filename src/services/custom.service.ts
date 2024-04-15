@@ -77,7 +77,7 @@ export class CustomService {
     }
 
     /**数据验证:不存在-抛出异常、存在-返回数据模型**/
-    public async divineCheckr<T>(where: boolean, node: T, scope: DivineCustomOption<T>) {
+    public async divineCatchWherer<T>(where: boolean, node: T, scope: DivineCustomOption<T>) {
         return await divineCatchWherer(where && Boolean(scope.message), {
             message: scope.message,
             cause: scope.cause,
@@ -105,7 +105,7 @@ export class CustomService {
                         node
                     })
                 )
-                return await this.divineCheckr(!Boolean(node), node, scope as never)
+                return await this.divineCatchWherer(!Boolean(node), node, scope as never)
             })
         } catch (e) {
             throw new HttpException(e.response ?? e.message, e.status)
@@ -128,7 +128,7 @@ export class CustomService {
                     [CustomService.name, this.divineHaver.name].join(':'),
                     divineLogger(scope.headers, { message: `[${model.metadata.name}]:查询出参`, cause: scope.cause ?? null, node })
                 )
-                return await this.divineCheckr(Boolean(node), node, scope as never)
+                return await this.divineCatchWherer(Boolean(node), node, scope as never)
             })
         } catch (e) {
             throw new HttpException(e.response ?? e.message, e.status)
@@ -204,7 +204,7 @@ export class CustomService {
                 return await divineResolver({ list, total })
             })
         } catch (e) {
-            throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.response ?? e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
@@ -214,7 +214,7 @@ export class CustomService {
             const qb = model.createQueryBuilder('t')
             return await callback(qb)
         } catch (e) {
-            throw new HttpException(e.message, HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException(e.response ?? e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 }
