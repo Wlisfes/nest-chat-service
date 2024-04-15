@@ -1,6 +1,6 @@
 import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsArray, IsBoolean, IsEnum } from 'class-validator'
+import { IsNotEmpty, Length, Max, IsArray, IsBoolean, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
@@ -16,14 +16,15 @@ export class CommunitEntier extends CommonEntier {
     @Column({ comment: '社群ID', nullable: false })
     uid: string
 
-    @ApiProperty({ description: '社群名称', example: '妖雨纯' })
+    @ApiProperty({ description: '社群名称' })
     @IsNotEmpty({ message: '社群名称必填' })
-    @Length(2, 32, { message: '社群名称必须保持2~32位' })
+    @Length(2, 32, { message: '社群名称必须保持2~32字符' })
     @Column({ comment: '社群名称', nullable: false })
     name: string
 
-    @ApiProperty({ description: '社群封面', example: '妖雨纯' })
+    @ApiProperty({ description: '社群封面' })
     @IsNotEmpty({ message: '社群封面必填' })
+    @Max(255, { message: '社群封面地址过长' })
     @Column({ comment: '社群封面', nullable: false })
     poster: string
 
@@ -40,6 +41,7 @@ export class CommunitEntier extends CommonEntier {
 
     @ApiProperty({ description: '社群描述' })
     @IsNotEmpty({ message: '社群描述必填' })
+    @Length(4, 32, { message: '社群描述必须保持4~200字符' })
     @Column({ comment: '社群描述', nullable: false })
     comment: string
 
@@ -51,9 +53,4 @@ export class CommunitEntier extends CommonEntier {
     speak: boolean
 }
 
-export class SchemaCommunit extends CommunitEntier {
-    @ApiProperty({ description: '用户UID', example: ['2149446185344106496'] })
-    @IsArray({ message: '用户UID参数格式错误' })
-    @Type(() => String)
-    invite: string[]
-}
+export class SchemaCommunit extends CommunitEntier {}
