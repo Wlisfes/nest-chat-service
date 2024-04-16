@@ -4,22 +4,26 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { CustomService } from '@/services/custom.service'
 import {
     UserEntier,
+    MediaEntier,
     ContactEntier,
     CommunitEntier,
     CommunitMemberEntier,
     SessionEntier,
     NotificationEntier,
-    MessagerEntier
+    MessagerEntier,
+    MessagerMediaEntier
 } from '@/entities/instance'
 
 export const forEntities = [
     UserEntier,
+    MediaEntier,
     ContactEntier,
     CommunitEntier,
     CommunitMemberEntier,
     SessionEntier,
+    NotificationEntier,
     MessagerEntier,
-    NotificationEntier
+    MessagerMediaEntier
 ]
 
 @Global()

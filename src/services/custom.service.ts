@@ -24,12 +24,14 @@ export class CustomService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
+        @InjectRepository(entities.MediaEntier) public readonly tableMedia: Repository<entities.MediaEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
         @InjectRepository(entities.CommunitMemberEntier) public readonly tableCommunitMember: Repository<entities.CommunitMemberEntier>,
         @InjectRepository(entities.ContactEntier) public readonly tableContact: Repository<entities.ContactEntier>,
         @InjectRepository(entities.NotificationEntier) public readonly tableNotification: Repository<entities.NotificationEntier>,
         @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
         @InjectRepository(entities.MessagerEntier) public readonly tableMessager: Repository<entities.MessagerEntier>,
+        @InjectRepository(entities.MessagerMediaEntier) public readonly tableMessageMediar: Repository<entities.MessagerMediaEntier>,
         private readonly entityManager: EntityManager,
         private readonly dataSource: DataSource,
         private readonly jwtService: JwtService
