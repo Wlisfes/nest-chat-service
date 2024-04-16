@@ -26,12 +26,14 @@ export class NotificationService {
                 qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
                 /**社群申请记录联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
                 //prettier-ignore
                 qb.select([
                     ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source', 'userId', 'niveId', 'communitId', 'status']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status']),
+                    ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
                 ])
                 qb.where(
                     `((t.userId = :userId OR t.niveId = :userId) AND t.source = :contact) OR (t.userId = :userId AND t.source = :communit AND communit.status = :status)`,

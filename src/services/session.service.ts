@@ -23,6 +23,7 @@ export class SessionService {
                 qb.leftJoinAndMapOne('contact.nive', entities.UserEntier, 'nive', 'nive.uid = contact.niveId')
                 /**群聊会话联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
                 qb.leftJoinAndMapOne(
                     'communit.member',
                     entities.CommunitMemberEntier,
@@ -35,7 +36,8 @@ export class SessionService {
                     ...divineSelection('contact', ['keyId', 'uid', 'status', 'userId', 'niveId']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
-                    ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment', 'speak']),
+                    ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
+                    ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL']),
                     ...divineSelection('member', ['communitId', 'userId', 'role', 'status', 'speak'])
                 ])
                 qb.where('(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)', { userId })

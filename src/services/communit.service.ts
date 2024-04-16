@@ -26,6 +26,13 @@ export class CommunitService {
                 message: '社群名称已存在或被占用',
                 dispatch: { where: { name: scope.name } }
             })
+            await this.customService.divineNoner(this.customService.tableMedia, {
+                headers,
+                message: 'fileId不存在或者文件类型错误',
+                dispatch: {
+                    where: { fileId: scope.poster, source: entities.MediaEntierSource.avatar }
+                }
+            })
             /**新建社群记录**/
             const communit = await this.customService.divineCreate(this.customService.tableCommunit, {
                 headers,

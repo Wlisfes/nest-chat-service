@@ -21,7 +21,7 @@ export class UploaderService {
     public async putStream(headers, scope: env.Omix<env.BodyBaseUploader & { buffer: Buffer; name: string; size: number }>) {
         try {
             const suffix = scope.name.split('.').pop().toLowerCase()
-            const fileId = await divineIntNumber({ random: true, bit: 32 })
+            const fileId = await divineIntNumber()
             const fileSize = await divineBytefor(scope.size)
             const folder = ['chat', scope.source, fileId + '.' + suffix].join('/')
             this.logger.info(
@@ -50,11 +50,11 @@ export class UploaderService {
     /**拉取远程文件**/
     public async httpStreamRemoter(headers: env.Headers, fileURL: string) {
         try {
-            const { status, data, request: t } = await request.get(fileURL, { responseType: 'arraybuffer' })
+            const { status, data, request: req } = await request.get(fileURL, { responseType: 'arraybuffer' })
             if (status === HttpStatus.OK) {
                 const buffer = Buffer.from(data)
                 const fileSize: string = await divineBytefor(buffer.length)
-                const fileName: string = t.path.split('/').pop()
+                const fileName: string = req.path.split('/').pop()
                 this.logger.info(
                     [UploaderService.name, this.httpStreamRemoter.name].join(':'),
                     divineLogger(headers, { message: '远程文件拉取成功', fileURL, fileName, fileSize })
@@ -100,7 +100,7 @@ export class UploaderService {
                     headers,
                     state: result
                 }).then(async node => {
-                    return await divineResolver(node)
+                    return await divineResolver(data)
                 })
             })
         } catch (e) {

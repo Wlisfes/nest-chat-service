@@ -64,6 +64,11 @@ export class MediaEntier extends CommonEntier {
     @IsNotEmpty({ message: '文件高度必填' })
     @Column({ comment: '文件高度', nullable: true, default: 0 })
     height: number
+
+    @ApiProperty({ description: '下级数据ID', example: '2149446185344106496' })
+    @IsNotEmpty({ message: '下级数据ID必填' })
+    @Column({ comment: '下级数据ID', nullable: true })
+    depater: string
 }
 
 export class SchemaMediaEntier extends MediaEntier {

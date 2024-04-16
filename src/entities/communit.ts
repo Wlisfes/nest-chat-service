@@ -1,9 +1,10 @@
 import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, Max, IsArray, IsBoolean, IsEnum } from 'class-validator'
+import { IsNotEmpty, Length, IsBoolean, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
+/**社群记录表: 社群状态**/
 export enum EnumCommunitStatus {
     enable = 'enable',
     dissolve = 'dissolve'
@@ -24,8 +25,7 @@ export class CommunitEntier extends CommonEntier {
 
     @ApiProperty({ description: '社群封面' })
     @IsNotEmpty({ message: '社群封面必填' })
-    @Max(255, { message: '社群封面地址过长' })
-    @Column({ comment: '社群封面', nullable: false })
+    @Column({ comment: '社群封面', length: 512, nullable: false })
     poster: string
 
     @ApiProperty({ description: '社群创建者ID', example: '2149446185344106496' })

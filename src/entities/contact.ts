@@ -3,7 +3,7 @@ import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
-/**好友状态**/
+/**好友记录表: 好友状态**/
 export enum EnumContactStatus {
     delete = 'delete',
     enable = 'enable'

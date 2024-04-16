@@ -1,9 +1,15 @@
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm'
+import { Entity, Column } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsEmail } from 'class-validator'
+import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
+
+/**用户表: 状态**/
+export enum EnumUserStatus {
+    disable = 'disable',
+    enable = 'enable'
+}
 
 @Entity({ name: 'user', comment: '用户表' })
 export class UserEntier extends CommonEntier {
@@ -12,8 +18,9 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '唯一UUID', nullable: false })
     uid: string
 
-    @ApiProperty({ description: '状态: 禁用-disable、启用-enable', enum: ['disable', 'enable'], example: 'enable' })
+    @ApiProperty({ description: '状态: 禁用-disable、启用-enable', enum: EnumUserStatus })
     @IsNotEmpty({ message: '状态必填' })
+    @IsEnum(EnumUserStatus, { message: '状态参数格式错误' })
     @Column({ comment: '状态: 禁用-disable、启用-enable', default: 'enable', nullable: false })
     status: string
 

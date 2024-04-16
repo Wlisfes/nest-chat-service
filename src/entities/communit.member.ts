@@ -4,13 +4,13 @@ import { IsNotEmpty, IsBoolean, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
-/**社群成员状态**/
+/**社群成员表: 社群成员状态**/
 export enum EnumCommunitMemberStatus {
     enable = 'enable',
     quit = 'quit',
     kick = 'kick'
 }
-/**社群成员角色**/
+/**社群成员表: 社群成员角色**/
 export enum EnumCommunitMemberRole {
     master = 'master',
     manager = 'manager',
