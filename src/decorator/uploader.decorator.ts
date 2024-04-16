@@ -1,9 +1,10 @@
 import { Injectable, HttpException, HttpStatus, PipeTransform, ArgumentMetadata } from '@nestjs/common'
 import * as env from '@/interface/instance.resolver'
+import * as entities from '@/entities/instance'
 
 /**文件类型配置**/
 export type UploadRuleOption = {
-    [key in keyof typeof env.EnumUploadFolder]?: {
+    [key in keyof typeof entities.MediaEntierSource]?: {
         fileType: string[]
         maxSize: number
     }

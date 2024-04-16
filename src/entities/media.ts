@@ -66,4 +66,8 @@ export class MediaEntier extends CommonEntier {
     height: number
 }
 
-export class SchemaMediaEntier extends MediaEntier {}
+export class SchemaMediaEntier extends MediaEntier {
+    @ApiProperty({ type: 'string', format: 'binary' })
+    @IsNotEmpty({ message: 'file文件不能为空' })
+    file: File
+}

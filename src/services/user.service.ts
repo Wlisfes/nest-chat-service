@@ -11,6 +11,7 @@ import { divineCatchWherer } from '@/utils/utils-plugin'
 import { request, divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
+import * as entities from '@/entities/instance'
 
 @Injectable()
 export class UserService {
@@ -47,7 +48,7 @@ export class UserService {
                     buffer,
                     name,
                     size,
-                    folder: env.EnumUploadFolder.avatar
+                    source: entities.MediaEntierSource.avatar
                 })
             })
             return await this.customService.divineWithTransaction(async manager => {

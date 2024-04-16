@@ -18,22 +18,25 @@ export class UploaderService {
     ) {}
 
     /**上传文件到阿里云OSS**/
-    public async putStream(headers, { buffer, name: fileName, size, folder: path }: env.BodyPutStream) {
+    public async putStream(headers, scope: env.Omix<env.BodyBaseUploader & { buffer: Buffer; name: string; size: number }>) {
         try {
-            const suffix = fileName.split('.').pop().toLowerCase()
+            const suffix = scope.name.split('.').pop().toLowerCase()
             const fileId = await divineIntNumber({ random: true, bit: 32 })
-            const fileSize = await divineBytefor(size)
-            const folder = ['chat', path, fileId + '.' + suffix].join('/')
+            const fileSize = await divineBytefor(scope.size)
+            const folder = ['chat', scope.source, fileId + '.' + suffix].join('/')
             this.logger.info(
                 [UploaderService.name, this.putStream.name].join(':'),
-                divineLogger(headers, { message: '开始上传', result: { fileId, folder, fileName, fileSize } })
+                divineLogger(headers, { message: '开始上传', result: { fileId, folder, fileName: scope.name, fileSize } })
             )
-            return await this.client.put(folder, buffer).then(async ({ name: fieldName, url }: any) => {
+            return await this.client.put(folder, scope.buffer).then(async ({ name: fieldName, url }: any) => {
                 this.logger.info(
                     [UploaderService.name, this.putStream.name].join(':'),
-                    divineLogger(headers, { message: '上传成功', result: { fileId, folder, fileName, fileSize, fieldName, url } })
+                    divineLogger(headers, {
+                        message: '上传成功',
+                        result: { fileId, folder, fileName: scope.name, fileSize, fieldName, url }
+                    })
                 )
-                return await divineResolver({ message: '上传成功', fileId, folder, fileName, fieldName, url })
+                return await divineResolver({ message: '上传成功', fileId, folder, fileName: scope.name, fieldName, url })
             })
         } catch (e) {
             this.logger.error(
@@ -72,18 +75,33 @@ export class UploaderService {
     public async httpStreamUploader(headers: env.Headers, userId: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
         const connect = await this.customService.divineConnectTransaction()
         try {
-            return await this.putStream(headers, {
-                buffer: file.buffer,
-                name: file.originalname,
-                size: file.size,
-                folder: scope.folder
-            }).then(async data => {
-                // const { width, height } = await divineImageResize(file.buffer)
-                await this.customService.divineCreate(this.customService.tableMedia, {
+            const { buffer, size, originalname: name } = file
+            return await this.putStream(headers, { buffer, name, size, source: scope.source }).then(async data => {
+                const result: env.Omix<Partial<entities.MediaEntier>> = {
+                    userId: userId,
+                    fileName: name,
+                    fileSize: size,
+                    source: scope.source,
+                    fileId: data.fileId,
+                    fieldName: data.fieldName,
+                    folder: data.folder,
+                    fileURL: data.url,
+                    width: 0,
+                    height: 0
+                }
+                /**图片资源上传**/
+                if ([entities.MediaEntierSource.avatar, entities.MediaEntierSource.image].includes(scope.source as never)) {
+                    const { width, height } = await divineImageResize(buffer)
+                    result.width = width
+                    result.height = height
+                }
+                /**文件记录存储**/ //prettier-ignore
+                return await this.customService.divineCreate(this.customService.tableMedia, {
                     headers,
-                    state: {}
+                    state: result
+                }).then(async node => {
+                    return await divineResolver(node)
                 })
-                return await divineResolver(data)
             })
         } catch (e) {
             await connect.rollbackTransaction()
