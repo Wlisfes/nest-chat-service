@@ -6,14 +6,14 @@ async function bootstrap() {
     const app = await NestFactory.createMicroservice<MicroserviceOptions>(WebSchedulerModule, {
         transport: Transport.RMQ,
         options: {
-            urls: [''],
+            urls: [process.env.RABBITMQ_URL],
             queue: 'web-scheduler',
+            noAck: false,
             queueOptions: {
                 durable: false
             }
         }
     })
-    //监听端口服务
     await app.listen().then(() => {
         console.log('[web-scheduler]服务启动:')
     })
