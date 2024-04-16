@@ -1,16 +1,20 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { CustomService } from '@/services/custom.service'
 import { OSS_CLIENT, OSS_STS_CLIENT, Client, AuthClient } from '@/services/uploader/uploader.provider'
-import { request, divineBytefor, divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { request, divineBytefor, divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineImageResize } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
+import * as entities from '@/entities/instance'
 
 @Injectable()
 export class UploaderService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @Inject(OSS_CLIENT) public readonly client: Client,
-        @Inject(OSS_STS_CLIENT) public readonly sts: AuthClient
+        @Inject(OSS_STS_CLIENT) public readonly sts: AuthClient,
+        private readonly customService: CustomService
     ) {}
 
     /**上传文件到阿里云OSS**/
@@ -65,15 +69,31 @@ export class UploaderService {
     }
 
     /**文件上传**/
-    public async httpStreamUploader(headers: env.Headers, uid: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
+    public async httpStreamUploader(headers: env.Headers, userId: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
+        const connect = await this.customService.divineConnectTransaction()
         try {
-            return await this.putStream(headers, { buffer: file.buffer, name: file.originalname, size: file.size, folder: scope.folder })
+            return await this.putStream(headers, {
+                buffer: file.buffer,
+                name: file.originalname,
+                size: file.size,
+                folder: scope.folder
+            }).then(async data => {
+                // const { width, height } = await divineImageResize(file.buffer)
+                await this.customService.divineCreate(this.customService.tableMedia, {
+                    headers,
+                    state: {}
+                })
+                return await divineResolver(data)
+            })
         } catch (e) {
+            await connect.rollbackTransaction()
             this.logger.error(
                 [UploaderService.name, this.httpStreamUploader.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        } finally {
+            await connect.release()
         }
     }
 }

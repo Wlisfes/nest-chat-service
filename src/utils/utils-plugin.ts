@@ -3,6 +3,7 @@ import { create } from 'svg-captcha'
 import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as stream from 'stream'
+import * as sizeOf from 'image-size'
 
 /**条件捕获、异常抛出**/
 export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; status?: number; cause?: env.Omix }>) {
@@ -25,6 +26,11 @@ export async function divineGrapher(scope: env.Omix<{ width: number; height: num
         charPreset: 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789',
         ...scope
     })
+}
+
+/**获取图片宽高比率**/
+export async function divineImageResize(buffer: Buffer) {
+    return sizeOf.default(buffer)
 }
 
 /**Buffer转换Stream**/
