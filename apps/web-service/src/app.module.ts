@@ -9,6 +9,7 @@ import { LoggerModule } from '@/modules/logger.module'
 import { ThrottlerModule } from '@/modules/throttler.module'
 import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
+import { RabbitmqModule } from '@/modules/rabbitmq.module'
 import { NodemailerModule } from '@/modules/nodemailer.module'
 import { UploaderModule } from '@/modules/uploader.module'
 import { CommonService } from '@/services/common.service'
@@ -36,6 +37,7 @@ import { MessagerController } from '@web-service/controllers/messager.controller
         ThrottlerModule,
         RedisModule,
         DatabaseModule,
+        RabbitmqModule,
         NodemailerModule,
         UploaderModule
     ],
