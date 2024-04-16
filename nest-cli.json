@@ -31,6 +31,15 @@
             "compilerOptions": {
                 "tsConfigPath": "apps/web-socket/tsconfig.app.json"
             }
+        },
+        "web-scheduler": {
+            "type": "application",
+            "root": "apps/web-scheduler",
+            "entryFile": "main",
+            "sourceRoot": "apps/web-scheduler/src",
+            "compilerOptions": {
+                "tsConfigPath": "apps/web-scheduler/tsconfig.app.json"
+            }
         }
     }
 }

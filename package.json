@@ -9,11 +9,13 @@
         "dev": "nest start --watch",
         "dev:web-service": "nest start --watch web-service",
         "dev:web-socket": "nest start --watch web-socket",
+        "dev:web-scheduler": "nest start --watch web-scheduler",
         "build:web-service": "nest build web-service",
         "build:web-socket": "nest build web-socket",
-        "build:all": "nest build web-service && nest build web-socket",
+        "build:web-scheduler": "nest build web-scheduler",
         "start:web-service": "node dist/apps/web-service/main",
-        "start:web-socket": "node dist/apps/web-socket/main"
+        "start:web-socket": "node dist/apps/web-socket/main",
+        "start:web-scheduler": "node dist/apps/web-scheduler/main"
     },
     "dependencies": {
         "@nestjs/common": "^10.3.2",

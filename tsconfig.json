@@ -13,7 +13,8 @@
         "paths": {
             "@/*": ["src/*"],
             "@web-service/*": ["apps/web-service/src/*"],
-            "@web-socket/*": ["apps/web-socket/src/*"]
+            "@web-socket/*": ["apps/web-socket/src/*"],
+            "@web-scheduler/*": ["apps/web-scheduler/src/*"]
         },
         "incremental": true,
         "skipLibCheck": true,
