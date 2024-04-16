@@ -4,7 +4,7 @@ import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -26,7 +26,7 @@ export class CommunitService {
                 message: '社群名称已存在或被占用',
                 dispatch: { where: { name: scope.name } }
             })
-            await this.customService.divineNoner(this.customService.tableMedia, {
+            await this.customService.divineHaver(this.customService.tableMedia, {
                 headers,
                 message: 'fileId不存在或者文件类型错误',
                 dispatch: {
