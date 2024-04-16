@@ -14,9 +14,15 @@ export class WebConsumerService {
 
     /**获取自定义请求头**/
     private async divineCustomizeHeaders(consume: ConsumeMessage) {
+        if (consume.properties.messageId) {
+            return {
+                [web.WEB_COMMON_HEADER_STARTTIME]: Date.now(),
+                [web.WEB_COMMON_HEADER_CONTEXTID]: consume.properties.messageId
+            } as never as env.Headers
+        }
         return {
             [web.WEB_COMMON_HEADER_STARTTIME]: Date.now(),
-            [web.WEB_COMMON_HEADER_CONTEXTID]: consume.properties.messageId || (await divineIntNumber({ random: true, bit: 32 }))
+            [web.WEB_COMMON_HEADER_CONTEXTID]: await divineIntNumber({ random: true, bit: 32 })
         } as never as env.Headers
     }
 
