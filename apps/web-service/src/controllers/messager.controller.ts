@@ -8,4 +8,13 @@ import * as env from '@/interface/instance.resolver'
 @Controller('messager')
 export class MessagerController {
     constructor(private readonly messagerService: MessagerService) {}
+
+    @Post('/customize/transmitter')
+    @ApiDecorator({
+        operation: { summary: '发送自定义消息' },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpCustomizeMessager(@Headers() headers: env.Headers) {
+        return await this.messagerService.httpCustomizeMessager(headers)
+    }
 }

@@ -10,9 +10,17 @@ import { RabbitmqService } from '@/services/rabbitmq.service'
             inject: [ConfigService],
             useFactory(config: ConfigService) {
                 return {
-                    exchanges: [{ name: 'web-scheduler', type: 'topic' }],
+                    exchanges: [{ name: 'web-customize-transmitter', type: 'topic' }],
                     uri: config.get('RABBITMQ_URL'),
-                    connectionInitOptions: { wait: false }
+                    connectionInitOptions: { wait: false },
+                    prefetchCount: 1,
+                    queueOptions: {
+                        durable: true
+                    },
+                    default: {
+                        prefetchCount: 1,
+                        options: { durable: true }
+                    }
                 }
             }
         })
