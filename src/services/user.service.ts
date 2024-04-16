@@ -16,22 +16,22 @@ import * as env from '@/interface/instance.resolver'
 export class UserService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        private readonly custom: CustomService,
+        private readonly customService: CustomService,
         private readonly uploader: UploaderService,
-        private readonly common: CommonService,
-        private readonly redis: RedisService
+        private readonly commonService: CommonService,
+        private readonly redisService: RedisService
     ) {}
 
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
             const key = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email)
-            await this.redis.getStore(key).then(async code => {
+            await this.redisService.getStore(key, null, headers).then(async code => {
                 return await divineCatchWherer(scope.code !== code, {
                     message: '验证码不存在'
                 })
             })
-            await this.custom.divineNoner(this.custom.tableUser, {
+            await this.customService.divineNoner(this.customService.tableUser, {
                 headers,
                 message: '邮箱已注册',
                 dispatch: {
@@ -50,8 +50,8 @@ export class UserService {
                     folder: env.EnumUploadFolder.avatar
                 })
             })
-            return await this.custom.divineWithTransaction(async manager => {
-                const user = await this.custom.divineCreate(this.custom.tableUser, {
+            return await this.customService.divineWithTransaction(async manager => {
+                const user = await this.customService.divineCreate(this.customService.tableUser, {
                     manager: true,
                     headers,
                     state: {
@@ -63,7 +63,7 @@ export class UserService {
                     }
                 })
                 await manager.save(user)
-                return await this.redis.delStore(key).then(async () => {
+                return await this.redisService.delStore(key, headers).then(async () => {
                     this.logger.info(
                         [UserService.name, this.httpUserRegister.name].join(':'),
                         divineLogger(headers, { message: '注册成功', user })
@@ -86,16 +86,16 @@ export class UserService {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
 
-            await this.redis.getStore<string>(key).then(async code => {
+            await this.redisService.getStore<string>(key, null, headers).then(async code => {
                 await divineHandler(Boolean(sid), async () => {
-                    return await this.redis.delStore(key)
+                    return await this.redisService.delStore(key, headers)
                 })
                 return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
                     message: '验证码不存在'
                 })
             })
             //prettier-ignore
-            const node = await this.custom.divineHaver(this.custom.tableUser, {
+            const node = await this.customService.divineHaver(this.customService.tableUser, {
                 headers,
                 message: '账号不存在',
                 dispatch: {
@@ -114,7 +114,7 @@ export class UserService {
                 return await divineResolver({ uid, status, email, password })
             })
             //prettier-ignore
-            return await this.custom.divineJwtTokenSecretr(node, {
+            return await this.customService.divineJwtTokenSecretr(node, {
                 message: '身份验证失败',
                 expire: 24 * 60 * 60
             }).then(async token => {
@@ -140,17 +140,17 @@ export class UserService {
     public async httpUserResolver(headers: env.Headers, userId: string) {
         try {
             const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-            return await this.redis.getStore(key, null, headers).then(async node => {
+            return await this.redisService.getStore(key, null, headers).then(async node => {
                 if (node) {
                     return await divineResolver(node)
                 }
                 //prettier-ignore
-                return await this.custom.divineHaver(this.custom.tableUser, { 
+                return await this.customService.divineHaver(this.customService.tableUser, { 
                     headers,
                     message: '身份验证失败',
                     dispatch: { where: { uid: userId } }
                 }).then(async data => {
-                    await this.redis.setStore(key, data, 24 * 60 * 60)
+                    await this.redisService.setStore(key, data, 24 * 60 * 60, headers)
                     this.logger.info(
                         [UserService.name, this.httpUserResolver.name].join(':'),
                         divineLogger(headers, { message: '账号信息读取成功', user: data })
