@@ -2,9 +2,8 @@ import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
-import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -22,10 +21,14 @@ export class SessionService {
                 qb.leftJoinAndMapOne('contact.user', entities.UserEntier, 'user', 'user.uid = contact.userId')
                 qb.leftJoinAndMapOne('contact.nive', entities.UserEntier, 'nive', 'nive.uid = contact.niveId')
                 /**消息记录联查**/
-                qb.leftJoinAndMapOne('t.message', entities.MessagerEntier, 'message', 'message.sessionId = t.sid')
+                qb.leftJoinAndMapOne(
+                    't.message',
+                    entities.MessagerEntier,
+                    'message',
+                    'message.sessionId = t.sid AND (message.status = :delivered OR message.userId = :userId)',
+                    { userId: userId, delivered: entities.EnumMessagerStatus.delivered }
+                )
                 qb.leftJoinAndMapMany('message.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = message.sid')
-                qb.leftJoinAndMapMany('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
-                qb.leftJoinAndMapOne('medias.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
                 /**群聊会话联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
@@ -34,7 +37,7 @@ export class SessionService {
                     entities.CommunitMemberEntier,
                     'member',
                     'member.communitId = communit.uid AND member.userId = :userId',
-                    { userId }
+                    { userId: userId }
                 )
                 qb.select([
                     /**会话基础字段**/
@@ -42,9 +45,6 @@ export class SessionService {
                     /**消息记录联查字段**/
                     ...divineSelection('message', ['keyId', 'createTime', 'updateTime', 'sid', 'sessionId']),
                     ...divineSelection('message', ['userId', 'contactId', 'communitId', 'text', 'source', 'status', 'reason']),
-                    ...divineSelection('medias', ['keyId', 'sid', 'fileId']),
-                    ...divineSelection('media', ['fileId', 'fileName', 'fieldName', 'fileSize', 'fileURL', 'width', 'height']),
-                    ...divineSelection('depater', ['fileId', 'fileName', 'fieldName', 'fileSize', 'fileURL', 'width', 'height']),
                     /**联系人联查字段**/
                     ...divineSelection('contact', ['keyId', 'uid', 'status', 'userId', 'niveId']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
