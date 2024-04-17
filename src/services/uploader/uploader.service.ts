@@ -3,10 +3,11 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { OSS_CLIENT, OSS_STS_CLIENT, Client, AuthClient } from '@/services/uploader/uploader.provider'
-import { request, divineBytefor, divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
-import { divineImageResize } from '@/utils/utils-plugin'
+import { request, divineBytefor, divineResolver, divineIntNumber, divineLogger, divineFileNameReplace } from '@/utils/utils-common'
+import { divineImageResize, divineDocumentThumbnail } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
+import { Response } from 'express'
 
 @Injectable()
 export class UploaderService {
@@ -16,6 +17,22 @@ export class UploaderService {
         @Inject(OSS_STS_CLIENT) public readonly sts: AuthClient,
         private readonly customService: CustomService
     ) {}
+
+    /**媒体数据存储**/
+    private async httpMediaCreater(headers: env.Headers, scope: env.BodyMediaCreater) {
+        try {
+            return await this.customService.divineCreate(this.customService.tableMedia, {
+                headers,
+                state: scope
+            })
+        } catch (e) {
+            this.logger.error(
+                [UploaderService.name, this.httpMediaCreater.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 
     /**上传文件到阿里云OSS**/
     public async putStream(headers, scope: env.Omix<env.BodyBaseUploader & { buffer: Buffer; name: string; size: number }>) {
@@ -72,16 +89,25 @@ export class UploaderService {
     }
 
     /**文件上传**/
-    public async httpStreamUploader(headers: env.Headers, userId: string, scope: env.BodyBaseUploader, file: Express.Multer.File) {
+    public async httpStreamUploader(
+        headers: env.Headers,
+        userId: string,
+        scope: env.BodyBaseUploader,
+        file: env.Omix<Express.Multer.File>
+    ) {
         const connect = await this.customService.divineConnectTransaction()
         try {
-            const { buffer, size, originalname: name } = file
-            return await this.putStream(headers, { buffer, name, size, source: scope.source }).then(async data => {
-                const result: env.Omix<Partial<entities.MediaEntier>> = {
+            return await this.putStream(headers, {
+                buffer: file.buffer,
+                name: file.name,
+                size: file.size,
+                source: scope.source
+            }).then(async data => {
+                const params: env.Omix<Partial<entities.MediaEntier>> = {
                     userId: userId,
-                    fileName: name,
-                    fileSize: size,
+                    fileSize: file.size,
                     source: scope.source,
+                    fileName: data.fileName,
                     fileId: data.fileId,
                     fieldName: data.fieldName,
                     folder: data.folder,
@@ -91,15 +117,37 @@ export class UploaderService {
                 }
                 /**图片资源上传**/
                 if ([entities.MediaEntierSource.avatar, entities.MediaEntierSource.image].includes(scope.source as never)) {
-                    const { width, height } = await divineImageResize(buffer)
-                    result.width = width
-                    result.height = height
+                    const { width, height } = await divineImageResize(file.buffer)
+                    params.width = width
+                    params.height = height
                 }
-                /**文件记录存储**/ //prettier-ignore
-                return await this.customService.divineCreate(this.customService.tableMedia, {
-                    headers,
-                    state: result
-                }).then(async node => {
+                /**PDF文档上传**/
+                if (scope.source === entities.MediaEntierSource.document && file.mimetype === 'application/pdf') {
+                    const buffer = await divineDocumentThumbnail(file.buffer)
+                    await this.putStream(headers, {
+                        name: await divineFileNameReplace(data.fileName, 'jpeg'),
+                        buffer: buffer,
+                        source: entities.MediaEntierSource.image,
+                        size: buffer.length
+                    }).then(async response => {
+                        const { fileId, fileName, fieldName, fileURL, folder, fileSize } = await this.httpMediaCreater(headers, {
+                            source: entities.MediaEntierSource.image,
+                            userId: userId,
+                            fileName: response.fileName,
+                            fileSize: buffer.length,
+                            fileId: response.fileId,
+                            fieldName: response.fieldName,
+                            folder: response.folder,
+                            fileURL: response.url,
+                            width: 420,
+                            height: 210
+                        })
+                        ;(data as env.Omix).depater = { fileId, fileName, fieldName, url: fileURL, folder }
+                        return (params.depater = fileId)
+                    })
+                }
+                await this.httpMediaCreater(headers, params)
+                return await connect.commitTransaction().then(async () => {
                     return await divineResolver(data)
                 })
             })

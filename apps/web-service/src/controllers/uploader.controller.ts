@@ -4,6 +4,7 @@ import { FileInterceptor } from '@nestjs/platform-express'
 import { UploaderService } from '@/services/uploader/uploader.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import { CustomizeEnumUploadValidator } from '@/decorator/uploader.decorator'
+import { divineFileRequest } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 @ApiTags('文件存储模块')
@@ -19,11 +20,7 @@ export class UploaderController {
         authorize: { check: true, next: false }
     })
     @ApiBody({ type: env.BodyOneUploader })
-    @UseInterceptors(
-        FileInterceptor('file', {
-            fileFilter: (req, file: env.Omix, cb) => cb(null, (file.body = req.body))
-        })
-    )
+    @UseInterceptors(FileInterceptor('file', { fileFilter: divineFileRequest }))
     public async httpStreamUploader(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,

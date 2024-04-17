@@ -61,8 +61,8 @@ export function divineDocumentThumbnail(buffer: Buffer): Promise<Buffer> {
             const uint8array = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
             const pdf = await pdfjsLib.getDocument({ data: uint8array }).promise
             const page = await pdf.getPage(1)
-            const viewport = page.getViewport({ scale: 1 })
-            const canvas = createCanvas(viewport.width, viewport.height)
+            const viewport = page.getViewport({ scale: 420 / page.view[2] })
+            const canvas = createCanvas(420, 210)
             const context = canvas.getContext('2d')
             await page.render({ canvasContext: context as never, viewport: viewport }).promise
             resolve(canvas.toBuffer('image/jpeg'))

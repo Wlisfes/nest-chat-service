@@ -46,7 +46,7 @@
         "mysql": "^2.18.1",
         "nest-winston": "^1.9.4",
         "nodemailer": "^6.9.13",
-        "pdfjs-dist": "^4.1.392",
+        "pdfjs-dist": "^3.11.174",
         "reflect-metadata": "^0.1.13",
         "request-ip": "^3.3.0",
         "rxjs": "^7.2.0",

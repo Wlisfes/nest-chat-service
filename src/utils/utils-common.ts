@@ -1,3 +1,4 @@
+import { Request } from 'express'
 import { snowflakeId } from 'snowflake-id-maker'
 import { isEmpty } from 'class-validator'
 import * as web from '@/config/instance.config'
@@ -83,4 +84,19 @@ export async function divineBytefor(byte: number, dec: number = 2) {
 /**redis存储键组合方法**/
 export async function divineKeyCompose(namespaces: string, ...args: string[]) {
     return [namespaces, ...args].filter(key => !isEmpty(key)).join(':')
+}
+
+/**文件名称、类型挂载**/
+export function divineFileRequest(request: Request, file: env.Omix, cb: Function) {
+    file.body = request.body
+    file.name = Buffer.from(file.originalname, 'binary').toString('utf-8')
+    return cb(null, true)
+}
+
+/**替换文件后辍名**/
+export async function divineFileNameReplace(fileName: string, suffix: string) {
+    if (fileName.includes('.')) {
+        return fileName.replace(/\.[^.]+$/, `.${suffix}`)
+    }
+    return [fileName, suffix].join('.')
 }
