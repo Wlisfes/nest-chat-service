@@ -1,7 +1,9 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 import { create } from 'svg-captcha'
+import { ConsumeMessage } from 'amqplib'
 import { createCanvas } from 'canvas'
-import { divineHandler } from '@/utils/utils-common'
+import { divineHandler, divineIntNumber } from '@/utils/utils-common'
+import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as stream from 'stream'
 import * as sizeOf from 'image-size'
@@ -52,6 +54,20 @@ export function divineStreamToBuffer(streamFile): Promise<Buffer> {
         streamFile.on('data', data => buffers.push(data))
         streamFile.on('end', () => resolve(Buffer.concat(buffers)))
     })
+}
+
+/**获取自定义请求头**/
+export async function divineCustomizeHeaders(consume: ConsumeMessage) {
+    if (consume.properties.messageId) {
+        return {
+            [web.WEB_COMMON_HEADER_STARTTIME]: Date.now(),
+            [web.WEB_COMMON_HEADER_CONTEXTID]: consume.properties.messageId
+        } as never as env.Headers
+    }
+    return {
+        [web.WEB_COMMON_HEADER_STARTTIME]: Date.now(),
+        [web.WEB_COMMON_HEADER_CONTEXTID]: await divineIntNumber({ random: true, bit: 32 })
+    } as never as env.Headers
 }
 
 /**获取PDF缩略图**/
