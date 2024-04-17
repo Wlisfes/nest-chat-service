@@ -4,6 +4,7 @@ import { ConsumeMessage } from 'amqplib'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
+import { RabbitmqService } from '@/services/rabbitmq.service'
 import { divineDelay, divineLogger, divineIntNumber } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -11,7 +12,11 @@ import * as entities from '@/entities/instance'
 
 @Injectable()
 export class WebConsumerService {
-    constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly customService: CustomService) {}
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        private readonly customService: CustomService,
+        private readonly rabbitmqService: RabbitmqService
+    ) {}
 
     /**获取自定义请求头**/
     private async divineCustomizeHeaders(consume: ConsumeMessage) {
@@ -46,9 +51,9 @@ export class WebConsumerService {
 
     /**自定义消息消费者**/
     @RabbitSubscribe({
-        exchange: 'web-customize-transmitter',
-        routingKey: 'sub-customize-transmitter',
-        queue: 'sub-customize-transmitter'
+        exchange: 'web-customize-messager',
+        routingKey: 'sub-customize-messager',
+        queue: 'sub-customize-messager'
     })
     public async SubscribeCustomizeTransmitter(data: env.Omix<entities.MessagerEntier>, consume: ConsumeMessage) {
         const headers = await this.divineCustomizeHeaders(consume)

@@ -7,7 +7,7 @@ import { RabbitmqModule } from '@/modules/rabbitmq.module'
 import { WebConsumerService } from '@web-scheduler/web.consumer.service'
 
 @Module({
-    imports: [LoggerModule.forRoot({ name: 'web-scheduler' }), RabbitmqModule, ConfigerModule, RedisModule, DatabaseModule],
+    imports: [LoggerModule.forRoot({ name: 'web-scheduler' }), ConfigerModule, RedisModule, DatabaseModule, RabbitmqModule],
     controllers: [],
     providers: [WebConsumerService]
 })

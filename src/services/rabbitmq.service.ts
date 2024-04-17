@@ -17,7 +17,7 @@ export class RabbitmqService {
                 [RabbitmqService.name, this.despatchCustomizeTransmitter.name].join(':'),
                 divineLogger(headers, { message: '发送自定义消息', data })
             )
-            return await this.amqpConnection.publish('web-customize-transmitter', 'sub-customize-transmitter', data, {
+            return await this.amqpConnection.publish('web-customize-messager', 'sub-customize-messager', data, {
                 timestamp: Date.now(),
                 messageId: headers[web.WEB_COMMON_HEADER_CONTEXTID]
             })
