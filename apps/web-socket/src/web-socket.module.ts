@@ -7,10 +7,12 @@ import { RabbitmqModule } from '@/modules/rabbitmq.module'
 import { WebSocketController } from '@web-socket/web-socket.controller'
 import { WebSocketService } from '@web-socket/web-socket.service'
 import { WebSocketEventGateway } from '@web-socket/web-socket.gateway'
+import { WebSocketMessagerService } from '@web-socket/web.socket-messager.service'
+import { WebSocketChangeMessagerService } from '@web-socket/web.socket-change-messager.service'
 
 @Module({
     imports: [LoggerModule.forRoot({ name: 'web-socket' }), ConfigerModule, RedisModule, DatabaseModule, RabbitmqModule],
     controllers: [WebSocketController],
-    providers: [WebSocketService, WebSocketEventGateway]
+    providers: [WebSocketService, WebSocketEventGateway, WebSocketMessagerService, WebSocketChangeMessagerService]
 })
 export class WebSocketModule {}
