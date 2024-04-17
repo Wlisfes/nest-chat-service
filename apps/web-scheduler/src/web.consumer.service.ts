@@ -63,6 +63,7 @@ export class WebConsumerService {
                 divineLogger(headers, { message: '自定义消息消费者-开始消费', data })
             )
             await this.httpUpdateCustomizeMessager(headers, data)
+            await this.rabbitmqService.despatchSocketMessager(headers, data)
             await divineDelay(2000)
             this.logger.info(
                 [WebConsumerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),

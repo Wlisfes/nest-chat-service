@@ -10,7 +10,11 @@ import { RabbitmqService } from '@/services/rabbitmq.service'
             inject: [ConfigService],
             useFactory(config: ConfigService) {
                 return {
-                    exchanges: [{ name: 'web-customize-messager', type: 'topic' }],
+                    exchanges: [
+                        { name: 'web-customize-messager', type: 'topic' },
+                        { name: 'web-socket-messager', type: 'topic' },
+                        { name: 'web-socket-change-messager', type: 'topic' }
+                    ],
                     uri: config.get('RABBITMQ_URL'),
                     connectionInitOptions: { wait: false },
                     prefetchCount: 1,
