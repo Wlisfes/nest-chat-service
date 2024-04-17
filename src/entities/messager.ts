@@ -1,6 +1,7 @@
 import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsEnum } from 'class-validator'
+import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**消息表: 记录类型**/
@@ -33,6 +34,11 @@ export class MessagerEntier extends CommonEntier {
     @Column({ comment: '消息SID', nullable: false })
     sid: string
 
+    @ApiProperty({ description: '会话SID', example: '2155687887377530880' })
+    @IsNotEmpty({ message: '会话SID必填' })
+    @Column({ comment: '会话SID', nullable: false })
+    sessionId: string
+
     @ApiProperty({ description: '消息发送用户UID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '消息发送用户UID必填' })
     @Column({ comment: '消息发送用户UID', nullable: false })
@@ -48,8 +54,8 @@ export class MessagerEntier extends CommonEntier {
     @Column({ comment: '社群ID', nullable: true })
     communitId: string
 
-    @ApiProperty({ description: '文本内容' })
-    @IsNotEmpty({ message: '内容必填' })
+    @ApiProperty({ description: '文本内容', required: false })
+    @IsOptional({ message: '文本内容' })
     @Column({ comment: '文本内容', nullable: true })
     text: string
 
@@ -63,17 +69,26 @@ export class MessagerEntier extends CommonEntier {
     source: string
 
     @ApiProperty({
-        description: '消息状态: sending-发送中、delivered-发送成功、failed-发送失败、read-已读、deleted-删除',
+        description: '消息状态: sending-发送中、delivered-发送成功、failed-发送失败、deleted-删除',
         enum: EnumMessagerStatus
     })
     @IsNotEmpty({ message: '消息状态必填' })
     @IsEnum(EnumMessagerStatus, { message: '消息状态参数格式错误' })
     @Column({
-        comment: '消息状态: sending-发送中、delivered-发送成功、failed-发送失败、read-已读、deleted-删除',
+        comment: '消息状态: sending-发送中、delivered-发送成功、failed-发送失败、deleted-删除',
         nullable: false,
-        default: 'enable'
+        default: 'sending'
     })
     status: string
+
+    @ApiProperty({ description: '失败原因', required: false })
+    @IsOptional({ message: '失败原因' })
+    @Column({ comment: '失败原因', nullable: true })
+    reason: string
 }
 
-export class SchemaMessagerEntier extends MessagerEntier {}
+export class SchemaMessagerEntier extends MessagerEntier {
+    @ApiProperty({ description: '文件ID', required: false })
+    @IsOptional({ message: '文件ID' })
+    fileId: string
+}

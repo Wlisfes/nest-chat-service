@@ -48,7 +48,7 @@ export class UserService {
                     buffer,
                     name,
                     size,
-                    source: entities.MediaEntierSource.avatar
+                    source: entities.MediaEntierSource.image
                 })
             })
             return await this.customService.divineWithTransaction(async manager => {

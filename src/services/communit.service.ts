@@ -30,7 +30,7 @@ export class CommunitService {
                 headers,
                 message: 'fileId不存在或者文件类型错误',
                 dispatch: {
-                    where: { fileId: scope.poster, source: entities.MediaEntierSource.avatar }
+                    where: { fileId: scope.poster, source: entities.MediaEntierSource.image }
                 }
             })
             /**新建社群记录**/

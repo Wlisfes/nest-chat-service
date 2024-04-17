@@ -12,9 +12,14 @@ export class MessagerController {
     @Post('/customize/transmitter')
     @ApiDecorator({
         operation: { summary: '发送自定义消息' },
+        authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpCustomizeMessager(@Headers() headers: env.Headers) {
-        return await this.messagerService.httpCustomizeMessager(headers)
+    public async httpCustomizeMessager(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyCustomizeMessager
+    ) {
+        return await this.messagerService.httpCustomizeMessager(headers, request.user.uid, body)
     }
 }

@@ -5,7 +5,6 @@ import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**媒体文件表: 文件类型**/
 export enum MediaEntierSource {
-    avatar = 'avatar',
     image = 'image',
     document = 'document',
     audio = 'audio',
@@ -19,10 +18,10 @@ export class MediaEntier extends CommonEntier {
     @Column({ comment: '上传用户ID', nullable: false })
     userId: string
 
-    @ApiProperty({ description: '上传类型: avatar-头像、image-图片、document-文档、audio-音频、video-视频', enum: MediaEntierSource })
+    @ApiProperty({ description: '上传类型: image-图片、document-文档、audio-音频、video-视频', enum: MediaEntierSource })
     @IsNotEmpty({ message: '上传类型必填' })
     @IsEnum(MediaEntierSource, { message: '上传类型参数格式错误' })
-    @Column({ comment: '上传类型: avatar-头像、image-图片、document-文档、audio-音频、video-视频', nullable: false })
+    @Column({ comment: '上传类型: image-图片、document-文档、audio-音频、video-视频', nullable: false })
     source: string
 
     @ApiProperty({ description: '文件ID', example: '2149446185344106496' })
