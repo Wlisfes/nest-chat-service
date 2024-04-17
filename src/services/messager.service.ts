@@ -131,7 +131,7 @@ export class MessagerService {
                     state: { sid: message.sid, fileId: scope.fileId }
                 })
                 /**写入记录**/
-                await this.httpCreateCustomizeMessager(headers, { ...message, fileId: scope.fileId }).catch(e => {
+                await this.httpCreateCustomizeMessager(headers, message).catch(e => {
                     message.status = entities.EnumMessagerStatus.failed
                     message.reason = e.message
                 })
