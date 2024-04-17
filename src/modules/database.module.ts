@@ -11,7 +11,8 @@ import {
     SessionEntier,
     NotificationEntier,
     MessagerEntier,
-    MessagerMediaEntier
+    MessagerMediaEntier,
+    MessagerReadEntier
 } from '@/entities/instance'
 
 export const forEntities = [
@@ -23,7 +24,8 @@ export const forEntities = [
     SessionEntier,
     NotificationEntier,
     MessagerEntier,
-    MessagerMediaEntier
+    MessagerMediaEntier,
+    MessagerReadEntier
 ]
 
 @Global()
