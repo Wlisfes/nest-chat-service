@@ -1,9 +1,11 @@
 import { HttpException, HttpStatus } from '@nestjs/common'
 import { create } from 'svg-captcha'
+import { createCanvas } from 'canvas'
 import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as stream from 'stream'
 import * as sizeOf from 'image-size'
+import * as pdfjsLib from 'pdfjs-dist'
 
 /**条件捕获、异常抛出**/
 export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; status?: number; cause?: env.Omix }>) {
@@ -49,5 +51,23 @@ export function divineStreamToBuffer(streamFile): Promise<Buffer> {
         streamFile.on('error', reject)
         streamFile.on('data', data => buffers.push(data))
         streamFile.on('end', () => resolve(Buffer.concat(buffers)))
+    })
+}
+
+/**获取PDF缩略图**/
+export function divineDocumentThumbnail(buffer: Buffer): Promise<Buffer> {
+    return new Promise(async resolve => {
+        try {
+            const uint8array = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+            const pdf = await pdfjsLib.getDocument({ data: uint8array }).promise
+            const page = await pdf.getPage(1)
+            const viewport = page.getViewport({ scale: 1 })
+            const canvas = createCanvas(viewport.width, viewport.height)
+            const context = canvas.getContext('2d')
+            await page.render({ canvasContext: context as never, viewport: viewport }).promise
+            resolve(canvas.toBuffer('image/jpeg'))
+        } catch (e) {
+            return await divineCatchWherer(true, { message: e.message, status: HttpStatus.INTERNAL_SERVER_ERROR })
+        }
     })
 }
