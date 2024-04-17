@@ -27,10 +27,10 @@ export class UploaderController {
         @Body() body: env.BodyBaseUploader,
         @UploadedFile(
             new CustomizeEnumUploadValidator({
-                avatar: { maxSize: 3, fileType: ['jpg', 'jpeg', 'png', 'webp'] },
                 image: { maxSize: 10, fileType: ['jpg', 'jpeg', 'png', 'webp', 'gif'] },
                 audio: { maxSize: 10, fileType: ['mp3'] },
-                video: { maxSize: 20, fileType: ['mp4'] }
+                video: { maxSize: 20, fileType: ['mp4'] },
+                document: { maxSize: 20, fileType: ['doc', 'docx', 'pdf', 'txt'] }
             })
         )
         file: Express.Multer.File

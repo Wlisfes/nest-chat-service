@@ -4,9 +4,7 @@ import { Logger } from 'winston'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
-import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -21,6 +19,11 @@ export class MessagerService {
     /**写入自定义消息记录**/
     private async httpCreateCustomizeMessager(headers: env.Headers, scope: env.Omix<Partial<entities.MessagerEntier>>) {
         try {
+            /**写入已读记录**/
+            await this.customService.divineCreate(this.customService.tableMessagerRead, {
+                headers,
+                state: { sid: scope.sid, userId: scope.userId }
+            })
             return await this.customService.divineCreate(this.customService.tableMessager, {
                 headers,
                 state: scope
@@ -128,7 +131,7 @@ export class MessagerService {
                     state: { sid: message.sid, fileId: scope.fileId }
                 })
                 /**写入记录**/
-                await this.httpCreateCustomizeMessager(headers, message).catch(e => {
+                await this.httpCreateCustomizeMessager(headers, { ...message, fileId: scope.fileId }).catch(e => {
                     message.status = entities.EnumMessagerStatus.failed
                     message.reason = e.message
                 })

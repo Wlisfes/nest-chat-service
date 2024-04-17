@@ -32,6 +32,7 @@ export class CustomService {
         @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
         @InjectRepository(entities.MessagerEntier) public readonly tableMessager: Repository<entities.MessagerEntier>,
         @InjectRepository(entities.MessagerMediaEntier) public readonly tableMessageMediar: Repository<entities.MessagerMediaEntier>,
+        @InjectRepository(entities.MessagerReadEntier) public readonly tableMessagerRead: Repository<entities.MessagerReadEntier>,
         private readonly entityManager: EntityManager,
         private readonly dataSource: DataSource,
         private readonly jwtService: JwtService

@@ -61,6 +61,11 @@ export function divineWherer<T>(where: boolean, value: T, defaultValue: T = unde
     return where ? value : defaultValue
 }
 
+/**参数组合**/
+export async function divineParameter<T>(params: env.Omix<T>): Promise<env.Omix<T>> {
+    return params
+}
+
 /**日志聚合**/
 export function divineLogger(headers: env.Omix<env.Headers> = {}, log: env.Omix | string = {}) {
     const duration = headers[web.WEB_COMMON_HEADER_STARTTIME]

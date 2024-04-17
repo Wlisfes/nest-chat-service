@@ -116,7 +116,7 @@ export class UploaderService {
                     height: 0
                 }
                 /**图片资源上传**/
-                if ([entities.MediaEntierSource.avatar, entities.MediaEntierSource.image].includes(scope.source as never)) {
+                if (entities.MediaEntierSource.image === scope.source) {
                     const { width, height } = await divineImageResize(file.buffer)
                     params.width = width
                     params.height = height
