@@ -4,7 +4,7 @@ import { MessagerService } from '@/services/messager.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import * as env from '@/interface/instance.resolver'
 
-@ApiTags('聊天模块')
+@ApiTags('消息模块')
 @Controller('messager')
 export class MessagerController {
     constructor(private readonly messagerService: MessagerService) {}
