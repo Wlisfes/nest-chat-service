@@ -69,7 +69,7 @@ export class SessionService {
                                         )
                                         qb.select(divineSelection('t', ['sid', 'sessionId', 'source', 'status', 'userId']))
                                         qb.where('t.sessionId = :sessionId AND read.sid IS NULL', { sessionId: item.sid })
-                                        return await qb.getMany().then(node => Object.assign(node, { read: false }))
+                                        return await qb.getMany()
                                     })
                                 })
                             })
