@@ -1,23 +1,26 @@
 import { Injectable } from '@nestjs/common'
+import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketClientService {
     private readonly client: Map<string, env.AuthSocket> = new Map()
 
-    private async closure(userId: string) {
-        const socket = await this.getClient(userId)
-        if (socket && socket.connected) {
-            await socket.disconnect()
-        }
-        return await this.delClient(userId)
+    public async closure(socket: env.AuthSocket) {
+        await socket.disconnect()
+        return await this.delClient(socket.user.uid)
     }
 
     public async setClient(userId: string, socket: env.AuthSocket) {
         const app = await this.getClient(userId)
-        if (app && app.id !== socket.id && app.connected) {
+        if (app && app.id === socket.id) {
+            return this.client.set(userId, socket)
+        } else if (app) {
+            await divineHandler(app.connected, async () => {
+                return await this.closure(app)
+            })
+            await this.delClient(userId)
         }
-        await this.closure(userId)
         return this.client.set(userId, socket)
     }
 
