@@ -15,11 +15,11 @@ export class MessagerController {
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpCustomizeMessager(
+    public async httpCustomizeMessagerTransmitter(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
-        @Body() body: env.BodyCustomizeMessager
+        @Body() body: env.BodyCustomizeMessagerTransmitter
     ) {
-        return await this.messagerService.httpCustomizeMessager(headers, request.user.uid, body)
+        return await this.messagerService.httpCustomizeMessagerTransmitter(headers, request.user.uid, body)
     }
 }

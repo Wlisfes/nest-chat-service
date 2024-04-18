@@ -16,37 +16,8 @@ export class MessagerService {
         private readonly rabbitmqService: RabbitmqService
     ) {}
 
-    /**写入自定义消息记录**/
-    private async httpCreateCustomizeMessager(headers: env.Headers, scope: env.Omix<Partial<entities.MessagerEntier>>) {
-        try {
-            /**写入已读记录**/
-            await this.customService.divineCreate(this.customService.tableMessagerRead, {
-                headers,
-                state: { sid: scope.sid, userId: scope.userId }
-            })
-            return await this.customService.divineCreate(this.customService.tableMessager, {
-                headers,
-                state: scope
-            })
-        } catch (e) {
-            await this.customService.divineUpdate(this.customService.tableMessager, {
-                headers,
-                where: { sid: scope.sid },
-                state: {
-                    reason: e.message,
-                    status: entities.EnumMessagerStatus.failed
-                }
-            })
-            this.logger.error(
-                [MessagerService.name, this.httpCreateCustomizeMessager.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
-
-    /**发送自定义消息**/
-    public async httpCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCustomizeMessager) {
+    /**自定义消息前置参数校验**/
+    public async httpCheckCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
         try {
             if (scope.source === entities.EnumMessagerSource.text) {
                 /**文本消息**/
@@ -60,7 +31,7 @@ export class MessagerService {
                 })
             }
             /**验证会话ID、好友、社群绑定关系**/
-            const data = await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
                 qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
                 qb.leftJoinAndMapOne(
@@ -94,6 +65,72 @@ export class MessagerService {
                     return await divineResolver(node)
                 })
             })
+        } catch (e) {
+            this.logger.error(
+                [MessagerService.name, this.httpCheckCustomizeMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**验证消息文件ID数据**/
+    public async httpCheckMediaMessager(headers: env.Headers, userId: string, scope: env.BodyCheckMediaMessager) {
+        try {
+            const node = await this.customService.divineHaver(this.customService.tableMedia, {
+                headers,
+                message: '媒体ID不存在',
+                dispatch: {
+                    where: { fileId: scope.fileId, userId }
+                }
+            })
+            await this.customService.divineCatchWherer(node.source !== scope.source, null, {
+                message: '媒体类型错误'
+            })
+            return await divineResolver(node)
+        } catch (e) {
+            this.logger.error(
+                [MessagerService.name, this.httpCheckMediaMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**写入自定义消息记录**/
+    public async httpCreateCustomizeMessager(headers: env.Headers, scope: env.Omix<Partial<entities.MessagerEntier>>) {
+        try {
+            /**写入已读记录**/
+            await this.customService.divineCreate(this.customService.tableMessagerRead, {
+                headers,
+                state: { sid: scope.sid, userId: scope.userId }
+            })
+            return await this.customService.divineCreate(this.customService.tableMessager, {
+                headers,
+                state: scope
+            })
+        } catch (e) {
+            await this.customService.divineUpdate(this.customService.tableMessager, {
+                headers,
+                where: { sid: scope.sid },
+                state: {
+                    reason: e.message,
+                    status: entities.EnumMessagerStatus.failed
+                }
+            })
+            this.logger.error(
+                [MessagerService.name, this.httpCreateCustomizeMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**发送自定义消息通用方法**/
+    public async httpCommonCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCommonCustomizeMessager) {
+        try {
+            /**验证会话ID、好友、社群绑定关系**/
+            const data = await this.httpCheckCustomizeMessager(headers, userId, scope)
             const message = {
                 sid: await divineIntNumber(), //消息SID
                 sessionId: scope.sessionId, //会话SID
@@ -103,7 +140,8 @@ export class MessagerService {
                 text: scope.text, //文本内容
                 source: scope.source, //消息类型
                 status: entities.EnumMessagerStatus.sending, //消息状态
-                reason: null //消息失败原因
+                reason: null, //消息失败原因
+                referrer: scope.referrer //消息来源
             }
             if (scope.source === entities.EnumMessagerSource.text) {
                 /**文本消息**/
@@ -112,18 +150,10 @@ export class MessagerService {
                     message.reason = e.message
                 })
             } else {
-                /**媒体消息文件验证**/ //prettier-ignore
-                await this.customService.divineHaver(this.customService.tableMedia, {
-                    headers,
-                    message: '媒体ID不存在',
-                    dispatch: {
-                        where: { fileId: scope.fileId, userId }
-                    }
-                }).then(async node => {
-                    await this.customService.divineCatchWherer(node.source !== scope.source, null, {
-                        message: '媒体类型错误'
-                    })
-                    return await divineResolver(node)
+                /**媒体消息文件验证**/
+                await this.httpCheckMediaMessager(headers, userId, {
+                    source: scope.source,
+                    fileId: scope.fileId
                 })
                 /**写入媒体记录关联**/
                 await this.customService.divineCreate(this.customService.tableMessageMediar, {
@@ -142,10 +172,19 @@ export class MessagerService {
             })
         } catch (e) {
             this.logger.error(
-                [MessagerService.name, this.httpCustomizeMessager.name].join(':'),
+                [MessagerService.name, this.httpCommonCustomizeMessager.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
+    }
+
+    /**HTTP接口发送自定义消息**/
+    public async httpCustomizeMessagerTransmitter(headers: env.Headers, userId: string, scope: env.BodyCustomizeMessagerTransmitter) {
+        return await this.httpCommonCustomizeMessager(
+            headers,
+            userId,
+            Object.assign(scope, { referrer: entities.EnumMessagerReferrer.http })
+        )
     }
 }

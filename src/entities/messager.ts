@@ -27,6 +27,12 @@ export enum EnumMessagerStatus {
     deleted = 'deleted' //删除
 }
 
+/**消息表: 消息来源**/
+export enum EnumMessagerReferrer {
+    socket = 'socket',
+    http = 'http'
+}
+
 @Entity({ name: 'messager', comment: '消息表' })
 export class MessagerEntier extends CommonEntier {
     @ApiProperty({ description: '消息SID', example: '2149446185344106496' })
@@ -85,6 +91,12 @@ export class MessagerEntier extends CommonEntier {
     @IsOptional({ message: '失败原因' })
     @Column({ comment: '失败原因', nullable: true })
     reason: string
+
+    @ApiProperty({ description: '消息来源: socket、http', enum: EnumMessagerReferrer })
+    @IsNotEmpty({ message: '消息来源必填' })
+    @IsEnum(EnumMessagerReferrer, { message: '消息来源参数格式错误' })
+    @Column({ comment: '消息来源: socket、http', nullable: false, default: 'http' })
+    referrer: string
 }
 
 export class SchemaMessagerEntier extends MessagerEntier {
