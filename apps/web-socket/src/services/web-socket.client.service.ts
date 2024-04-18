@@ -1,26 +1,28 @@
-import { Injectable } from '@nestjs/common'
-import { divineHandler } from '@/utils/utils-common'
+import { Injectable, HttpStatus } from '@nestjs/common'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketClientService {
     private readonly client: Map<string, env.AuthSocket> = new Map()
 
-    public async closure(socket: env.AuthSocket) {
-        await socket.disconnect()
-        return await this.delClient(socket.user.uid)
+    /**抛出中断消息**/
+    public async discontinue(socket: env.AuthSocket) {
+        return await socket.emit('discontinue', { message: '挤出', status: HttpStatus.FORBIDDEN })
     }
 
-    public async setClient(userId: string, socket: env.AuthSocket) {
-        const app = await this.getClient(userId)
-        if (app && app.id === socket.id) {
-            return this.client.set(userId, socket)
-        } else if (app) {
-            await divineHandler(app.connected, async () => {
-                return await this.closure(app)
-            })
-            await this.delClient(userId)
+    /**关闭实例**/
+    public async disconnect(userId: string) {
+        const socket = await this.getClient(userId)
+        if (socket && socket.connected) {
+            await this.discontinue(socket)
+            await socket.disconnect()
         }
+        return await this.delClient(userId)
+    }
+
+    /**存储实例**/
+    public async setClient(userId: string, socket: env.AuthSocket) {
+        await this.disconnect(userId)
         return this.client.set(userId, socket)
     }
 
