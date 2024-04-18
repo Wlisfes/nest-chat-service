@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common'
-import { AuthSocket } from '@web-socket/web-socket.resolver'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketClientService {
-    private readonly client: Map<string, AuthSocket> = new Map()
+    private readonly client: Map<string, env.AuthSocket> = new Map()
 
-    public async setClient(userId: string, socket: AuthSocket) {
+    public async setClient(userId: string, socket: env.AuthSocket) {
         return this.client.set(userId, socket)
     }
 

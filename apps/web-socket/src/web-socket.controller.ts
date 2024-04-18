@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common'
-import { WebSocketService } from '@web-socket/web-socket.service'
+import { WebSocketService } from '@web-socket/services/web-socket.service'
 
 @Controller()
 export class WebSocketController {

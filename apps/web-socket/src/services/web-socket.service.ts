@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { AuthSocket } from '@web-socket/web-socket.resolver'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketService {}

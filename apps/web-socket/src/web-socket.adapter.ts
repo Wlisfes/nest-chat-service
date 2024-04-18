@@ -1,7 +1,7 @@
 import { IoAdapter } from '@nestjs/platform-socket.io'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
-import { AuthSocket } from '@web-socket/web-socket.resolver'
+import * as env from '@/interface/instance.resolver'
 
 export class WebSocketAdapter extends IoAdapter {
     constructor(app, private readonly logger: Logger, private readonly customService: CustomService) {
@@ -10,7 +10,7 @@ export class WebSocketAdapter extends IoAdapter {
 
     createIOServer(port: number, options?: Record<string, any>) {
         const server = super.createIOServer(port, options)
-        server.use(async (socket: AuthSocket, next) => {
+        server.use(async (socket: env.AuthSocket, next) => {
             const { headers } = socket.handshake
             if (!headers.authorization) {
                 return next(new Error('未登录'))

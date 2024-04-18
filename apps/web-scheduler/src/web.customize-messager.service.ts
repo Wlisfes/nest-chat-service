@@ -5,7 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
-import { divineDelay, divineLogger } from '@/utils/utils-common'
+import { divineLogger } from '@/utils/utils-common'
 import { divineCustomizeHeaders } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -50,7 +50,6 @@ export class WebCustomizeMessagerService {
             )
             await this.httpUpdateCustomizeMessager(headers, data)
             await this.rabbitmqService.despatchSocketMessager(headers, data)
-            await divineDelay(2000)
             this.logger.info(
                 [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
                 divineLogger(headers, { message: '自定义消息消费者-消费完成', data })
