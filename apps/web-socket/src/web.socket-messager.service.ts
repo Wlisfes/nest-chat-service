@@ -31,7 +31,7 @@ export class WebSocketMessagerService {
                 [WebSocketMessagerService.name, this.SubscribeSocketMessager.name].join(':'),
                 divineLogger(headers, { message: 'socket消息推送-开始消费', data })
             )
-            await divineDelay(2000)
+            await divineDelay(0)
             this.logger.info(
                 [WebSocketMessagerService.name, this.SubscribeSocketMessager.name].join(':'),
                 divineLogger(headers, { message: 'socket消息推送-消费完成', data })

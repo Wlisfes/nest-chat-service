@@ -1,25 +1,27 @@
 import { IoAdapter } from '@nestjs/platform-socket.io'
-import { WsException } from '@nestjs/websockets'
-import { Socket } from 'socket.io'
 import { Logger } from 'winston'
-import { RedisService } from '@/services/redis/redis.service'
-
-export interface AuthSocket extends Socket {
-    user?: any
-}
+import { CustomService } from '@/services/custom.service'
+import { AuthSocket } from '@web-socket/web-socket.resolver'
 
 export class WebSocketAdapter extends IoAdapter {
-    constructor(app, private readonly logger: Logger, private readonly RedisService: RedisService) {
+    constructor(app, private readonly logger: Logger, private readonly customService: CustomService) {
         super(app)
     }
 
     createIOServer(port: number, options?: Record<string, any>) {
         const server = super.createIOServer(port, options)
         server.use(async (socket: AuthSocket, next) => {
-            const { headers, auth } = socket.handshake
-            console.log({ headers, auth })
-            if (!auth.token) {
-                return next(new Error('Not Authenticated'))
+            const { headers } = socket.handshake
+            if (!headers.authorization) {
+                return next(new Error('未登录'))
+            } else {
+                try {
+                    socket.user = await this.customService.divineJwtTokenParser(headers.authorization, {
+                        message: '身份验证失败'
+                    })
+                } catch (e) {
+                    return next(new Error(e.message))
+                }
             }
             return next()
         })

@@ -1,6 +1,11 @@
+import { Inject } from '@nestjs/common'
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
 import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { Server, Socket } from 'socket.io'
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
+import { Logger } from 'winston'
+import { WebSocketClientService } from '@web-socket/web-socket.client.service'
+import { WebSocketService } from '@web-socket/web-socket.service'
 import * as web from '@/config/instance.config'
 
 @WebSocketGateway(web.WEB_SOCKET_PORT, {
@@ -10,18 +15,22 @@ import * as web from '@/config/instance.config'
     pingTimeout: 15000
 })
 export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisconnect {
-    @WebSocketServer() private readonly server: Server
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        private readonly webSocketClientService: WebSocketClientService,
+        private readonly webSocketService: WebSocketService
+    ) {}
 
-    afterInit(@ConnectedSocket() client: Socket) {
+    public async afterInit(@ConnectedSocket() socket: Socket) {
         console.log('[web-socket]服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
     }
 
-    handleDisconnect(@ConnectedSocket() client: Socket) {}
-
-    handleConnection(@ConnectedSocket() client: Socket) {
-        console.log('客户端已连接:', client.id)
+    public async handleConnection(@ConnectedSocket() client: Socket) {
+        console.log('客户端已连接:', client)
         // client.emit('connect', { message: '连接成功' })
     }
+
+    public async handleDisconnect(@ConnectedSocket() client: Socket) {}
 
     @SubscribeMessage('sender')
     subscribeSender(@ConnectedSocket() client: Socket, @MessageBody() data: { name: string }) {
