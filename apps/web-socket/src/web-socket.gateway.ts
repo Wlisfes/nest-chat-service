@@ -1,11 +1,13 @@
 import { Inject, UseGuards } from '@nestjs/common'
-import { AuthGuard } from '@/guards/auth.guard'
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
 import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { Server, Socket } from 'socket.io'
+import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
+import { divineLogger } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
@@ -22,13 +24,21 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
         private readonly webSocketService: WebSocketService
     ) {}
 
-    public async afterInit(@ConnectedSocket() socket: env.AuthSocket) {
+    /**服务启动**/
+    public async afterInit(server: Server) {
         console.log('[web-socket]服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
     }
 
+    /**客户端连接**/
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
-        console.log('客户端已连接:', socket.id, socket.user)
-        // client.emit('connect', { message: '连接成功' })
+        this.logger.info(
+            [WebSocketEventGateway.name, this.handleConnection.name].join(':'),
+            divineLogger(
+                { [web.WEB_COMMON_HEADER_CONTEXTID]: socket.id },
+                { message: '客户端连接', socketId: socket.id, user: socket.user }
+            )
+        )
+        await this.webSocketClientService.setClient(socket.user.uid, socket)
     }
 
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {}
@@ -48,10 +58,10 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     public fetchCommunitMessager(@ConnectedSocket() socket: env.AuthSocket, @MessageBody() data: { name: string }) {}
 
     /**私聊消息**/
-    @UseGuards(AuthGuard)
+    @UseGuards(WebSocketGuard)
     @SubscribeMessage('private-messager')
     public fetchPrivateMessager(@ConnectedSocket() socket: env.AuthSocket, @MessageBody() data: { name: string }) {
-        console.log('private-sender:', data, socket.handshake.headers)
+        console.log('private-sender:', data, socket.user)
         // console.log('client:', client)
         return {
             event: 'private-sender',
