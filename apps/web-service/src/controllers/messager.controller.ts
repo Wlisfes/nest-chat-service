@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger'
 import { MessagerService } from '@/services/messager.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
 import * as env from '@/interface/instance.resolver'
+import * as entities from '@/entities/instance'
 
 @ApiTags('消息模块')
 @Controller('messager')
@@ -18,8 +19,11 @@ export class MessagerController {
     public async httpCustomizeMessagerTransmitter(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
-        @Body() body: env.BodyCustomizeMessagerTransmitter
+        @Body() body: env.BodyCheckCustomizeMessager
     ) {
-        return await this.messagerService.httpCustomizeMessagerTransmitter(headers, request.user.uid, body)
+        return await this.messagerService.httpCommonCustomizeMessager(headers, request.user.uid, {
+            ...body,
+            referrer: entities.EnumMessagerReferrer.http
+        })
     }
 }

@@ -58,7 +58,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @SubscribeMessage('socket-customize-messager')
     public async SubscribeSocketCustomizeMessager(
         @ConnectedSocket() socket: env.AuthSocket,
-        @MessageBody() scope: env.BodySocketCustomizeMessager
+        @MessageBody() scope: env.BodyCheckCustomizeMessager
     ) {
         try {
             this.logger.info(

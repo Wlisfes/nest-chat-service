@@ -178,13 +178,4 @@ export class MessagerService {
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
-
-    /**HTTP接口发送自定义消息**/
-    public async httpCustomizeMessagerTransmitter(headers: env.Headers, userId: string, scope: env.BodyCustomizeMessagerTransmitter) {
-        return await this.httpCommonCustomizeMessager(
-            headers,
-            userId,
-            Object.assign(scope, { referrer: entities.EnumMessagerReferrer.http })
-        )
-    }
 }

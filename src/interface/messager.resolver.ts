@@ -18,9 +18,3 @@ export class BodyCommonCustomizeMessager extends PickType(entities.SchemaMessage
 
 /**验证消息文件ID数据**/
 export class BodyCheckMediaMessager extends PickType(entities.SchemaMessagerEntier, ['source', 'fileId']) {}
-
-/**HTTP接口发送自定义消息**/
-export class BodyCustomizeMessagerTransmitter extends BodyCheckCustomizeMessager {}
-
-/**Socket发送自定义消息**/
-export class BodySocketCustomizeMessager extends BodyCheckCustomizeMessager {}

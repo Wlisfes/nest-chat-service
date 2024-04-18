@@ -10,13 +10,10 @@ export class WebSocketService {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly messagerService: MessagerService) {}
 
     /**Socket发送自定义消息**/
-    public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodySocketCustomizeMessager) {
-        return await this.messagerService.httpCommonCustomizeMessager(
-            headers,
-            userId,
-            Object.assign(scope, {
-                referrer: entities.EnumMessagerReferrer.socket
-            })
-        )
+    public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
+        return await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
+            ...scope,
+            referrer: entities.EnumMessagerReferrer.socket
+        })
     }
 }
