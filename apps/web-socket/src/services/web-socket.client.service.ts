@@ -1,9 +1,16 @@
 import { Injectable, HttpStatus } from '@nestjs/common'
+import { Server } from 'socket.io'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketClientService {
-    private readonly client: Map<string, env.AuthSocket> = new Map()
+    public readonly client: Map<string, env.AuthSocket> = new Map()
+    public server: Server
+
+    /**存储Socket运行实例**/
+    public async setServer(server: Server) {
+        return (this.server = server)
+    }
 
     /**抛出中断消息**/
     public async closure(socket: env.AuthSocket) {
@@ -30,10 +37,6 @@ export class WebSocketClientService {
 
     public async getClient(userId: string) {
         return this.client.get(userId)
-    }
-
-    public async getAllClient() {
-        return this.client
     }
 
     public async delClient(userId: string) {

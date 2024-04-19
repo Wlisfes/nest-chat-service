@@ -62,7 +62,7 @@ export class MessagerEntier extends CommonEntier {
 
     @ApiProperty({ description: '文本内容', required: false })
     @IsOptional({ message: '文本内容' })
-    @Column({ comment: '文本内容', nullable: true })
+    @Column({ comment: '文本内容', length: 2048, nullable: true })
     text: string
 
     @ApiProperty({
@@ -89,7 +89,7 @@ export class MessagerEntier extends CommonEntier {
 
     @ApiProperty({ description: '失败原因', required: false })
     @IsOptional({ message: '失败原因' })
-    @Column({ comment: '失败原因', nullable: true })
+    @Column({ comment: '失败原因', length: 2048, nullable: true })
     reason: string
 
     @ApiProperty({ description: '消息来源: socket、http', enum: EnumMessagerReferrer })

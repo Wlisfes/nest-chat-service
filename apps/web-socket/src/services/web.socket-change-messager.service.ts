@@ -3,8 +3,7 @@ import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq'
 import { ConsumeMessage } from 'amqplib'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { CustomService } from '@/services/custom.service'
-import { RabbitmqService } from '@/services/rabbitmq.service'
+import { WebSocketService } from '@web-socket/services/web-socket.service'
 import { divineDelay, divineLogger } from '@/utils/utils-common'
 import { divineCustomizeHeaders } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
@@ -12,11 +11,7 @@ import * as entities from '@/entities/instance'
 
 @Injectable()
 export class WebSocketChangeMessagerService {
-    constructor(
-        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        private readonly customService: CustomService,
-        private readonly rabbitmqService: RabbitmqService
-    ) {}
+    constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly webSocketService: WebSocketService) {}
 
     /**socket消息状态推送消费者**/
     @RabbitSubscribe({

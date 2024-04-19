@@ -3,7 +3,7 @@ import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDiscon
 import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { Server, Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
@@ -18,6 +18,8 @@ import * as env from '@/interface/instance.resolver'
     pingTimeout: 15000
 })
 export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer() private readonly server: Server
+
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly webSocketClientService: WebSocketClientService,
@@ -27,6 +29,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     /**服务启动**/
     public async afterInit(server: Server) {
         console.log('[web-socket]服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
+        await this.webSocketClientService.setServer(server)
     }
 
     /**开启长连接**/
@@ -38,6 +41,8 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
                 { message: '开启长连接', socketId: socket.id, user: socket.user }
             )
         )
+        const sid = '2156085601013678080'
+        socket.join(sid)
         await this.webSocketClientService.setClient(socket.user.uid, socket)
     }
 
