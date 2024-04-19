@@ -4,6 +4,7 @@ import { Logger } from 'winston'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
+import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -173,6 +174,65 @@ export class MessagerService {
         } catch (e) {
             this.logger.error(
                 [MessagerService.name, this.httpCommonCustomizeMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**会话消息列表**/
+    public async httpSessionColumnMessager(headers: env.Headers, userId: string, scope: env.QuerySessionColumnMessager) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableMessager, async qb => {
+                /**媒体文件联查**/
+                qb.leftJoinAndMapMany('t.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = t.sid')
+                qb.leftJoinAndMapOne('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
+                qb.leftJoinAndMapOne('media.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
+                /**已读用户联查**/
+                qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = t.sid')
+                /**联系人联查**/
+                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                /**社群联查**/
+                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne(
+                    'communit.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = communit.uid AND member.userId = :userId',
+                    { userId: userId }
+                )
+                qb.select([
+                    /**消息基础字段**/
+                    ...divineSelection('t', ['keyId', 'sid', 'createTime', 'updateTime', 'sessionId', 'userId']),
+                    ...divineSelection('t', ['contactId', 'communitId', 'text', 'source', 'status', 'reason', 'referrer']),
+                    /**媒体文件字段**/
+                    ...divineSelection('medias', ['sid', 'fileId']),
+                    ...divineSelection('media', ['source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('depater', ['fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    /**已读用户字段**/
+                    ...divineSelection('reads', ['sid', 'userId'])
+                ])
+                qb.where(`t.sessionId = :sessionId AND (contact.userId = :userId OR contact.niveId = :userId OR member.userId = :userId)`, {
+                    sessionId: scope.sessionId
+                })
+                qb.orderBy('t.createTime', 'DESC')
+                qb.skip((scope.page - 1) * scope.size)
+                qb.take(scope.size)
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    return await divineResolver({
+                        total,
+                        list: list.map((item: env.Omix) => ({
+                            ...item,
+                            medias: (item.medias ?? []).map((media: env.Omix<entities.MediaEntier>) => {
+                                return { sid: media.sid, fileId: media.fileId, ...media.media }
+                            })
+                        }))
+                    })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [MessagerService.name, this.httpSessionColumnMessager.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

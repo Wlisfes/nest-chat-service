@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, Request } from '@nestjs/common'
+import { Controller, Get, Post, Body, Query, Headers, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { MessagerService } from '@/services/messager.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
@@ -25,5 +25,19 @@ export class MessagerController {
             ...body,
             referrer: entities.EnumMessagerReferrer.http
         })
+    }
+
+    @Get('/session/column')
+    @ApiDecorator({
+        operation: { summary: '会话消息列表' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpSessionColumnMessager(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.QuerySessionColumnMessager
+    ) {
+        return await this.messagerService.httpSessionColumnMessager(headers, request.user.uid, query)
     }
 }
