@@ -11,6 +11,35 @@ import * as entities from '@/entities/instance'
 export class SessionService {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly customService: CustomService) {}
 
+    /**获取当前用户所有会话房间**/
+    public async httpSocketConnection(headers: env.Headers, userId: string) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne(
+                    'communit.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = communit.uid AND member.userId = :userId',
+                    { userId: userId }
+                )
+                qb.where(`(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)`, {
+                    userId: userId
+                })
+                return qb.getMany().then(async list => {
+                    return await divineResolver(list.map(node => node.sid))
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [SessionService.name, this.httpSocketConnection.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
     /**会话列表**/
     public async httpSessionColumn(headers: env.Headers, userId: string) {
         try {

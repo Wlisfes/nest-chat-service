@@ -34,26 +34,18 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
 
     /**开启长连接**/
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
+        await this.webSocketService.httpSocketConnection(socket, socket.user.uid)
         this.logger.info(
-            [WebSocketEventGateway.name, this.handleConnection.name].join(':'),
-            divineLogger(
-                { [web.WEB_COMMON_HEADER_CONTEXTID]: socket.id },
-                { message: '开启长连接', socketId: socket.id, user: socket.user }
-            )
+            [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),
+            divineLogger(socket.handshake.headers, { message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user })
         )
-        const sid = '2156085601013678080'
-        socket.join(sid)
-        await this.webSocketClientService.setClient(socket.user.uid, socket)
     }
 
     /**中断长连接**/
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {
         this.logger.info(
             [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),
-            divineLogger(
-                { [web.WEB_COMMON_HEADER_CONTEXTID]: socket.id },
-                { message: '中断长连接', socketId: socket.id, user: socket.user }
-            )
+            divineLogger(socket.handshake.headers, { message: '中断长连接', socketId: socket.id, user: socket.user })
         )
         await this.webSocketClientService.disconnect(socket.user.uid)
     }
@@ -70,12 +62,18 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
                 [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '发送自定义消息-开始', socketId: socket.id, data: scope })
             )
-            const node = await this.webSocketService.httpSocketCustomizeMessager(socket.handshake.headers, socket.user.uid, scope)
-            this.logger.info(
-                [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
-                divineLogger(socket.handshake.headers, { message: '发送自定义消息-结束', socketId: socket.id, node })
-            )
-            return await divineResolver(node)
+            //prettier-ignore
+            return await this.webSocketService.httpSocketCustomizeMessager(
+                socket.handshake.headers,
+                socket.user.uid,
+                scope
+            ).then(async node => {
+                this.logger.info(
+                    [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
+                    divineLogger(socket.handshake.headers, { message: '发送自定义消息-结束', socketId: socket.id, node })
+                )
+                return await divineResolver(node)
+            })
         } catch (e) {
             this.logger.error(
                 [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),

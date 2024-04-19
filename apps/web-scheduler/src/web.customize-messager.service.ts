@@ -5,7 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
-import { divineLogger } from '@/utils/utils-common'
+import { divineLogger, divineResolver } from '@/utils/utils-common'
 import { divineCustomizeHeaders } from '@/utils/utils-plugin'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -21,11 +21,12 @@ export class WebCustomizeMessagerService {
     /**更新自定义消息状态**/
     private async httpUpdateCustomizeMessager(headers: env.Headers, scope: env.Omix<entities.MessagerEntier>) {
         try {
-            return await this.customService.divineUpdate(this.customService.tableMessager, {
+            await this.customService.divineUpdate(this.customService.tableMessager, {
                 headers,
                 where: { sid: scope.sid },
                 state: { status: entities.EnumMessagerStatus.delivered }
             })
+            return await divineResolver({ ...scope, status: entities.EnumMessagerStatus.delivered })
         } catch (e) {
             this.logger.error(
                 [WebCustomizeMessagerService.name, this.httpUpdateCustomizeMessager.name].join(':'),
@@ -48,8 +49,11 @@ export class WebCustomizeMessagerService {
                 [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
                 divineLogger(headers, { message: '自定义消息消费者-开始消费', data })
             )
-            await this.httpUpdateCustomizeMessager(headers, data)
-            await this.rabbitmqService.despatchSocketMessager(headers, data)
+            /**更新消息状态**/
+            await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
+                /**socket消息推送**/
+                return await this.rabbitmqService.despatchSocketMessager(headers, scope)
+            })
             this.logger.info(
                 [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
                 divineLogger(headers, { message: '自定义消息消费者-消费完成', data })
