@@ -40,4 +40,18 @@ export class MessagerController {
     ) {
         return await this.messagerService.httpSessionColumnMessager(headers, request.user.uid, query)
     }
+
+    @Get('/session/resolver')
+    @ApiDecorator({
+        operation: { summary: '获取消息详情' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpSessionOneMessager(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.QuerySessionOneMessager
+    ) {
+        return await this.messagerService.httpSessionOneMessager(headers, query)
+    }
 }

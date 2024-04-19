@@ -16,6 +16,9 @@ export class BodyCommonCustomizeMessager extends IntersectionType(
 /**验证消息文件ID数据**/
 export class BodyCheckMediaMessager extends PickType(entities.SchemaMessagerEntier, ['source', 'fileId']) {}
 
+/**获取消息详情**/
+export class QuerySessionOneMessager extends PickType(entities.SchemaMessagerEntier, ['sid']) {}
+
 /**会话消息列表**/
 export class QuerySessionColumnMessager extends IntersectionType(
     PickType(entities.SchemaMessagerEntier, ['sessionId']),

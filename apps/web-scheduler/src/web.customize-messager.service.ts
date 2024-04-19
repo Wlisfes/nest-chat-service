@@ -50,13 +50,14 @@ export class WebCustomizeMessagerService {
                 divineLogger(headers, { message: '自定义消息消费者-开始消费', data })
             )
             /**更新消息状态**/
-            await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
+            const result = await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
                 /**socket消息推送**/
-                return await this.rabbitmqService.despatchSocketMessager(headers, scope)
+                await this.rabbitmqService.despatchSocketMessager(headers, scope)
+                return await divineResolver(scope)
             })
             this.logger.info(
                 [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
-                divineLogger(headers, { message: '自定义消息消费者-消费完成', data })
+                divineLogger(headers, { message: '自定义消息消费者-消费完成', data: result })
             )
         } catch (e) {
             this.logger.error(
