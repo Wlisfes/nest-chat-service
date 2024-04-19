@@ -2,12 +2,17 @@ import { Injectable, Inject } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { MessagerService } from '@/services/messager.service'
+import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
 @Injectable()
 export class WebSocketService {
-    constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly messagerService: MessagerService) {}
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        private readonly webSocketClientService: WebSocketClientService,
+        private readonly messagerService: MessagerService
+    ) {}
 
     /**Socket发送自定义消息**/
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {

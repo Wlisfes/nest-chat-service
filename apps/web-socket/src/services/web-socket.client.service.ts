@@ -6,18 +6,20 @@ export class WebSocketClientService {
     private readonly client: Map<string, env.AuthSocket> = new Map()
 
     /**抛出中断消息**/
-    public async discontinue(socket: env.AuthSocket) {
-        return await socket.emit('discontinue', { message: '挤出', status: HttpStatus.FORBIDDEN })
+    public async closure(socket: env.AuthSocket) {
+        return await socket.emit('closure', { message: '挤出', status: HttpStatus.FORBIDDEN })
     }
 
     /**关闭实例**/
     public async disconnect(userId: string) {
         const socket = await this.getClient(userId)
         if (socket && socket.connected) {
-            await this.discontinue(socket)
+            await this.closure(socket)
             await socket.disconnect()
+        } else if (socket) {
+            return await this.delClient(userId)
         }
-        return await this.delClient(userId)
+        return undefined
     }
 
     /**存储实例**/
