@@ -32,40 +32,7 @@ export class MessagerService {
                 })
             }
             /**验证会话ID、好友、社群绑定关系**/
-            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
-                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
-                qb.leftJoinAndMapOne(
-                    'communit.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = communit.uid AND member.userId = :userId',
-                    { userId: userId }
-                )
-                qb.where(`t.sid = :sid AND (member.userId = :userId OR (contact.userId = :userId OR contact.niveId = :userId))`, {
-                    sid: scope.sessionId,
-                    userId: userId
-                })
-                return qb.getOne().then(async node => {
-                    await this.customService.divineCatchWherer(isEmpty(node), null, {
-                        message: '会话SID不存在'
-                    })
-                    if (node.source === entities.EnumSessionSource.contact) {
-                        /**私聊会话**/
-                        const contact = (node as any).contact as entities.ContactEntier
-                        await this.customService.divineCatchWherer(contact.status === entities.EnumContactStatus.delete, null, {
-                            message: '好友已删除'
-                        })
-                    } else {
-                        /**群聊会话**/
-                        const communit = (node as any).communit as entities.CommunitEntier
-                        await this.customService.divineCatchWherer(communit.status === entities.EnumCommunitStatus.dissolve, null, {
-                            message: '社群已解散'
-                        })
-                    }
-                    return await divineResolver(node)
-                })
-            })
+            return await this.httpCheckSessionBinder(userId, scope.sessionId)
         } catch (e) {
             this.logger.error(
                 [MessagerService.name, this.httpCheckCustomizeMessager.name].join(':'),
@@ -73,6 +40,44 @@ export class MessagerService {
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
+    }
+
+    /**验证当前用户与sessionId会话是否存在绑定关系**/
+    public async httpCheckSessionBinder(userId: string, sessionId: string) {
+        return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+            qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+            qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+            qb.leftJoinAndMapOne(
+                'communit.member',
+                entities.CommunitMemberEntier,
+                'member',
+                'member.communitId = communit.uid AND member.userId = :userId',
+                { userId: userId }
+            )
+            qb.where(`t.sid = :sid AND (member.userId = :userId OR (contact.userId = :userId OR contact.niveId = :userId))`, {
+                sid: sessionId,
+                userId: userId
+            })
+            return qb.getOne().then(async node => {
+                await this.customService.divineCatchWherer(isEmpty(node), null, {
+                    message: '会话SID不存在'
+                })
+                if (node.source === entities.EnumSessionSource.contact) {
+                    /**私聊会话**/
+                    const contact = (node as any).contact as entities.ContactEntier
+                    await this.customService.divineCatchWherer(contact.status === entities.EnumContactStatus.delete, null, {
+                        message: '好友已删除'
+                    })
+                } else {
+                    /**群聊会话**/
+                    const communit = (node as any).communit as entities.CommunitEntier
+                    await this.customService.divineCatchWherer(communit.status === entities.EnumCommunitStatus.dissolve, null, {
+                        message: '社群已解散'
+                    })
+                }
+                return await divineResolver(node)
+            })
+        })
     }
 
     /**验证消息文件ID数据**/
@@ -183,6 +188,9 @@ export class MessagerService {
     /**会话消息列表**/
     public async httpSessionColumnMessager(headers: env.Headers, userId: string, scope: env.QuerySessionColumnMessager) {
         try {
+            /**验证会话ID、好友、社群绑定关系**/
+            await this.httpCheckSessionBinder(userId, scope.sessionId)
+            /**查询消息记录列表**/
             return await this.customService.divineBuilder(this.customService.tableMessager, async qb => {
                 /**媒体文件联查**/
                 qb.leftJoinAndMapMany('t.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = t.sid')
@@ -190,17 +198,6 @@ export class MessagerService {
                 qb.leftJoinAndMapOne('media.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
                 /**已读用户联查**/
                 qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = t.sid')
-                /**联系人联查**/
-                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
-                /**社群联查**/
-                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
-                qb.leftJoinAndMapOne(
-                    'communit.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = communit.uid AND member.userId = :userId',
-                    { userId: userId }
-                )
                 qb.select([
                     /**消息基础字段**/
                     ...divineSelection('t', ['keyId', 'sid', 'createTime', 'updateTime', 'sessionId', 'userId']),
@@ -212,9 +209,7 @@ export class MessagerService {
                     /**已读用户字段**/
                     ...divineSelection('reads', ['sid', 'userId'])
                 ])
-                qb.where(`t.sessionId = :sessionId AND (contact.userId = :userId OR contact.niveId = :userId OR member.userId = :userId)`, {
-                    sessionId: scope.sessionId
-                })
+                qb.where(`t.sessionId = :sessionId`, { sessionId: scope.sessionId })
                 qb.orderBy('t.createTime', 'DESC')
                 qb.skip((scope.page - 1) * scope.size)
                 qb.take(scope.size)
