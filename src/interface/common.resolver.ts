@@ -10,19 +10,19 @@ export class CommonResolver {
     @IsNotEmpty({ message: 'keyId 必填' })
     keyId: number
 
-    @ApiProperty({ description: '当前页', required: false, example: 1 })
+    @ApiProperty({ description: '分页偏移量', required: false, example: 0 })
     @IsOptional()
-    @IsNumber({}, { message: 'page必须是数字' })
-    @Min(1, { message: 'page必须大于0' })
+    @IsNumber({}, { message: 'offset必须是数字' })
+    @Min(0, { message: 'offset必须大于或等于0' })
     @Type(type => Number)
-    page: number = 1
+    offset: number = 0
 
     @ApiProperty({ description: '分页数量', required: false, example: 10 })
     @IsOptional()
-    @IsNumber({}, { message: 'size必须是数字' })
-    @Min(1, { message: 'size必须大于0' })
+    @IsNumber({}, { message: 'limit必须是数字' })
+    @Min(1, { message: 'limit必须大于0' })
     @Type(type => Number)
-    size: number = 10
+    limit: number = 10
 }
 
 export class NoticeResolver {

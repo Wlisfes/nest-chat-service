@@ -251,8 +251,8 @@ export class MessagerService {
                 ])
                 qb.where(`t.sessionId = :sessionId`, { sessionId: scope.sessionId })
                 qb.orderBy('t.createTime', 'DESC')
-                qb.skip((scope.page - 1) * scope.size)
-                qb.take(scope.size)
+                qb.skip(scope.offset)
+                qb.take(scope.limit)
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({
                         total,

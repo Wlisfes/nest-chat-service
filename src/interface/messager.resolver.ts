@@ -22,5 +22,5 @@ export class QuerySessionOneMessager extends PickType(entities.SchemaMessagerEnt
 /**会话消息列表**/
 export class QuerySessionColumnMessager extends IntersectionType(
     PickType(entities.SchemaMessagerEntier, ['sessionId']),
-    PickType(env.CommonResolver, ['page', 'size'])
+    PickType(env.CommonResolver, ['offset', 'limit'])
 ) {}
