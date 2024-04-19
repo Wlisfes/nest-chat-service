@@ -76,6 +76,13 @@ export function divineLogger(headers: env.Omix<env.Headers> = {}, log: env.Omix 
     }
 }
 
+/**自定义Error信息**/
+export function divineCustomizeError<T = { message: string; status: number }>(scope: env.Omix<T>): env.Omix<env.CustomizeError<T>> {
+    const err = new Error(scope.message) as env.CustomizeError<T>
+    err.data = scope
+    return err
+}
+
 /**字节转换文字输出**/
 export async function divineBytefor(byte: number, dec: number = 2) {
     if (byte === 0) return 'Byte'

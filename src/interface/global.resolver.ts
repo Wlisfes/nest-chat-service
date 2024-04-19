@@ -8,3 +8,8 @@ export type Headers = Omix<IncomingHttpHeaders>
 
 /**获取Promise返回的类型**/
 export type PromiseType<T extends Promise<any>> = T extends Promise<infer R> ? R : never
+
+/**自定义错误类型**/
+export interface CustomizeError<T> extends Error {
+    data: T
+}

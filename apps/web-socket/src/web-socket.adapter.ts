@@ -1,7 +1,8 @@
+import { HttpStatus } from '@nestjs/common'
 import { IoAdapter } from '@nestjs/platform-socket.io'
-import { WsException } from '@nestjs/websockets'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
+import { divineCustomizeError } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 export class WebSocketAdapter extends IoAdapter {
@@ -14,14 +15,14 @@ export class WebSocketAdapter extends IoAdapter {
         server.use(async (socket: env.AuthSocket, next) => {
             const { headers } = socket.handshake
             if (!headers.authorization) {
-                return next(new WsException('未登录'))
+                return next(divineCustomizeError({ message: '未登录', status: HttpStatus.UNAUTHORIZED }))
             } else {
                 try {
                     socket.user = await this.customService.divineJwtTokenParser(headers.authorization, {
                         message: '身份验证失败'
                     })
                 } catch (e) {
-                    return next(new WsException(e.message))
+                    return next(divineCustomizeError({ message: e.message, status: e.status ?? HttpStatus.UNAUTHORIZED }))
                 }
             }
             return next()
