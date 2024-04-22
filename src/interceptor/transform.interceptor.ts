@@ -13,7 +13,7 @@ export class TransformInterceptor implements NestInterceptor {
                 return {
                     data: data || null,
                     code: HttpStatus.OK,
-                    message: data?.message ?? '请求成功',
+                    message: typeof data?.message === 'object' ? '请求成功' : data?.message ?? '请求成功',
                     timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
                     requestId: request.headers[web.WEB_COMMON_HEADER_CONTEXTID]
                 }

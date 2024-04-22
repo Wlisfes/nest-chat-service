@@ -10,3 +10,6 @@ export class BodySessionContactCreater extends PickType(entities.SchemaSession, 
 
 /**新建群聊会话**/
 export class BodySessionCommunitCreater extends PickType(entities.SchemaSession, ['communitId']) {}
+
+/**会话详情**/
+export class BodySessionOneResolver extends PickType(entities.SchemaSession, ['sid']) {}

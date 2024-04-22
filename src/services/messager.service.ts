@@ -189,6 +189,8 @@ export class MessagerService {
     public async httpSessionOneMessager(headers: env.Headers, scope: env.QuerySessionOneMessager) {
         try {
             return await this.customService.divineBuilder(this.customService.tableMessager, async qb => {
+                /**用户信息联查**/
+                qb.leftJoinAndMapOne('t.user', entities.UserEntier, 'user', 'user.uid = t.userId')
                 /**媒体文件联查**/
                 qb.leftJoinAndMapMany('t.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = t.sid')
                 qb.leftJoinAndMapOne('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
@@ -199,6 +201,8 @@ export class MessagerService {
                     /**消息基础字段**/
                     ...divineSelection('t', ['keyId', 'sid', 'createTime', 'updateTime', 'sessionId', 'userId']),
                     ...divineSelection('t', ['contactId', 'communitId', 'text', 'source', 'status', 'reason', 'referrer']),
+                    /**用户信息字段**/
+                    ...divineSelection('user', ['uid', 'avatar', 'nickname', 'status']),
                     /**媒体文件字段**/
                     ...divineSelection('medias', ['sid', 'fileId']),
                     ...divineSelection('media', ['source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
