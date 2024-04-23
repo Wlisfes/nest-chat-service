@@ -21,20 +21,24 @@ export class WebChangeMessagerService {
     /**消息已读用户存储**/
     private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<env.BodySocketChangeMessager>) {
         try {
-            console.log(scope)
-            // const node = this.customService.tableMessagerRead.findOne({
-            //     where: { sid: scope.sid, userId: scope.userId }
-            // })
-            // if (node) {
-            //     /**存在已读、直接返回**/
-            //     return await divineResolver(node)
-            // } else {
-            //     /**否则新增已读数据**/
-            //     return await this.customService.divineCreate(this.customService.tableMessagerRead, {
-            //         headers,
-            //         state: { sid: scope.sid, userId: scope.userId }
-            //     })
-            // }
+            /**查询是否存在已读数据**/ //prettier-ignore
+            return await this.customService.divineNoner(this.customService.tableMessagerRead, {
+                headers,
+                dispatch: {
+                    where: { sid: scope.sid, userId: scope.userId }
+                }
+            }).then(async (node) => {
+                if (Boolean(node)) {
+                    /**存在已读、直接返回**/
+                    return await divineResolver(node)
+                } else {
+                    /**否则新增已读数据**/
+                    return await this.customService.divineCreate(this.customService.tableMessagerRead, {
+                        headers,
+                        state: { sid: scope.sid, userId: scope.userId }
+                    })
+                }
+            })
         } catch (e) {
             this.logger.error(
                 [WebChangeMessagerService.name, this.httpReadChangeMessager.name].join(':'),

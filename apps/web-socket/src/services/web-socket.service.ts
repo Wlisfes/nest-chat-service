@@ -92,6 +92,7 @@ export class WebSocketService {
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
                 divineLogger(headers, { message: 'Socket推送消息至客户端-推送成功', data: scope })
             )
+            return await divineResolver({ message: '推送成功', ...scope })
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
@@ -118,6 +119,7 @@ export class WebSocketService {
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
                 divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-推送成功', data: scope })
             )
+            return await divineResolver({ message: '推送成功', ...scope })
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),

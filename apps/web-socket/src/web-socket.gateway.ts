@@ -36,6 +36,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     /**开启长连接**/
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket, socket.user.uid)
+        console.log(this.server.sockets.adapter.rooms)
         this.logger.info(
             [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),
             divineLogger(socket.handshake.headers, { message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user })
