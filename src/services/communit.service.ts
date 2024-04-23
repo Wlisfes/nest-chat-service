@@ -4,9 +4,9 @@ import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
-import { UserService } from '@/services/user.service'
+import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -18,7 +18,7 @@ export class CommunitService {
         private readonly customService: CustomService,
         private readonly sessionService: SessionService,
         private readonly messagerService: MessagerService,
-        private readonly userService: UserService
+        private readonly redisService: RedisService
     ) {}
 
     /**新建社群**/
@@ -69,7 +69,8 @@ export class CommunitService {
             const session = await this.sessionService.httpSessionCommunitCreater(headers, {
                 communitId: communit.uid
             })
-            const user = await this.userService.httpUserResolver(headers, userId)
+            const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
+            const user = await this.redisService.getStore(key, null, headers)
             /**插入一条记录**/
             await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
                 source: entities.EnumMessagerSource.text,
