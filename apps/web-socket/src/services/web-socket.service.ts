@@ -1,12 +1,11 @@
 import { Injectable, Inject, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { RabbitmqService } from '@/services/rabbitmq.service'
-import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
+import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
-import { divineLogger, divineResolver } from '@/utils/utils-common'
+import { divineLogger, divineResolver, divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -14,11 +13,10 @@ import * as entities from '@/entities/instance'
 export class WebSocketService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        private readonly rabbitmqService: RabbitmqService,
-        private readonly customService: CustomService,
         private readonly webSocketClientService: WebSocketClientService,
         private readonly sessionService: SessionService,
-        private readonly messagerService: MessagerService
+        private readonly messagerService: MessagerService,
+        private readonly rabbitmqService: RabbitmqService
     ) {}
 
     /**初始化连接、开启会话房间**/
@@ -56,12 +54,17 @@ export class WebSocketService {
         }
     }
 
-    /**Socket发送自定义消息**/
+    /**Socket发送自定义消息、消息推入MQ队列**/
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
         return await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
             ...scope,
             referrer: entities.EnumMessagerReferrer.socket
         })
+    }
+
+    /**Socket已读消息操作、消息推入MQ队列**/
+    public async httpSocketChangeMessager(headers: env.Headers, scope: env.BodySocketChangeMessager) {
+        return await this.rabbitmqService.despatchSocketChangeMessager(headers, scope)
     }
 
     /**Socket推送消息至客户端**/
@@ -71,10 +74,9 @@ export class WebSocketService {
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
                 divineLogger(headers, { message: 'Socket推送消息至客户端-开始推送', data: scope })
             )
-            /**获取消息详情、执行socket推送**/ //prettier-ignore
-            await this.messagerService.httpSessionOneMessager(headers, {
-                sid: scope.sid
-            }).then(async message => {
+            /**获取消息详情、执行socket推送**/
+            const message = await this.messagerService.httpSessionOneMessager(headers, { sid: scope.sid })
+            await divineHandler(Boolean(message), async () => {
                 const sockets = this.webSocketClientService.server.sockets
                 const eventName = `server-customize-messager`
                 if (scope.referrer === entities.EnumMessagerReferrer.socket) {
@@ -83,12 +85,8 @@ export class WebSocketService {
                     if (socket && socket.connected) {
                         return sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
                     }
-                    /**发送用户不在线、直接全量推送**/
-                    return sockets.to(scope.sessionId).emit(eventName, message)
-                } else {
-                    /**其他消息来源: 给这个房间的所有用户都推送**/
-                    return sockets.to(scope.sessionId).emit(eventName, message)
                 }
+                return sockets.to(scope.sessionId).emit(eventName, message)
             })
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),

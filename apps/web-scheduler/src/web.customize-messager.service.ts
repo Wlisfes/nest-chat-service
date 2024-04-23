@@ -5,7 +5,6 @@ import { ConsumeMessage } from 'amqplib'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
-import { RabbitmqService } from '@/services/rabbitmq.service'
 import { divineLogger, divineResolver } from '@/utils/utils-common'
 import { divineCustomizeHeaders } from '@/utils/utils-plugin'
 import { divineClientSender } from '@/utils/utils-microservices'
@@ -17,8 +16,7 @@ export class WebCustomizeMessagerService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @Inject('WEB-SOCKET') private socketClient: ClientProxy,
-        private readonly customService: CustomService,
-        private readonly rabbitmqService: RabbitmqService
+        private readonly customService: CustomService
     ) {}
 
     /**更新自定义消息状态**/
@@ -54,7 +52,7 @@ export class WebCustomizeMessagerService {
             )
             /**更新消息状态**/
             await this.httpUpdateCustomizeMessager(headers, data)
-            /**调用socket服务方法、将推送消息至客户端**/
+            /**调用socket服务方法、Socket推送消息至客户端**/
             await divineClientSender(this.socketClient, {
                 eventName: 'web-socket-push-messager',
                 headers: headers,

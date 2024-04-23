@@ -30,26 +30,6 @@ export class RabbitmqService {
         }
     }
 
-    /**socket消息推送**/
-    public async despatchSocketMessager<T>(headers: env.Headers, data: env.Omix<T>) {
-        try {
-            this.logger.info(
-                [RabbitmqService.name, this.despatchSocketMessager.name].join(':'),
-                divineLogger(headers, { message: 'socket消息推送', data })
-            )
-            return await this.amqpConnection.publish('web-socket-messager', 'sub-socket-messager', data, {
-                timestamp: Date.now(),
-                messageId: headers[web.WEB_COMMON_HEADER_CONTEXTID]
-            })
-        } catch (e) {
-            this.logger.error(
-                [RabbitmqService.name, this.despatchSocketMessager.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
-
     /**socket消息状态推送**/
     public async despatchSocketChangeMessager<T>(headers: env.Headers, data: env.Omix<T>) {
         try {

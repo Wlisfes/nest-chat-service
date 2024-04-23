@@ -24,8 +24,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly webSocketClientService: WebSocketClientService,
-        private readonly webSocketService: WebSocketService,
-        private readonly rabbitmqService: RabbitmqService
+        private readonly webSocketService: WebSocketService
     ) {}
 
     /**服务启动**/
@@ -55,14 +54,17 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     /**发送消息已读操作**/
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-change-messager')
-    public async SubscribeSocketChangeMessager(@ConnectedSocket() socket: env.AuthSocket, @MessageBody() scope: env.SocketChangeMessager) {
+    public async SubscribeSocketChangeMessager(
+        @ConnectedSocket() socket: env.AuthSocket,
+        @MessageBody() scope: env.BodySocketChangeMessager
+    ) {
         try {
             this.logger.info(
                 [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '发送消息已读操作-开始', socketId: socket.id, data: scope })
             )
-            // await this.webSocketService.httpSocketPushChangeMessager(socket.handshake.headers, scope)
-            await this.rabbitmqService.despatchSocketChangeMessager(socket.handshake.headers, scope)
+            /**Socket已读消息操作、消息推入MQ队列**/
+            await this.webSocketService.httpSocketChangeMessager(socket.handshake.headers, scope)
             this.logger.info(
                 [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
@@ -96,18 +98,13 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
                 [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '发送自定义消息-开始', socketId: socket.id, data: scope })
             )
-            //prettier-ignore
-            return await this.webSocketService.httpSocketCustomizeMessager(
-                socket.handshake.headers,
-                socket.user.uid,
-                scope
-            ).then(async node => {
-                this.logger.info(
-                    [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
-                    divineLogger(socket.handshake.headers, { message: '发送自定义消息-结束', socketId: socket.id, node })
-                )
-                return await divineResolver(node)
-            })
+            /**Socket发送自定义消息、消息推入MQ队列**/
+            const node = await this.webSocketService.httpSocketCustomizeMessager(socket.handshake.headers, socket.user.uid, scope)
+            this.logger.info(
+                [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
+                divineLogger(socket.handshake.headers, { message: '发送自定义消息-结束', socketId: socket.id, node })
+            )
+            return await divineResolver(node)
         } catch (e) {
             this.logger.error(
                 [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),

@@ -1,39 +1,40 @@
 import { Inject, Injectable, HttpException, HttpStatus } from '@nestjs/common'
+import { ClientProxy } from '@nestjs/microservices'
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq'
 import { ConsumeMessage } from 'amqplib'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
-import { RabbitmqService } from '@/services/rabbitmq.service'
 import { divineLogger, divineResolver } from '@/utils/utils-common'
 import { divineCustomizeHeaders } from '@/utils/utils-plugin'
+import { divineClientSender } from '@/utils/utils-microservices'
 import * as env from '@/interface/instance.resolver'
-import * as entities from '@/entities/instance'
 
 @Injectable()
 export class WebChangeMessagerService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-        private readonly customService: CustomService,
-        private readonly rabbitmqService: RabbitmqService
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
+        private readonly customService: CustomService
     ) {}
 
-    /**消息已读用户添加**/
-    private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<env.SocketChangeMessager>) {
+    /**消息已读用户存储**/
+    private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<env.BodySocketChangeMessager>) {
         try {
-            const node = this.customService.tableMessagerRead.findOne({
-                where: { sid: scope.sid, userId: scope.userId }
-            })
-            if (node) {
-                /**存在已读、直接返回**/
-                return await divineResolver(node)
-            } else {
-                /**否则新增已读数据**/
-                return await this.customService.divineCreate(this.customService.tableMessagerRead, {
-                    headers,
-                    state: { sid: scope.sid, userId: scope.userId }
-                })
-            }
+            console.log(scope)
+            // const node = this.customService.tableMessagerRead.findOne({
+            //     where: { sid: scope.sid, userId: scope.userId }
+            // })
+            // if (node) {
+            //     /**存在已读、直接返回**/
+            //     return await divineResolver(node)
+            // } else {
+            //     /**否则新增已读数据**/
+            //     return await this.customService.divineCreate(this.customService.tableMessagerRead, {
+            //         headers,
+            //         state: { sid: scope.sid, userId: scope.userId }
+            //     })
+            // }
         } catch (e) {
             this.logger.error(
                 [WebChangeMessagerService.name, this.httpReadChangeMessager.name].join(':'),
@@ -49,7 +50,7 @@ export class WebChangeMessagerService {
         routingKey: 'sub-socket-change-messager',
         queue: 'sub-socket-change-messager'
     })
-    public async SubscribeChangeMessager(data: env.Omix<env.SocketChangeMessager>, consume: ConsumeMessage) {
+    public async SubscribeChangeMessager(data: env.Omix<env.BodySocketChangeMessager>, consume: ConsumeMessage) {
         const headers = await divineCustomizeHeaders(consume)
         try {
             this.logger.info(
@@ -58,11 +59,11 @@ export class WebChangeMessagerService {
             )
             /**更新消息状态**/
             await this.httpReadChangeMessager(headers, data)
-            /**socket消息变更推送**/
-            await this.rabbitmqService.despatchSocketChangeMessager(headers, {
-                sid: data.sid,
-                userId: data.userId,
-                sessionId: data.sessionId
+            /**调用socket服务方法、Socket推送消息状态变更至客户端**/
+            await divineClientSender(this.socketClient, {
+                eventName: 'web-socket-push-change-messager',
+                headers: headers,
+                state: data
             })
             this.logger.info(
                 [WebChangeMessagerService.name, this.SubscribeChangeMessager.name].join(':'),

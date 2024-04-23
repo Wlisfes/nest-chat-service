@@ -12,8 +12,6 @@ import { RabbitmqService } from '@/services/rabbitmq.service'
                 return {
                     exchanges: [
                         { name: 'web-customize-messager', type: 'topic' },
-                        { name: 'web-socket-messager', type: 'topic' },
-                        { name: 'web-alter-change-messager', type: 'topic' },
                         { name: 'web-socket-change-messager', type: 'topic' }
                     ],
                     uri: config.get('RABBITMQ_URL'),
