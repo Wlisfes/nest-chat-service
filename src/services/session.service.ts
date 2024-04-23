@@ -79,15 +79,15 @@ export class SessionService {
                     /**会话基础字段**/
                     ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId']),
                     /**消息记录联查字段**/
-                    ...divineSelection('message', ['createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
+                    ...divineSelection('message', ['keyId', 'createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
                     /**联系人联查字段**/
                     ...divineSelection('contact', ['uid', 'status', 'userId', 'niveId']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
                     /**社群联查字段**/
-                    ...divineSelection('communit', ['uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
-                    ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL']),
-                    ...divineSelection('member', ['communitId', 'userId', 'role', 'status', 'speak'])
+                    ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
+                    ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
+                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
                 ])
                 qb.where('(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)', { userId })
                 qb.orderBy('message.createTime', 'DESC')
@@ -154,15 +154,15 @@ export class SessionService {
                     /**会话基础字段**/
                     ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId']),
                     /**消息记录联查字段**/
-                    ...divineSelection('message', ['createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
+                    ...divineSelection('message', ['keyId', 'createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
                     /**联系人联查字段**/
                     ...divineSelection('contact', ['uid', 'status', 'userId', 'niveId']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
                     /**社群联查字段**/
-                    ...divineSelection('communit', ['uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
-                    ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL']),
-                    ...divineSelection('member', ['communitId', 'userId', 'role', 'status', 'speak'])
+                    ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
+                    ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
+                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
                 ])
                 qb.where('t.sid = :sid AND ((contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId))', {
                     userId: userId,

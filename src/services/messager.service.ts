@@ -196,7 +196,7 @@ export class MessagerService {
                 qb.leftJoinAndMapOne('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
                 qb.leftJoinAndMapOne('media.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
                 /**已读用户联查**/
-                qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = t.sid')
+                qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = :sid', { sid: scope.sid })
                 qb.select([
                     /**消息基础字段**/
                     ...divineSelection('t', ['keyId', 'sid', 'createTime', 'updateTime', 'sessionId', 'userId']),
@@ -204,11 +204,11 @@ export class MessagerService {
                     /**用户信息字段**/
                     ...divineSelection('user', ['uid', 'avatar', 'nickname', 'status']),
                     /**媒体文件字段**/
-                    ...divineSelection('medias', ['sid', 'fileId']),
-                    ...divineSelection('media', ['source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
-                    ...divineSelection('depater', ['fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('medias', ['keyId', 'sid', 'fileId']),
+                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('depater', ['keyId', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
                     /**已读用户字段**/
-                    ...divineSelection('reads', ['sid', 'userId'])
+                    ...divineSelection('reads', ['keyId', 'sid', 'userId'])
                 ])
                 qb.where('t.sid = :sid', { sid: scope.sid })
                 return qb.getOne().then(async (node: env.Omix) => {
@@ -251,11 +251,11 @@ export class MessagerService {
                     /**用户信息字段**/
                     ...divineSelection('user', ['uid', 'avatar', 'nickname', 'status']),
                     /**媒体文件字段**/
-                    ...divineSelection('medias', ['sid', 'fileId']),
-                    ...divineSelection('media', ['source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
-                    ...divineSelection('depater', ['fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('medias', ['keyId', 'sid', 'fileId']),
+                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('depater', ['keyId', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
                     /**已读用户字段**/
-                    ...divineSelection('reads', ['sid', 'userId'])
+                    ...divineSelection('reads', ['keyId', 'sid', 'userId'])
                 ])
                 qb.where(`t.sessionId = :sessionId`, { sessionId: scope.sessionId })
                 qb.orderBy('t.createTime', 'DESC')
