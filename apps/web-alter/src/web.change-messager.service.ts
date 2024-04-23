@@ -18,52 +18,63 @@ export class WebChangeMessagerService {
         private readonly rabbitmqService: RabbitmqService
     ) {}
 
-    // /**更新自定义消息状态**/
-    // private async httpUpdateCustomizeMessager(headers: env.Headers, scope: env.Omix<entities.MessagerEntier>) {
-    //     try {
-    //         await this.customService.divineUpdate(this.customService.tableMessager, {
-    //             headers,
-    //             where: { sid: scope.sid },
-    //             state: { status: entities.EnumMessagerStatus.delivered }
-    //         })
-    //         return await divineResolver({ ...scope, status: entities.EnumMessagerStatus.delivered })
-    //     } catch (e) {
-    //         this.logger.error(
-    //             [WebCustomizeMessagerService.name, this.httpUpdateCustomizeMessager.name].join(':'),
-    //             divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-    //         )
-    //         throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-    //     }
-    // }
+    /**消息已读用户添加**/
+    private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<entities.MessagerReadEntier>) {
+        try {
+            const node = await this.customService.divineNoner(this.customService.tableMessagerRead, {
+                headers,
+                state: { sid: scope.sid, userId: scope.userId }
+            })
+            if (node) {
+                /**存在已读、直接返回**/
+                return await divineResolver(node)
+            } else {
+                /**否则新增已读数据**/
+                return await this.customService.divineCreate(this.customService.tableMessagerRead, {
+                    headers,
+                    state: { sid: scope.sid, userId: scope.userId }
+                })
+            }
+        } catch (e) {
+            this.logger.error(
+                [WebChangeMessagerService.name, this.httpReadChangeMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 
-    // /**自定义消息消费者**/
-    // @RabbitSubscribe({
-    //     exchange: 'web-customize-messager',
-    //     routingKey: 'sub-customize-messager',
-    //     queue: 'sub-customize-messager'
-    // })
-    // public async SubscribeCustomizeTransmitter(data: env.Omix<entities.MessagerEntier>, consume: ConsumeMessage) {
-    //     const headers = await divineCustomizeHeaders(consume)
-    //     try {
-    //         this.logger.info(
-    //             [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
-    //             divineLogger(headers, { message: '自定义消息消费者-开始消费', data })
-    //         )
-    //         /**更新消息状态**/
-    //         const result = await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
-    //             /**socket消息推送**/
-    //             await this.rabbitmqService.despatchSocketMessager(headers, scope)
-    //             return await divineResolver(scope)
-    //         })
-    //         this.logger.info(
-    //             [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
-    //             divineLogger(headers, { message: '自定义消息消费者-消费完成', data: result })
-    //         )
-    //     } catch (e) {
-    //         this.logger.error(
-    //             [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
-    //             divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-    //         )
-    //     }
-    // }
+    /**消息状态变更消费者**/
+    @RabbitSubscribe({
+        exchange: 'web-socket-change-messager',
+        routingKey: 'sub-socket-change-messager',
+        queue: 'sub-socket-change-messager'
+    })
+    public async SubscribeChangeMessager(data: env.Omix<entities.MessagerReadEntier>, consume: ConsumeMessage) {
+        const headers = await divineCustomizeHeaders(consume)
+        try {
+            this.logger.info(
+                [WebChangeMessagerService.name, this.SubscribeChangeMessager.name].join(':'),
+                divineLogger(headers, { message: '消息状态变更消费者-开始消费', data })
+            )
+            /**更新消息状态**/
+            const result = await this.httpReadChangeMessager(headers, data).then(async scope => {
+                /**socket消息推送**/
+                await this.rabbitmqService.despatchSocketMessager(headers, {
+                    sid: scope.sid,
+                    userId: scope.userId
+                })
+                return await divineResolver(scope)
+            })
+            this.logger.info(
+                [WebChangeMessagerService.name, this.SubscribeChangeMessager.name].join(':'),
+                divineLogger(headers, { message: '消息状态变更消费者-消费完成', data: result })
+            )
+        } catch (e) {
+            this.logger.error(
+                [WebChangeMessagerService.name, this.SubscribeChangeMessager.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+        }
+    }
 }
