@@ -19,7 +19,7 @@ export class WebChangeMessagerService {
     ) {}
 
     /**消息已读用户添加**/
-    private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<entities.MessagerReadEntier>) {
+    private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<env.SocketChangeMessager>) {
         try {
             const node = await this.customService.divineNoner(this.customService.tableMessagerRead, {
                 headers,
@@ -50,7 +50,7 @@ export class WebChangeMessagerService {
         routingKey: 'sub-socket-change-messager',
         queue: 'sub-socket-change-messager'
     })
-    public async SubscribeChangeMessager(data: env.Omix<entities.MessagerReadEntier>, consume: ConsumeMessage) {
+    public async SubscribeChangeMessager(data: env.Omix<env.SocketChangeMessager>, consume: ConsumeMessage) {
         const headers = await divineCustomizeHeaders(consume)
         try {
             this.logger.info(
@@ -58,17 +58,16 @@ export class WebChangeMessagerService {
                 divineLogger(headers, { message: '消息状态变更消费者-开始消费', data })
             )
             /**更新消息状态**/
-            const result = await this.httpReadChangeMessager(headers, data).then(async scope => {
-                /**socket消息推送**/
-                await this.rabbitmqService.despatchSocketMessager(headers, {
-                    sid: scope.sid,
-                    userId: scope.userId
-                })
-                return await divineResolver(scope)
+            await this.httpReadChangeMessager(headers, data)
+            /**socket消息变更推送**/
+            await this.rabbitmqService.despatchSocketChangeMessager(headers, {
+                sid: data.sid,
+                userId: data.userId,
+                sessionId: data.sessionId
             })
             this.logger.info(
                 [WebChangeMessagerService.name, this.SubscribeChangeMessager.name].join(':'),
-                divineLogger(headers, { message: '消息状态变更消费者-消费完成', data: result })
+                divineLogger(headers, { message: '消息状态变更消费者-消费完成', data: data })
             )
         } catch (e) {
             this.logger.error(

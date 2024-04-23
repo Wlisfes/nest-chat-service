@@ -19,14 +19,15 @@ export class WebSocketChangeMessagerService {
         routingKey: 'sub-socket-change-messager',
         queue: 'sub-socket-change-messager'
     })
-    public async SubscribeSocketChangeMessager(data: env.Omix<entities.MessagerEntier>, consume: ConsumeMessage) {
+    public async SubscribeSocketChangeMessager(data: env.Omix<env.SocketChangeMessager>, consume: ConsumeMessage) {
         const headers = await divineCustomizeHeaders(consume)
         try {
             this.logger.info(
                 [WebSocketChangeMessagerService.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(headers, { message: 'socket消息状态推送-开始消费', data })
             )
-            await divineDelay(2000)
+            /**Socket推送消息状态变更**/
+            await this.webSocketService.httpSocketPushChangeMessager(headers, data)
             this.logger.info(
                 [WebSocketChangeMessagerService.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(headers, { message: 'socket消息状态推送-消费完成', data })
