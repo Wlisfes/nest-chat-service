@@ -1,4 +1,5 @@
 import { Inject, Injectable, HttpException, HttpStatus } from '@nestjs/common'
+import { ClientProxy } from '@nestjs/microservices'
 import { RabbitSubscribe } from '@golevelup/nestjs-rabbitmq'
 import { ConsumeMessage } from 'amqplib'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
@@ -14,6 +15,7 @@ import * as entities from '@/entities/instance'
 export class WebCustomizeMessagerService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
         private readonly customService: CustomService,
         private readonly rabbitmqService: RabbitmqService
     ) {}
@@ -50,14 +52,23 @@ export class WebCustomizeMessagerService {
                 divineLogger(headers, { message: '自定义消息消费者-开始消费', data })
             )
             /**更新消息状态**/
-            const result = await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
-                /**socket消息推送**/
-                await this.rabbitmqService.despatchSocketMessager(headers, scope)
-                return await divineResolver(scope)
+            // const result = await this.httpUpdateCustomizeMessager(headers, data).then(async scope => {
+            //     /**socket消息推送**/
+            //     await this.rabbitmqService.despatchSocketMessager(headers, scope)
+            //     return await divineResolver(scope)
+            // })
+            this.socketClient.send('notifications', data).subscribe({
+                next: res => {
+                    console.log(`22222:`, res)
+                },
+                error: err => {
+                    console.log(`33333:`, err)
+                }
             })
+
             this.logger.info(
                 [WebCustomizeMessagerService.name, this.SubscribeCustomizeTransmitter.name].join(':'),
-                divineLogger(headers, { message: '自定义消息消费者-消费完成', data: result })
+                divineLogger(headers, { message: '自定义消息消费者-消费完成', data })
             )
         } catch (e) {
             this.logger.error(
