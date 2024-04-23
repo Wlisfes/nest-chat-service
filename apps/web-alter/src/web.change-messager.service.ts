@@ -21,9 +21,8 @@ export class WebChangeMessagerService {
     /**消息已读用户添加**/
     private async httpReadChangeMessager(headers: env.Headers, scope: env.Omix<env.SocketChangeMessager>) {
         try {
-            const node = await this.customService.divineNoner(this.customService.tableMessagerRead, {
-                headers,
-                state: { sid: scope.sid, userId: scope.userId }
+            const node = this.customService.tableMessagerRead.findOne({
+                where: { sid: scope.sid, userId: scope.userId }
             })
             if (node) {
                 /**存在已读、直接返回**/

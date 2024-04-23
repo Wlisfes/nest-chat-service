@@ -7,6 +7,7 @@ import { Server } from 'socket.io'
 import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
+import { RabbitmqService } from '@/services/rabbitmq.service'
 import { divineLogger, divineResolver } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -23,7 +24,8 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly webSocketClientService: WebSocketClientService,
-        private readonly webSocketService: WebSocketService
+        private readonly webSocketService: WebSocketService,
+        private readonly rabbitmqService: RabbitmqService
     ) {}
 
     /**服务启动**/
@@ -48,6 +50,38 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
             divineLogger(socket.handshake.headers, { message: '中断长连接', socketId: socket.id, user: socket.user })
         )
         await this.webSocketClientService.disconnect(socket.user.uid)
+    }
+
+    /**发送消息已读操作**/
+    @UseGuards(WebSocketGuard)
+    @SubscribeMessage('socket-change-messager')
+    public async SubscribeSocketChangeMessager(@ConnectedSocket() socket: env.AuthSocket, @MessageBody() scope: env.SocketChangeMessager) {
+        try {
+            this.logger.info(
+                [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
+                divineLogger(socket.handshake.headers, { message: '发送消息已读操作-开始', socketId: socket.id, data: scope })
+            )
+            // await this.webSocketService.httpSocketPushChangeMessager(socket.handshake.headers, scope)
+            await this.rabbitmqService.despatchSocketChangeMessager(socket.handshake.headers, scope)
+            this.logger.info(
+                [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
+                divineLogger(socket.handshake.headers, { message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
+            )
+            return await divineResolver({ message: '操作成功', status: HttpStatus.OK })
+        } catch (e) {
+            this.logger.error(
+                [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
+                divineLogger(socket.handshake.headers, {
+                    message: e.message,
+                    status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+                    socketId: socket.id
+                })
+            )
+            return await divineResolver({
+                message: e.message,
+                status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+            })
+        }
     }
 
     /**发送自定义消息**/
