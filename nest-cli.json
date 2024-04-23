@@ -40,6 +40,15 @@
             "compilerOptions": {
                 "tsConfigPath": "apps/web-scheduler/tsconfig.app.json"
             }
+        },
+        "web-alter": {
+            "type": "application",
+            "root": "apps/web-alter",
+            "entryFile": "main",
+            "sourceRoot": "apps/web-alter/src",
+            "compilerOptions": {
+                "tsConfigPath": "apps/web-alter/tsconfig.app.json"
+            }
         }
     }
 }

@@ -10,12 +10,15 @@
         "dev:web-service": "nest start --watch web-service",
         "dev:web-socket": "nest start --watch web-socket",
         "dev:web-scheduler": "nest start --watch web-scheduler",
+        "dev:web-alter": "nest start --watch web-alter",
         "build:web-service": "nest build web-service",
         "build:web-socket": "nest build web-socket",
         "build:web-scheduler": "nest build web-scheduler",
+        "build:web-alter": "nest build web-alter",
         "start:web-service": "node dist/apps/web-service/main",
         "start:web-socket": "node dist/apps/web-socket/main",
-        "start:web-scheduler": "node dist/apps/web-scheduler/main"
+        "start:web-scheduler": "node dist/apps/web-scheduler/main",
+        "start:web-alter": "node dist/apps/web-alter/main"
     },
     "dependencies": {
         "@golevelup/nestjs-rabbitmq": "^5.2.0",
