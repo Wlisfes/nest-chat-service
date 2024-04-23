@@ -21,9 +21,9 @@ import { WebSocketChangeMessagerService } from '@web-socket/services/web.socket-
         MessagerService,
         WebSocketClientService,
         WebSocketService,
-        WebSocketEventGateway,
-        WebSocketMessagerService,
-        WebSocketChangeMessagerService
+        WebSocketEventGateway
+        // WebSocketMessagerService,
+        // WebSocketChangeMessagerService
     ]
 })
 export class WebSocketModule {}

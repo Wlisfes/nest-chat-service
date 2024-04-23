@@ -1,14 +1,21 @@
 import { Controller } from '@nestjs/common'
+import { MessagePattern, Payload } from '@nestjs/microservices'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
-import { MessagePattern } from '@nestjs/microservices'
+import * as env from '@/interface/instance.resolver'
 
 @Controller()
 export class WebSocketController {
     constructor(private readonly webSocketService: WebSocketService) {}
 
-    @MessagePattern('notifications')
-    public async httpSocketPushCustomizeMessager(data) {
-        console.log('httpSocketPushCustomizeMessager', data)
-        return data
+    /**Socket推送消息至客户端**/
+    @MessagePattern('web-socket-push-messager')
+    public async httpSocketPushCustomizeMessager(@Payload() scope: env.ClientPayload<env.BodySocketPushCustomizeMessager>) {
+        return await this.webSocketService.httpSocketPushCustomizeMessager(scope.headers, scope.state)
+    }
+
+    /**Socket推送消息状态变更至客户端**/
+    @MessagePattern('web-socket-push-change-messager')
+    public async httpSocketPushChangeMessager(@Payload() scope: env.ClientPayload<env.BodySocketPushCustomizeMessager>) {
+        return await this.webSocketService.httpSocketPushChangeMessager(scope.headers, scope.state)
     }
 }

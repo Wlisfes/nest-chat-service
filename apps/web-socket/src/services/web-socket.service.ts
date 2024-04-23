@@ -64,12 +64,12 @@ export class WebSocketService {
         })
     }
 
-    /**Socket推送自定义消息**/
-    public async httpSocketPushCustomizeMessager(headers: env.Headers, scope: env.Omix<entities.SchemaMessagerEntier>) {
+    /**Socket推送消息至客户端**/
+    public async httpSocketPushCustomizeMessager(headers: env.Headers, scope: env.Omix<env.BodySocketPushCustomizeMessager>) {
         try {
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
-                divineLogger(headers, { message: 'Socket推送自定义消息-开始推送', data: scope })
+                divineLogger(headers, { message: 'Socket推送消息至客户端-开始推送', data: scope })
             )
             /**获取消息详情、执行socket推送**/ //prettier-ignore
             await this.messagerService.httpSessionOneMessager(headers, {
@@ -92,13 +92,13 @@ export class WebSocketService {
             })
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
-                divineLogger(headers, { message: 'Socket推送自定义消息-推送成功', data: scope })
+                divineLogger(headers, { message: 'Socket推送消息至客户端-推送成功', data: scope })
             )
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
                 divineLogger(headers, {
-                    message: `Socket推送自定义消息失败: ${e.message}`,
+                    message: `Socket推送消息至客户端失败: ${e.message}`,
                     status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
                     data: scope
                 })
@@ -106,25 +106,25 @@ export class WebSocketService {
         }
     }
 
-    /**Socket推送消息状态变更**/
-    public async httpSocketPushChangeMessager(headers: env.Headers, scope: env.Omix<env.SocketChangeMessager>) {
+    /**Socket推送消息状态变更至客户端**/
+    public async httpSocketPushChangeMessager(headers: env.Headers, scope: env.Omix<env.BodySocketChangeMessager>) {
         try {
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
-                divineLogger(headers, { message: 'Socket推送消息状态变更-开始推送', data: scope })
+                divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-开始推送', data: scope })
             )
             const sockets = this.webSocketClientService.server.sockets
             /**根据会话SID全量推送**/
             sockets.to(scope.sessionId).emit(scope.sid, scope)
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
-                divineLogger(headers, { message: 'Socket推送消息状态变更-推送成功', data: scope })
+                divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-推送成功', data: scope })
             )
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
                 divineLogger(headers, {
-                    message: `Socket推送消息状态变更: ${e.message}`,
+                    message: `Socket推送消息状态变更至客户端失败: ${e.message}`,
                     status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
                     data: scope
                 })
