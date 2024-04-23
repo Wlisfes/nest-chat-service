@@ -236,7 +236,7 @@ export class SessionService {
     /**新建群聊会话**/
     public async httpSessionCommunitCreater(headers: env.Headers, scope: env.BodySessionCommunitCreater) {
         try {
-            await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
                 qb.where('t.communitId = :communitId AND t.source = :source', {
                     source: 'communit',
                     communitId: scope.communitId

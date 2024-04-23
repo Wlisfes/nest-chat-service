@@ -41,7 +41,7 @@ export class CommunitEntier extends CommonEntier {
 
     @ApiProperty({ description: '社群描述' })
     @IsNotEmpty({ message: '社群描述必填' })
-    @Length(4, 32, { message: '社群描述必须保持4~200字符' })
+    @Length(4, 200, { message: '社群描述必须保持4~200字符' })
     @Column({ comment: '社群描述', nullable: false })
     comment: string
 

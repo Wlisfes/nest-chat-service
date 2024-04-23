@@ -3,6 +3,8 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
+import { MessagerService } from '@/services/messager.service'
+import { UserService } from '@/services/user.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
@@ -14,7 +16,9 @@ export class CommunitService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly customService: CustomService,
-        private readonly sessionService: SessionService
+        private readonly sessionService: SessionService,
+        private readonly messagerService: MessagerService,
+        private readonly userService: UserService
     ) {}
 
     /**新建社群**/
@@ -30,7 +34,11 @@ export class CommunitService {
                 headers,
                 message: 'fileId不存在或者文件类型错误',
                 dispatch: {
-                    where: { fileId: scope.poster, source: entities.MediaEntierSource.image }
+                    where: {
+                        userId: userId,
+                        fileId: scope.poster,
+                        source: entities.MediaEntierSource.image
+                    }
                 }
             })
             /**新建社群记录**/
@@ -58,8 +66,17 @@ export class CommunitService {
                 }
             })
             /**新建群聊会话**/
-            await this.sessionService.httpSessionCommunitCreater(headers, {
+            const session = await this.sessionService.httpSessionCommunitCreater(headers, {
                 communitId: communit.uid
+            })
+            const user = await this.userService.httpUserResolver(headers, userId)
+            /**插入一条记录**/
+            await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
+                source: entities.EnumMessagerSource.text,
+                referrer: entities.EnumMessagerReferrer.http,
+                sessionId: session.sid,
+                text: `${user.nickname}创建了社群：“${scope.name}”`,
+                fileId: ''
             })
             return await connect.commitTransaction().then(async () => {
                 this.logger.info(
