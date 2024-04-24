@@ -35,8 +35,12 @@ export class NotificationService {
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status']),
                     ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
                 ])
+                qb.orderBy('t.updateTime', 'DESC')
                 qb.where(
-                    `((t.userId = :userId OR t.niveId = :userId) AND t.source = :contact) OR (t.userId = :userId AND t.source = :communit AND communit.status = :status)`,
+                    `((t.userId = :userId OR t.niveId = :userId) AND t.source = :contact)
+                        OR
+                     ((t.userId = :userId OR communit.ownId = :userId) AND t.source = :communit AND communit.status = :status)
+                    `,
                     {
                         contact: entities.EnumNotificationSource.contact,
                         communit: entities.EnumNotificationSource.communit,
