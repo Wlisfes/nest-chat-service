@@ -56,15 +56,31 @@ export class WebSocketService {
 
     /**Socket发送自定义消息、消息推入MQ队列**/
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
-        return await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
-            ...scope,
-            referrer: entities.EnumMessagerReferrer.socket
-        })
+        try {
+            const node = await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
+                ...scope,
+                referrer: entities.EnumMessagerReferrer.socket
+            })
+            return await divineResolver({ ...node, status: HttpStatus.OK })
+        } catch (e) {
+            return await divineResolver({
+                message: e.message,
+                status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+            })
+        }
     }
 
     /**Socket已读消息操作、消息推入MQ队列**/
     public async httpSocketChangeMessager(headers: env.Headers, scope: env.BodySocketChangeMessager) {
-        return await this.rabbitmqService.despatchSocketChangeMessager(headers, scope)
+        try {
+            await this.rabbitmqService.despatchSocketChangeMessager(headers, scope)
+            return await divineResolver({ message: '操作成功', status: HttpStatus.OK })
+        } catch (e) {
+            return await divineResolver({
+                message: e.message,
+                status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+            })
+        }
     }
 
     /**Socket推送消息至客户端**/
@@ -113,8 +129,14 @@ export class WebSocketService {
                 divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-开始推送', data: scope })
             )
             const sockets = this.webSocketClientService.server.sockets
-            /**根据会话SID全量推送**/
-            sockets.to(scope.sessionId).emit(scope.sid, scope)
+            const socket = await this.webSocketClientService.getClient(scope.userId)
+            if (socket && socket.connected) {
+                /**排除读取用户推送**/
+                sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, scope)
+            } else {
+                /**根据会话SID全量推送**/
+                sockets.to(scope.sessionId).emit(scope.sid, scope)
+            }
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
                 divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-推送成功', data: scope })

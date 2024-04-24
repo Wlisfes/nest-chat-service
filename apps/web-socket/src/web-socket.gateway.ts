@@ -63,18 +63,19 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
                 [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '发送消息已读操作-开始', socketId: socket.id, data: scope })
             )
-            /**Socket已读消息操作、消息推入MQ队列**/
-            await this.webSocketService.httpSocketChangeMessager(socket.handshake.headers, scope)
-            this.logger.info(
-                [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
-                divineLogger(socket.handshake.headers, { message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
-            )
-            return await divineResolver({ message: '操作成功', status: HttpStatus.OK })
+            /**Socket已读消息操作、消息推入MQ队列**/ //prettier-ignore
+            return await this.webSocketService.httpSocketChangeMessager(socket.handshake.headers, scope).then(async node => {
+                this.logger.info(
+                    [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
+                    divineLogger(socket.handshake.headers, { message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
+                )
+                return await divineResolver(node)
+            })
         } catch (e) {
             this.logger.error(
                 [WebSocketEventGateway.name, this.SubscribeSocketChangeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, {
-                    message: e.message,
+                    message: `发送消息已读操作失败：${e.message}`,
                     status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
                     socketId: socket.id
                 })
@@ -109,7 +110,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
             this.logger.error(
                 [WebSocketEventGateway.name, this.SubscribeSocketCustomizeMessager.name].join(':'),
                 divineLogger(socket.handshake.headers, {
-                    message: e.message,
+                    message: `发送自定义消息失败：${e.message}`,
                     status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
                     socketId: socket.id
                 })
