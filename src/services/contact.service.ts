@@ -128,4 +128,35 @@ export class ContactService {
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+    /**好友关系详情**/
+    public async httpContactResolver(headers: env.Headers, userId: string, scope: env.QueryContactResolver) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableContact, async qb => {
+                qb.leftJoinAndMapOne('t.user', entities.UserEntier, 'user', 'user.uid = t.userId')
+                qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
+                qb.select([
+                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'status', 'userId', 'niveId']),
+                    ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
+                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status'])
+                ])
+                qb.where('t.uid = :uid AND (t.userId = :userId OR t.niveId = :userId)', {
+                    userId: userId,
+                    uid: scope.uid
+                })
+                return qb.getOne().then(async node => {
+                    await this.customService.divineCatchWherer(!Boolean(node), node, {
+                        message: '该用户不是您的好友，无法查看详情'
+                    })
+                    return await divineResolver(node)
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [ContactService.name, this.httpContactResolver.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 }

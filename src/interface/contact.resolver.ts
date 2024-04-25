@@ -10,3 +10,6 @@ export class BodyContactInvite extends PickType(entities.SchemaContact, ['niveId
 
 /**新增好友**/
 export class BodyContactCreater extends PickType(entities.SchemaUser, ['uid']) {}
+
+/**好友关系详情**/
+export class QueryContactResolver extends PickType(entities.SchemaContact, ['uid']) {}
