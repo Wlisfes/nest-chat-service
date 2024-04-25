@@ -183,4 +183,35 @@ export class CommunitService {
             await connect.release()
         }
     }
+
+    /**社群详情**/
+    public async httpCommunitResolver(headers: env.Headers, userId: string, scope: env.QueryCommunitResolver) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+                qb.innerJoinAndMapMany(
+                    't.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = t.uid AND member.status = :status',
+                    { status: entities.EnumCommunitMemberStatus.enable }
+                )
+                qb.where(`t.uid = :uid`, { userId: userId, uid: scope.uid })
+                return qb.getOne().then(async (node: env.Omix) => {
+                    await this.customService.divineCatchWherer(!Boolean(node), node, {
+                        message: '社群ID不存在'
+                    })
+                    await this.customService.divineCatchWherer(!node.member.some(item => item.userId === userId), node, {
+                        message: '您不是该社群成员，无法查看详情'
+                    })
+                    return await divineResolver(node)
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitResolver.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 }

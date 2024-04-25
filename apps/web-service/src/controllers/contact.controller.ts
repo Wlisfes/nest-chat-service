@@ -33,13 +33,13 @@ export class ContactController {
         return await this.contactService.httpContactColumn(headers, request.user.uid)
     }
 
-    @Get('/one/resolver')
+    @Get('/resolver')
     @ApiDecorator({
         operation: { summary: '好友关系详情' },
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpContactOneResolver(
+    public async httpContactResolver(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
         @Query() query: env.QueryContactResolver

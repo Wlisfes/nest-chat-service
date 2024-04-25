@@ -10,3 +10,6 @@ export class BodyCommunitCreater extends PickType(entities.SchemaCommunit, ['nam
 
 /**申请加入社群**/
 export class BodyCommunitInviteJoiner extends PickType(entities.SchemaCommunit, ['uid']) {}
+
+/**社群详情**/
+export class QueryCommunitResolver extends PickType(entities.SchemaCommunit, ['uid']) {}
