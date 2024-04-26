@@ -92,43 +92,48 @@ export class WebSocketService {
             )
             /**获取消息详情、执行socket推送**/
             const message = await this.messagerService.httpSessionOneMessager(headers, { sid: scope.sid })
-            return await divineHandler(Boolean(message), {
-                failure: async () => {
-                    this.logger.error(
-                        [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
-                        divineLogger(headers, { message: 'Socket推送消息至客户端-推送失败', data: scope, result: message })
-                    )
-                    return await divineResolver({ message: '推送失败', ...scope })
-                },
-                handler: async () => {
-                    const sockets = this.webSocketClientService.server.sockets
-                    const eventName = `server-customize-messager`
-                    const typeName = `server-change-messager`
-                    if (scope.referrer === entities.EnumMessagerReferrer.socket) {
-                        /**消息来源是socket**/
-                        const socket = await this.webSocketClientService.getClient(scope.userId)
-                        if (socket && socket.connected) {
-                            /**除了发送者其他房间用户都推送过去**/
-                            sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
-                            /**发送者需要单独推送一条消息状态变更通知**/
-                            return socket.emit(scope.sid, {
-                                type: typeName,
-                                state: {
-                                    reason: null,
-                                    sid: scope.sid,
-                                    status: entities.EnumMessagerStatus.delivered
-                                }
-                            })
-                        }
+            if (!Boolean(message)) {
+                this.logger.error(
+                    [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
+                    divineLogger(headers, { message: 'Socket推送消息至客户端-推送失败', data: scope, result: message })
+                )
+                return await divineResolver({ message: '推送失败', ...scope })
+            } else {
+                const sockets = this.webSocketClientService.server.sockets
+                const eventName = `server-customize-messager`
+                const typeName = `server-change-messager`
+                if (scope.referrer === entities.EnumMessagerReferrer.socket) {
+                    /**消息来源是socket**/
+                    const socket = await this.webSocketClientService.getClient(scope.userId)
+                    if (Boolean(socket) && socket.connected) {
+                        /**如果发送者在线、除了发送者其他房间用户都推送过去**/
+                        sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
+                        socket.emit(scope.sid, {
+                            type: typeName,
+                            state: {
+                                reason: null,
+                                sid: scope.sid,
+                                status: entities.EnumMessagerStatus.delivered
+                            }
+                        })
+                    } else {
+                        /**如果发送者不在线、全量推送**/
+                        sockets.to(scope.sessionId).emit(eventName, message)
                     }
                     this.logger.info(
                         [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
                         divineLogger(headers, { message: 'Socket推送消息至客户端-推送成功', data: scope })
                     )
+                } else {
+                    /**其他来源**/
                     sockets.to(scope.sessionId).emit(eventName, message)
-                    return await divineResolver({ message: '推送成功', ...scope })
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
+                        divineLogger(headers, { message: 'Socket推送消息至客户端-全量推送成功', data: scope })
+                    )
                 }
-            })
+                return await divineResolver({ message: '推送成功', ...scope })
+            }
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
@@ -151,13 +156,16 @@ export class WebSocketService {
             const sockets = this.webSocketClientService.server.sockets
             const socket = await this.webSocketClientService.getClient(scope.userId)
             const typeName = `server-read-messager`
-            if (socket && socket.connected) {
-                /**排除读取用户推送**/
-                sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, { type: typeName, state: scope })
-            } else {
-                /**根据会话SID全量推送**/
-                sockets.to(scope.sessionId).emit(scope.sid, { type: typeName, state: scope })
-            }
+            await divineHandler(Boolean(socket) && socket.connected, {
+                handler: () => {
+                    /**排除读取用户推送**/
+                    sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, { type: typeName, state: scope })
+                },
+                failure: () => {
+                    /**根据会话SID全量推送**/
+                    sockets.to(scope.sessionId).emit(scope.sid, { type: typeName, state: scope })
+                }
+            })
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),
                 divineLogger(headers, { message: 'Socket推送消息状态变更至客户端-推送成功', data: scope })
