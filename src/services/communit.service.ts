@@ -188,6 +188,7 @@ export class CommunitService {
     public async httpCommunitResolver(headers: env.Headers, userId: string, scope: env.QueryCommunitResolver) {
         try {
             return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+                qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
                 qb.innerJoinAndMapMany(
                     't.member',
                     entities.CommunitMemberEntier,
@@ -195,6 +196,7 @@ export class CommunitService {
                     'member.communitId = t.uid AND member.status = :status',
                     { status: entities.EnumCommunitMemberStatus.enable }
                 )
+                qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
                 qb.where(`t.uid = :uid`, { userId: userId, uid: scope.uid })
                 return qb.getOne().then(async (node: env.Omix) => {
                     await this.customService.divineCatchWherer(!Boolean(node), node, {
