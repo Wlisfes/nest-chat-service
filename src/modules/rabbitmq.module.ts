@@ -16,12 +16,12 @@ import { RabbitmqService } from '@/services/rabbitmq.service'
                     ],
                     uri: config.get('RABBITMQ_URL'),
                     connectionInitOptions: { wait: false },
-                    prefetchCount: 1,
+                    prefetchCount: 10,
                     queueOptions: {
                         durable: true
                     },
                     default: {
-                        prefetchCount: 1,
+                        prefetchCount: 10,
                         options: { durable: true }
                     }
                 }
