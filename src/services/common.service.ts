@@ -47,24 +47,28 @@ export class CommonService {
     public async httpCommonNodemailerSender(scope: env.BodyCommonNodemailerSender, headers: env.Headers) {
         try {
             /**注册校验**/
-            await divineHandler(env.EnumMailSource.register === scope.source, async () => {
-                return await this.customService.divineNoner(this.customService.tableUser, {
-                    headers,
-                    message: '邮箱已注册',
-                    dispatch: {
-                        where: { email: scope.email }
-                    }
-                })
+            await divineHandler(env.EnumMailSource.register === scope.source, {
+                handler: async () => {
+                    return await this.customService.divineNoner(this.customService.tableUser, {
+                        headers,
+                        message: '邮箱已注册',
+                        dispatch: {
+                            where: { email: scope.email }
+                        }
+                    })
+                }
             })
             /**修改数据校验**/
-            await divineHandler([env.EnumMailSource.forget].includes(scope.source), async () => {
-                return await this.customService.divineHaver(this.customService.tableUser, {
-                    headers,
-                    message: '邮箱未注册',
-                    dispatch: {
-                        where: { email: scope.email }
-                    }
-                })
+            await divineHandler([env.EnumMailSource.forget].includes(scope.source), {
+                handler: async () => {
+                    return await this.customService.divineHaver(this.customService.tableUser, {
+                        headers,
+                        message: '邮箱未注册',
+                        dispatch: {
+                            where: { email: scope.email }
+                        }
+                    })
+                }
             })
             const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(async code => {
                 if (scope.source === 'register') {

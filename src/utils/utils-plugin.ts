@@ -11,11 +11,13 @@ import * as pdfjsLib from 'pdfjs-dist'
 
 /**条件捕获、异常抛出**/
 export async function divineCatchWherer(where: boolean, scope: env.Omix<{ message: string; status?: number; cause?: env.Omix }>) {
-    return await divineHandler(where, () => {
-        throw new HttpException(
-            scope.cause ? { message: scope.message, cause: scope.cause } : scope.message,
-            scope.status ?? HttpStatus.BAD_REQUEST
-        )
+    return await divineHandler(where, {
+        handler: () => {
+            throw new HttpException(
+                scope.cause ? { message: scope.message, cause: scope.cause } : scope.message,
+                scope.status ?? HttpStatus.BAD_REQUEST
+            )
+        }
     })
 }
 

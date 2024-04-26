@@ -88,8 +88,10 @@ export class UserService {
             const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
 
             await this.redisService.getStore<string>(key, null, headers).then(async code => {
-                await divineHandler(Boolean(sid), async () => {
-                    return await this.redisService.delStore(key, headers)
+                await divineHandler(Boolean(sid), {
+                    handler: async () => {
+                        return await this.redisService.delStore(key, headers)
+                    }
                 })
                 return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
                     message: '验证码不存在'

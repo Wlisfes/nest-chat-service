@@ -35,12 +35,15 @@ export async function divineResolver<
 }
 
 /**条件链式执行函数**/
-export async function divineHandler(where: boolean | Function, handler: Function) {
+export async function divineHandler(where: boolean | Function, scope: env.Omix<{ handler: Function; failure?: Function }>) {
+    let value = where
     if (typeof where === 'function') {
-        const value = where()
-        return value && handler ? await handler() : undefined
-    } else if (Boolean(where)) {
-        return handler ? await handler() : undefined
+        value = await where()
+    }
+    if (value && scope.handler) {
+        return await scope.handler()
+    } else if (!value && scope.failure) {
+        return await scope.failure()
     }
     return undefined
 }

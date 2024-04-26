@@ -92,23 +92,43 @@ export class WebSocketService {
             )
             /**获取消息详情、执行socket推送**/
             const message = await this.messagerService.httpSessionOneMessager(headers, { sid: scope.sid })
-            await divineHandler(Boolean(message), async () => {
-                const sockets = this.webSocketClientService.server.sockets
-                const eventName = `server-customize-messager`
-                if (scope.referrer === entities.EnumMessagerReferrer.socket) {
-                    /**消息来源是socket: 除了发送者其他房间用户都推送**/
-                    const socket = await this.webSocketClientService.getClient(scope.userId)
-                    if (socket && socket.connected) {
-                        return sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
+            return await divineHandler(Boolean(message), {
+                failure: async () => {
+                    this.logger.error(
+                        [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
+                        divineLogger(headers, { message: 'Socket推送消息至客户端-推送失败', data: scope, result: message })
+                    )
+                    return await divineResolver({ message: '推送失败', ...scope })
+                },
+                handler: async () => {
+                    const sockets = this.webSocketClientService.server.sockets
+                    const eventName = `server-customize-messager`
+                    const typeName = `server-change-messager`
+                    if (scope.referrer === entities.EnumMessagerReferrer.socket) {
+                        /**消息来源是socket**/
+                        const socket = await this.webSocketClientService.getClient(scope.userId)
+                        if (socket && socket.connected) {
+                            /**除了发送者其他房间用户都推送过去**/
+                            sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
+                            /**发送者需要单独推送一条消息状态变更通知**/
+                            return socket.emit(scope.sid, {
+                                type: typeName,
+                                state: {
+                                    reason: null,
+                                    sid: scope.sid,
+                                    status: entities.EnumMessagerStatus.delivered
+                                }
+                            })
+                        }
                     }
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
+                        divineLogger(headers, { message: 'Socket推送消息至客户端-推送成功', data: scope })
+                    )
+                    sockets.to(scope.sessionId).emit(eventName, message)
+                    return await divineResolver({ message: '推送成功', ...scope })
                 }
-                return sockets.to(scope.sessionId).emit(eventName, message)
             })
-            this.logger.info(
-                [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
-                divineLogger(headers, { message: 'Socket推送消息至客户端-推送成功', data: scope })
-            )
-            return await divineResolver({ message: '推送成功', ...scope })
         } catch (e) {
             this.logger.error(
                 [WebSocketService.name, this.httpSocketPushCustomizeMessager.name].join(':'),
@@ -130,12 +150,13 @@ export class WebSocketService {
             )
             const sockets = this.webSocketClientService.server.sockets
             const socket = await this.webSocketClientService.getClient(scope.userId)
+            const typeName = `server-read-messager`
             if (socket && socket.connected) {
                 /**排除读取用户推送**/
-                sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, scope)
+                sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, { type: typeName, state: scope })
             } else {
                 /**根据会话SID全量推送**/
-                sockets.to(scope.sessionId).emit(scope.sid, scope)
+                sockets.to(scope.sessionId).emit(scope.sid, { type: typeName, state: scope })
             }
             this.logger.info(
                 [WebSocketService.name, this.httpSocketPushChangeMessager.name].join(':'),

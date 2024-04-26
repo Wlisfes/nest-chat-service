@@ -3,9 +3,6 @@ import { Reflector } from '@nestjs/core'
 import { CustomService } from '@/services/custom.service'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
-// import { CustomProvider } from '@/utils/utils-configer'
-// import { divineParseJwtToken } from '@/utils/utils-plugin'
-// import { divineHandler } from '@/utils/utils-common'
 
 export interface IGuardOption {
     check: boolean
