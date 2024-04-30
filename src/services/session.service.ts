@@ -6,7 +6,7 @@ import { CustomService } from '@/services/custom.service'
 import { MessagerService } from '@/services/messager.service'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { RedisService } from '@/services/redis/redis.service'
-import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineWherer } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -50,7 +50,7 @@ export class SessionService {
     }
 
     /**会话列表**/
-    public async httpSessionColumn(headers: env.Headers, userId: string) {
+    public async httpSessionColumn(headers: env.Headers, userId: string, scope: env.BodySessionColumn) {
         try {
             return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
                 /**私聊会话联查**/
@@ -89,7 +89,17 @@ export class SessionService {
                     ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
                     ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
                 ])
-                qb.where('(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)', { userId })
+                qb.where(
+                    `((contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)) AND t.source IN (:...source)`,
+                    {
+                        userId,
+                        source: divineWherer(
+                            Boolean(scope.source),
+                            [scope.source],
+                            [entities.EnumSessionSource.contact, entities.EnumSessionSource.communit]
+                        )
+                    }
+                )
                 qb.orderBy('message.createTime', 'DESC')
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({

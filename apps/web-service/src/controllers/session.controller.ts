@@ -15,8 +15,12 @@ export class SessionController {
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpSessionColumn(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
-        return await this.sessionService.httpSessionColumn(headers, request.user.uid)
+    public async httpSessionColumn(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.BodySessionColumn
+    ) {
+        return await this.sessionService.httpSessionColumn(headers, request.user.uid, query)
     }
 
     @Get('/resolver')
