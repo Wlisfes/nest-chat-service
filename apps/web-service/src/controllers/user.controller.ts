@@ -36,4 +36,18 @@ export class UserController {
     public async httpUserResolver(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
         return await this.userService.httpUserResolver(headers, request.user.uid)
     }
+
+    @Post('/update')
+    @ApiDecorator({
+        operation: { summary: '用户基础信息更新' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpUserUpdate(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyUserUpdate
+    ) {
+        return await this.userService.httpUserUpdate(headers, request.user.uid, body)
+    }
 }

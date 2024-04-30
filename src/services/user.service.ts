@@ -8,7 +8,7 @@ import { UploaderService } from '@/services/uploader/uploader.service'
 import { CommonService } from '@/services/common.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { request, divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -86,7 +86,6 @@ export class UserService {
         try {
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
             const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
-
             await this.redisService.getStore<string>(key, null, headers).then(async code => {
                 await divineHandler(Boolean(sid), {
                     handler: async () => {
@@ -140,30 +139,68 @@ export class UserService {
     }
 
     /**账号信息**/
-    public async httpUserResolver(headers: env.Headers, userId: string) {
+    public async httpUserResolver(headers: env.Headers, userId: string, refresh?: boolean) {
         try {
             const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
             return await this.redisService.getStore(key, null, headers).then(async node => {
-                if (node) {
+                if (node && !refresh) {
                     return await divineResolver(node)
                 }
-                //prettier-ignore
-                return await this.customService.divineHaver(this.customService.tableUser, { 
+                const data = await this.customService.divineHaver(this.customService.tableUser, {
                     headers,
                     message: '身份验证失败',
                     dispatch: { where: { uid: userId } }
-                }).then(async data => {
-                    await this.redisService.setStore(key, data, 24 * 60 * 60, headers)
-                    this.logger.info(
-                        [UserService.name, this.httpUserResolver.name].join(':'),
-                        divineLogger(headers, { message: '账号信息读取成功', user: data })
-                    )
+                })
+                return await this.redisService.setStore(key, data, 0, headers).then(async () => {
                     return await divineResolver(data)
                 })
             })
         } catch (e) {
             this.logger.error(
                 [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**用户基础信息更新**/
+    public async httpUserUpdate(headers: env.Headers, userId: string, scope: env.BodyUserUpdate) {
+        try {
+            const media = await divineHandler<entities.MediaEntier>(Boolean(scope.fileId), {
+                handler: async () => {
+                    return await this.customService.divineHaver(this.customService.tableMedia, {
+                        message: '媒体ID不存在或类型错误',
+                        headers,
+                        dispatch: {
+                            where: { userId, fileId: scope.fileId, source: entities.MediaEntierSource.image }
+                        }
+                    })
+                }
+            })
+            const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
+            return await this.redisService.getStore(key, null, headers).then(async data => {
+                await this.customService.divineCatchWherer(!Boolean(data), data, {
+                    message: '身份验证失败'
+                })
+                /**更新用户基础信息**/
+                await this.customService.divineUpdate(this.customService.tableUser, {
+                    headers,
+                    where: { uid: userId },
+                    state: {
+                        nickname: scope.nickname ?? data.nickname,
+                        comment: scope.comment ?? data.comment,
+                        avatar: media?.fileURL ?? data.avatar
+                    }
+                })
+                /**刷新redis缓存**/
+                return await this.httpUserResolver(headers, userId, true).then(async () => {
+                    return divineResolver({ message: '更新成功' })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserUpdate.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
