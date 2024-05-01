@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
@@ -8,11 +8,13 @@ export class MessagerReadEntier extends CommonEntier {
     @ApiProperty({ description: '消息SID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '消息SID必填' })
     @Column({ comment: '消息SID', nullable: false })
+    @Index()
     sid: string
 
     @ApiProperty({ description: '用户UID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '用户UID必填' })
     @Column({ comment: '用户UID', nullable: false })
+    @Index()
     userId: string
 }
 

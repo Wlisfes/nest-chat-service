@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsBoolean, IsEnum } from 'class-validator'
 import { Type } from 'class-transformer'
@@ -22,11 +22,13 @@ export class CommunitMemberEntier extends CommonEntier {
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })
     @Column({ comment: '社群ID', nullable: true })
+    @Index()
     communitId: string
 
     @ApiProperty({ description: '用户UID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '用户UID必填' })
     @Column({ comment: '用户UID', nullable: false })
+    @Index()
     userId: string
 
     @ApiProperty({ description: '社群成员角色: master-群主、manager-管理员、masses-群众', enum: EnumCommunitMemberRole })

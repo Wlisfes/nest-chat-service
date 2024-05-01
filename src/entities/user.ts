@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
@@ -16,6 +16,7 @@ export class UserEntier extends CommonEntier {
     @ApiProperty({ description: 'UID', example: '2149446185344106496' })
     @IsNotEmpty({ message: 'UID必填' })
     @Column({ comment: '唯一UUID', nullable: false })
+    @Index()
     uid: string
 
     @ApiProperty({ description: '状态: 禁用-disable、启用-enable', enum: EnumUserStatus })

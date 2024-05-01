@@ -261,6 +261,7 @@ export class MessagerService {
                 qb.orderBy('t.createTime', 'DESC')
                 qb.skip(scope.offset)
                 qb.take(scope.limit)
+                qb.cache(5000)
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({
                         total,

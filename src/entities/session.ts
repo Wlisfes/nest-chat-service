@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
@@ -13,6 +13,7 @@ export enum EnumSessionSource {
 export class SessionEntier extends CommonEntier {
     @ApiProperty({ description: '会话SID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '会话SID必填' })
+    @Index()
     @Column({ comment: '会话SID', nullable: false })
     sid: string
 
@@ -25,11 +26,13 @@ export class SessionEntier extends CommonEntier {
     @ApiProperty({ description: '好友绑定关系ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '好友绑定关系ID必填' })
     @Column({ comment: '好友绑定关系ID', nullable: true })
+    @Index()
     contactId: string
 
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })
     @Column({ comment: '社群ID', nullable: true })
+    @Index()
     communitId: string
 }
 

@@ -1,4 +1,4 @@
-import { Entity, Column } from 'typeorm'
+import { Entity, Column, Index } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
@@ -16,6 +16,7 @@ export class MediaEntier extends CommonEntier {
     @ApiProperty({ description: '上传用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '上传用户ID必填' })
     @Column({ comment: '上传用户ID', nullable: false })
+    @Index()
     userId: string
 
     @ApiProperty({ description: '上传类型: image-图片、document-文档、audio-音频、video-视频', enum: MediaEntierSource })
@@ -27,6 +28,7 @@ export class MediaEntier extends CommonEntier {
     @ApiProperty({ description: '文件ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '文件ID必填' })
     @Column({ comment: '文件ID', nullable: false })
+    @Index()
     fileId: string
 
     @ApiProperty({ description: '文件原始名称' })

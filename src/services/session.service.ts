@@ -68,7 +68,7 @@ export class SessionService {
                 /**群聊会话联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
-                qb.leftJoinAndMapOne(
+                qb.leftJoinAndMapMany(
                     'communit.member',
                     entities.CommunitMemberEntier,
                     'member',
@@ -89,6 +89,7 @@ export class SessionService {
                     ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
                     ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
                 ])
+                qb.cache(5000)
                 qb.where(
                     `((contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)) AND t.source IN (:...source)`,
                     {
