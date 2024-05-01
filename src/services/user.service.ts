@@ -8,6 +8,7 @@ import { UploaderService } from '@/services/uploader/uploader.service'
 import { CommonService } from '@/services/common.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
+import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
@@ -146,13 +147,27 @@ export class UserService {
                 if (node && !refresh) {
                     return await divineResolver(node)
                 }
-                const data = await this.customService.divineHaver(this.customService.tableUser, {
-                    headers,
-                    message: '身份验证失败',
-                    dispatch: { where: { uid: userId } }
-                })
-                return await this.redisService.setStore(key, data, 0, headers).then(async () => {
-                    return await divineResolver(data)
+                return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
+                    qb.leftJoinAndMapOne('t.color', entities.WallpaperEntier, 'color', 't.color = color.keyId')
+                    qb.select([
+                        ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'uid', 'status', 'nickname', 'avatar']),
+                        ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify']),
+                        ...divineSelection('color', ['light', 'dark'])
+                    ])
+                    qb.where('t.uid = :uid', { uid: userId })
+                    return qb.getOne().then(async data => {
+                        this.logger.info(
+                            [UserService.name, this.httpUserResolver.name].join(':'),
+                            divineLogger(headers, { message: `[${this.customService.tableUser.metadata.name}]:查询出参`, node: data })
+                        )
+                        await this.customService.divineCatchWherer(!Boolean(data), data, {
+                            headers,
+                            message: '身份验证失败'
+                        })
+                        return await this.redisService.setStore(key, data, 0, headers).then(async () => {
+                            return await divineResolver(data)
+                        })
+                    })
                 })
             })
         } catch (e) {
