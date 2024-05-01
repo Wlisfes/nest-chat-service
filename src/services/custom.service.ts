@@ -26,6 +26,7 @@ export class CustomService {
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
         @InjectRepository(entities.MediaEntier) public readonly tableMedia: Repository<entities.MediaEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,
+        @InjectRepository(entities.WallpaperEntier) public readonly tableWallpaper: Repository<entities.WallpaperEntier>,
         @InjectRepository(entities.CommunitMemberEntier) public readonly tableCommunitMember: Repository<entities.CommunitMemberEntier>,
         @InjectRepository(entities.ContactEntier) public readonly tableContact: Repository<entities.ContactEntier>,
         @InjectRepository(entities.NotificationEntier) public readonly tableNotification: Repository<entities.NotificationEntier>,

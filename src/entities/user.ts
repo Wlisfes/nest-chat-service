@@ -2,6 +2,7 @@ import { Entity, Column, Index } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
 import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
+import { Type } from 'class-transformer'
 import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
@@ -9,6 +10,11 @@ import { CommonEntier } from '@/utils/utils-typeorm'
 export enum EnumUserStatus {
     disable = 'disable',
     enable = 'enable'
+}
+/**用户表: 主题**/
+export enum EnumUserTheme {
+    light = 'light',
+    dark = 'dark'
 }
 
 @Entity({ name: 'user', comment: '用户表' })
@@ -57,6 +63,35 @@ export class UserEntier extends CommonEntier {
         transformer: { from: value => value, to: value => hashSync(value) }
     })
     password: string
+
+    @ApiProperty({ description: '主题: 浅色模式-light、深色模式-dark', enum: EnumUserTheme })
+    @IsNotEmpty({ message: '主题必填' })
+    @IsEnum(EnumUserTheme, { message: '主题参数格式错误' })
+    @Column({ comment: '主题: 浅色模式-light、深色模式-dark', default: 'light', nullable: false })
+    theme: string
+
+    @ApiProperty({ description: '涂鸦背景主题色' })
+    @IsNotEmpty({ message: '涂鸦背景主题色必填' })
+    @Column({ comment: '涂鸦背景主题色', nullable: false, default: '' })
+    color: string
+
+    @ApiProperty({ description: '涂鸦: true-开启、false-关闭', enum: [true, false] })
+    @IsNotEmpty({ message: '涂鸦必填' })
+    @Type(() => Boolean)
+    @Column({ comment: '涂鸦', nullable: false, default: true })
+    paint: boolean
+
+    @ApiProperty({ description: '消息通知声音: true-开启、false-关闭', enum: [true, false] })
+    @IsNotEmpty({ message: '消息通知声音必填' })
+    @Type(() => Boolean)
+    @Column({ comment: '消息通知声音', nullable: false, default: true })
+    sound: boolean
+
+    @ApiProperty({ description: '消息通知: true-开启、false-关闭', enum: [true, false] })
+    @IsNotEmpty({ message: '消息通知必填' })
+    @Type(() => Boolean)
+    @Column({ comment: '消息通知', nullable: false, default: true })
+    notify: boolean
 }
 
 export class SchemaUser extends UserEntier {

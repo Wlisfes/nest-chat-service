@@ -1,4 +1,5 @@
 export * from '@/entities/user'
+export * from '@/entities/wallpaper'
 export * from '@/entities/media'
 export * from '@/entities/communit'
 export * from '@/entities/communit.member'
