@@ -68,14 +68,13 @@ export class SessionService {
                 /**群聊会话联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
-                qb.leftJoinAndMapMany(
+                qb.leftJoinAndMapOne(
                     'communit.member',
                     entities.CommunitMemberEntier,
                     'member',
                     'member.communitId = communit.uid AND member.userId = :userId',
                     { userId: userId }
                 )
-                qb.leftJoinAndMapOne('member.profile', entities.UserEntier, 'profile', 'profile.uid = member.userId')
                 qb.select([
                     /**会话基础字段**/
                     ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId']),
@@ -88,8 +87,7 @@ export class SessionService {
                     /**社群联查字段**/
                     ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
                     ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
-                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak']),
-                    ...divineSelection('profile', ['uid', 'nickname', 'avatar', 'status'])
+                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
                 ])
                 qb.cache(5000)
                 qb.where(
