@@ -7,7 +7,7 @@ import * as env from '@/interface/instance.resolver'
 @ApiTags('通用模块')
 @Controller('common')
 export class CommonController {
-    constructor(private readonly common: CommonService) {}
+    constructor(private readonly commonService: CommonService) {}
 
     @Get('/grapher')
     @ApiDecorator({
@@ -15,7 +15,7 @@ export class CommonController {
         response: { status: 200, description: 'OK' }
     })
     public async httpCommonGrapher(@Response() response, @Headers() headers: env.Headers) {
-        return await this.common.httpCommonGrapher(response, headers)
+        return await this.commonService.httpCommonGrapher(headers, response)
     }
 
     @Post('/mail/sender')
@@ -24,6 +24,15 @@ export class CommonController {
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
     public async httpCommonNodemailerSender(@Headers() headers: env.Headers, @Body() body: env.BodyCommonNodemailerSender) {
-        return await this.common.httpCommonNodemailerSender(body, headers)
+        return await this.commonService.httpCommonNodemailerSender(headers, body)
+    }
+
+    @Get('/wallpaper')
+    @ApiDecorator({
+        operation: { summary: '颜色背景列表' },
+        response: { status: 200, description: 'OK' }
+    })
+    public async httpCommonWallpaper(@Headers() headers: env.Headers) {
+        return await this.commonService.httpCommonWallpaper(headers)
     }
 }

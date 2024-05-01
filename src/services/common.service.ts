@@ -5,6 +5,7 @@ import { Logger } from 'winston'
 import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { CustomService } from '@/services/custom.service'
+import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineKeyCompose, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineGrapher } from '@/utils/utils-plugin'
 import * as web from '@/config/instance.config'
@@ -20,7 +21,7 @@ export class CommonService {
     ) {}
 
     /**图形验证码**/
-    public async httpCommonGrapher(response: Response, headers: env.Headers) {
+    public async httpCommonGrapher(headers: env.Headers, response: Response) {
         try {
             const { text, data } = await divineGrapher({ width: 120, height: 40 })
             const sid = await divineIntNumber()
@@ -44,7 +45,7 @@ export class CommonService {
     }
 
     /**发送邮件验证码**/
-    public async httpCommonNodemailerSender(scope: env.BodyCommonNodemailerSender, headers: env.Headers) {
+    public async httpCommonNodemailerSender(headers: env.Headers, scope: env.BodyCommonNodemailerSender) {
         try {
             /**注册校验**/
             await divineHandler(env.EnumMailSource.register === scope.source, {
@@ -91,6 +92,24 @@ export class CommonService {
         } catch (e) {
             this.logger.error(
                 [CommonService.name, this.httpCommonNodemailerSender.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**颜色背景列表**/
+    public async httpCommonWallpaper(headers: env.Headers) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableWallpaper, async qb => {
+                qb.select(divineSelection('t', ['keyId', 'light', 'dark']))
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    return await divineResolver({ total, list })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommonService.name, this.httpCommonWallpaper.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
