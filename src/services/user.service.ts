@@ -61,7 +61,8 @@ export class UserService {
                         email: scope.email,
                         nickname: scope.nickname,
                         password: scope.password,
-                        avatar: url
+                        avatar: url,
+                        comment: `你好，我正在使用Chat盒子`
                     }
                 })
                 await manager.save(user)
@@ -152,7 +153,7 @@ export class UserService {
                     qb.select([
                         ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'uid', 'status', 'nickname', 'avatar']),
                         ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify']),
-                        ...divineSelection('color', ['light', 'dark'])
+                        ...divineSelection('color', ['keyId', 'light', 'dark'])
                     ])
                     qb.where('t.uid = :uid', { uid: userId })
                     return qb.getOne().then(async data => {
@@ -205,6 +206,11 @@ export class UserService {
                     state: {
                         nickname: scope.nickname ?? data.nickname,
                         comment: scope.comment ?? data.comment,
+                        theme: scope.theme ?? data.theme,
+                        color: scope.color ?? data.color.keyId,
+                        paint: scope.paint ?? data.paint,
+                        sound: scope.sound ?? data.sound,
+                        notify: scope.notify ?? data.notify,
                         avatar: media?.fileURL ?? data.avatar
                     }
                 })

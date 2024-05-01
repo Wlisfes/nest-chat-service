@@ -48,9 +48,9 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '邮箱', nullable: false })
     email: string
 
-    @ApiProperty({ description: '动态', required: false, example: 'emo' })
+    @ApiProperty({ description: '状态描述', required: false, example: '你好，我正在使用Chat盒子' })
     @IsOptional()
-    @Column({ comment: '动态', nullable: true })
+    @Column({ comment: '状态描述', nullable: false })
     comment: string
 
     @ApiProperty({ description: '密码', example: 'MTIzNDU2' })
@@ -70,10 +70,10 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '主题: 浅色模式-light、深色模式-dark', default: 'light', nullable: false })
     theme: string
 
-    @ApiProperty({ description: '涂鸦背景主题色' })
-    @IsNotEmpty({ message: '涂鸦背景主题色必填' })
-    @Column({ comment: '涂鸦背景主题色', nullable: false, default: '' })
-    color: string
+    @ApiProperty({ description: '涂鸦背景主题色ID' })
+    @IsNotEmpty({ message: '涂鸦背景主题色ID必填' })
+    @Column({ comment: '涂鸦背景主题色ID', nullable: false })
+    color: number
 
     @ApiProperty({ description: '涂鸦: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '涂鸦必填' })

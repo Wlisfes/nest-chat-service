@@ -17,7 +17,9 @@ export class RestUserAuthorizer extends PickType(entities.SchemaUser, ['token', 
 export class RestUserResolver extends entities.UserEntier {}
 
 /**用户基础信息更新**/
-export class BodyUserUpdate extends PickType(PartialType(entities.SchemaUser), ['nickname', 'comment']) {
+export class BodyUserUpdate extends IntersectionType(
+    PickType(PartialType(entities.SchemaUser), ['nickname', 'comment', 'theme', 'color', 'paint', 'sound', 'notify'])
+) {
     @ApiProperty({ description: '头像文件ID', required: false })
     @IsOptional({ message: '头像文件ID' })
     fileId: string
