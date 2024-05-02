@@ -98,12 +98,12 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '双因子认证: true-开启、false-关闭', nullable: false, default: false })
     factor: boolean
 
-    @ApiProperty({ description: '错误重登次数' })
-    @IsNotEmpty({ message: '错误重登次数必填' })
-    @IsNumber({}, { message: '错误重登次数必须为数字' })
-    @Min(3, { message: '错误重登次数必须大于3' })
-    @Max(10, { message: '错误重登次数必须小于10' })
-    @Column({ comment: '错误重登次数', nullable: false, default: 5 })
+    @ApiProperty({ description: '双因子认证间隔天数' })
+    @IsNotEmpty({ message: '双因子认证间隔天数必填' })
+    @IsNumber({}, { message: '双因子认证间隔天数必须为数字' })
+    @Min(1, { message: '双因子认证间隔不能少于1天' })
+    @Max(30, { message: '双因子认证间隔不能大于30天' })
+    @Column({ comment: '双因子认证间隔天数', nullable: false, default: 7 })
     limit: number
 }
 

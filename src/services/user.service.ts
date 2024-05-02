@@ -21,30 +21,29 @@ export class UserService {
     ) {}
 
     /**token生成、登录时间存储**/
-    private async fetchJwtTokenSecret(headers: env.Headers, data: entities.UserEntier, scope: env.Omix<{ lasttimeKey: string }>) {
+    private async fetchJwtTokenSecret(
+        headers: env.Headers,
+        data: entities.UserEntier,
+        scope: env.Omix<{ lasttimeKey: string; device: string }>
+    ) {
         const expire = 24 * 60 * 60
         const schema = { uid: data.uid, status: data.status, email: data.email, password: data.password }
         const token = await this.customService.divineJwtTokenSecretr(schema, { message: '身份验证失败', expire })
+        /**存储登录日志**/
+        const { logId, ua, ip, browser, platform } = divineBstract(headers)
+        await this.customService.divineCreate(this.customService.tableLogger, {
+            headers,
+            state: { source: entities.EnumLoggerSource.login, userId: data.uid, logId, ua, ip, browser, platform }
+        })
+        /**存储登录设备**/
+
         /**存储登录时间**/
         return await this.redisService.setStore(scope.lasttimeKey, Date.now(), 0, headers).then(async () => {
-            const { logId, ua, ip, browser, platform } = divineBstract(headers)
-            await this.customService.divineCreate(this.customService.tableLogger, {
-                headers,
-                state: {
-                    source: entities.EnumLoggerSource.login,
-                    userId: data.uid,
-                    logId,
-                    ua,
-                    ip,
-                    browser,
-                    platform
-                }
-            })
             this.logger.info(
                 [UserService.name, this.fetchJwtTokenSecret.name].join(':'),
                 divineLogger(headers, { message: '登录成功', user: Object.assign(data, { token, expire }) })
             )
-            return await divineResolver({ message: '登录成功', token, expire })
+            return await divineResolver({ message: '登录成功', factor: false, token, expire })
         })
     }
 
@@ -144,17 +143,26 @@ export class UserService {
                         status: HttpStatus.FORBIDDEN
                     })
 
+                    //最后登录时间
                     const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid)
-                    const lasttime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
-                    if (!data.factor || lasttime === 0) {
+                    const lastTime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
+                    //双因子登录间隔时间
+                    const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, data.uid)
+                    const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
+                    const effect = limit * (24 * 60 * 60 * 1000)
+                    //登录设备编码
+                    const newDevice = await divineMD5Generate(request.useragent.source)
+                    const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid, newDevice)
+                    const device = await this.redisService.getStore<string>(deviceKey, null, headers)
+                    if (!data.factor || lastTime === 0) {
                         /**未开启双因子认证、可直接返回前端登录**/
                         /**redis中没有最后登录时间: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey })
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, device })
+                    } else if (Boolean(device) && lastTime + effect > Date.now()) {
+                        /**不是新的登录源并且最后登录时间未超出15天: 可直接返回登录**/
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, device })
                     } else {
-                        /**已开启双因子认证、需返回前端再次校验**/
-                        const device = await divineMD5Generate(request.useragent.source)
-
-                        return await divineResolver({ message: '登录成功', device })
+                        return await divineResolver({ message: '需双因子认证', factor: true })
                     }
                 })
             })
@@ -226,7 +234,6 @@ export class UserService {
                 await this.customService.divineCatchWherer(!Boolean(data), data, {
                     message: '身份验证失败'
                 })
-                console.log(scope)
                 /**更新用户基础信息**/
                 await this.customService.divineUpdate(this.customService.tableUser, {
                     headers,
