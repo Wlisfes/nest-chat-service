@@ -39,7 +39,7 @@ export async function createNodemailer(option: NodemailerOption) {
 /**读取模板**/
 export function readNodemailer<T extends Omix>(source: string, option: Omix<T> = {} as Omix<T>) {
     try {
-        const route = join(process.cwd(), `./src/services/nodemailer/templates/${source ?? 'authorize.html'}`)
+        const route = join(process.cwd(), `./src/services/nodemailer/templates/${source || 'common.html'}`)
         const content = readFileSync(route, 'utf8')
         return compile(content)(option)
     } catch (e) {

@@ -27,6 +27,24 @@ export class UserController {
         return await this.userService.httpUserAuthorizer(headers, request, body)
     }
 
+    @Post('/factor/authorizer')
+    @ApiDecorator({
+        operation: { summary: '双因子认证' },
+        response: { status: 200, description: 'OK', type: env.RestUserAuthorizer }
+    })
+    public async httpUserfactor(@Headers() headers: env.Headers, @Body() body: env.BodyUserfactor) {
+        return await this.userService.httpUserfactor(headers, body)
+    }
+
+    @Post('/factor/sender')
+    @ApiDecorator({
+        operation: { summary: '发送双因子认证验证码' },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpUserfactorSender(@Headers() headers: env.Headers, @Body() body: env.BodyUserfactorSender) {
+        return await this.userService.httpUserfactorSender(headers, body)
+    }
+
     @Get('/resolver')
     @ApiDecorator({
         operation: { summary: '账号信息' },

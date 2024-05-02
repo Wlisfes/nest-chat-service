@@ -5,9 +5,11 @@ import { compareSync } from 'bcryptjs'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { RedisService } from '@/services/redis/redis.service'
+import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
 import { divineMD5Generate } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineBstract, divineHandler } from '@/utils/utils-common'
+import { divineMaskCharacter } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -17,14 +19,15 @@ export class UserService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly customService: CustomService,
-        private readonly redisService: RedisService
+        private readonly redisService: RedisService,
+        private readonly nodemailer: NodemailerService
     ) {}
 
     /**token生成、登录时间存储**/
     private async fetchJwtTokenSecret(
         headers: env.Headers,
         data: entities.UserEntier,
-        scope: env.Omix<{ lasttimeKey: string; device: string }>
+        scope: env.Omix<{ lasttimeKey: string; deviceCache: boolean; deviceKey: string; device: string }>
     ) {
         const expire = 24 * 60 * 60
         const schema = { uid: data.uid, status: data.status, email: data.email, password: data.password }
@@ -36,7 +39,11 @@ export class UserService {
             state: { source: entities.EnumLoggerSource.login, userId: data.uid, logId, ua, ip, browser, platform }
         })
         /**存储登录设备**/
-
+        await divineHandler(!scope.deviceCache, {
+            handler: async () => {
+                return await this.redisService.setStore(scope.deviceKey, { logId, ua, ip, browser, platform }, 0, headers)
+            }
+        })
         /**存储登录时间**/
         return await this.redisService.setStore(scope.lasttimeKey, Date.now(), 0, headers).then(async () => {
             this.logger.info(
@@ -50,20 +57,16 @@ export class UserService {
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
-            /**校验邮箱验证码 start**********************/
-            const key = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email)
-            await this.redisService.getStore(key, null, headers).then(async code => {
-                return await this.customService.divineCatchWherer(scope.code !== code, null, {
-                    message: '验证码不存在'
+            const { keyName } = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email).then(async keyName => {
+                const code = await this.redisService.getStore(keyName, null, headers)
+                await this.customService.divineCatchWherer(scope.code !== code, null, { message: '验证码不存在' })
+                /**邮箱注册校验**/
+                await this.customService.divineNoner(this.customService.tableUser, {
+                    headers,
+                    message: '邮箱已注册',
+                    dispatch: { where: { email: scope.email } }
                 })
-            })
-            /**校验邮箱验证码 end**********************/
-            await this.customService.divineNoner(this.customService.tableUser, {
-                headers,
-                message: '邮箱已注册',
-                dispatch: {
-                    where: { email: scope.email }
-                }
+                return await divineResolver({ keyName })
             })
             return await this.customService.divineWithTransaction(async manager => {
                 const user = await this.customService.divineCreate(this.customService.tableUser, {
@@ -74,12 +77,13 @@ export class UserService {
                         email: scope.email,
                         nickname: scope.nickname,
                         password: scope.password,
+                        color: 1,
                         avatar: `https://chat-oss.lisfes.cn/chat/avatar/2161418838745382965.webp`,
                         comment: `你好，我正在使用Chat盒子`
                     }
                 })
                 await manager.save(user)
-                return await this.redisService.delStore(key, headers).then(async () => {
+                return await this.redisService.delStore(keyName, headers).then(async () => {
                     this.logger.info(
                         [UserService.name, this.httpUserRegister.name].join(':'),
                         divineLogger(headers, { message: '注册成功', user })
@@ -143,32 +147,85 @@ export class UserService {
                         status: HttpStatus.FORBIDDEN
                     })
 
-                    //最后登录时间
+                    /**最后登录时间**/
                     const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid)
                     const lastTime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
-                    //双因子登录间隔时间
-                    const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, data.uid)
-                    const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
-                    const effect = limit * (24 * 60 * 60 * 1000)
-                    //登录设备编码
-                    const newDevice = await divineMD5Generate(request.useragent.source)
-                    const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid, newDevice)
-                    const device = await this.redisService.getStore<string>(deviceKey, null, headers)
+                    /**登录设备编码**/
+                    const device = await divineMD5Generate(request.useragent.source)
+                    const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_DEVICE, data.uid, device)
+                    const deviceCache = Boolean(await this.redisService.getStore<string>(deviceKey, null, headers))
                     if (!data.factor || lastTime === 0) {
                         /**未开启双因子认证、可直接返回前端登录**/
                         /**redis中没有最后登录时间: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, device })
-                    } else if (Boolean(device) && lastTime + effect > Date.now()) {
-                        /**不是新的登录源并且最后登录时间未超出15天: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, device })
-                    } else {
-                        return await divineResolver({ message: '需双因子认证', factor: true })
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceCache, deviceKey, device }).then(
+                            async node => {
+                                await divineHandler(!data.factor, {
+                                    handler: () => this.customService.tableUser.update({ uid: data.uid }, { factor: true })
+                                })
+                                return await divineResolver(node)
+                            }
+                        )
                     }
+                    /**双因子登录间隔时间**/
+                    const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, data.uid)
+                    const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
+                    const effect = limit * (24 * 60 * 60 * 1000)
+                    if (deviceCache && lastTime + effect > Date.now()) {
+                        /**不是新的登录源并且最后登录时间未超出15天: 可直接返回登录**/
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceCache, deviceKey, device })
+                    }
+                    return await divineResolver({
+                        message: '双因子认证',
+                        factor: true,
+                        uid: data.uid,
+                        email: await divineMaskCharacter('email', data.email)
+                    })
                 })
             })
         } catch (e) {
             this.logger.error(
                 [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**发送双因子认证验证码**/
+    public async httpUserfactorSender(headers: env.Headers, scope: env.BodyUserfactorSender) {
+        try {
+            const node = await this.httpUserResolver(headers, scope.uid)
+            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(async code => {
+                return { code, key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, node.email) }
+            })
+            await this.nodemailer.httpCustomizeNodemailer({
+                from: `"Chat" <${this.nodemailer.fromName}>`,
+                to: node.email,
+                subject: 'Chat',
+                html: await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '双因子认证' })
+            })
+            return await this.redisService.setStore(key, code, 5 * 60, headers).then(async () => {
+                this.logger.info(
+                    [UserService.name, this.httpUserfactorSender.name].join(':'),
+                    divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, key, code })
+                )
+                return await divineResolver({ message: '发送成功' })
+            })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserfactorSender.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**双因子认证登录**/
+    public async httpUserfactor(headers: env.Headers, scope: env.BodyUserfactor) {
+        try {
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserfactor.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

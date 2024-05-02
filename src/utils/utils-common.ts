@@ -110,6 +110,17 @@ export async function divineKeyCompose(namespaces: string, ...args: string[]) {
     return [namespaces, ...args].filter(key => !isEmpty(key)).join(':')
 }
 
+/**邮箱号混淆**/
+export async function divineMaskCharacter(type: 'email', str: string) {
+    if (type === 'email') {
+        const prefix = str.substring(0, str.indexOf('@'))
+        const suffix = str.substring(str.indexOf('@'), str.length)
+        const fill = prefix.length > 2 ? prefix.substring(0, 3) : prefix
+        return fill.padEnd(8, '*') + suffix
+    }
+    return str
+}
+
 /**文件名称、类型挂载**/
 export function divineFileRequest(request: Request, file: env.Omix, cb: Function) {
     file.body = request.body
