@@ -1,5 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
 import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { UserAgentMiddleware } from '@/middleware/useragent.middleware'
 import { LoggerMiddleware } from '@/middleware/logger.middleware'
 import { AuthGuard } from '@/guards/auth.guard'
 import { TransformInterceptor } from '@/interceptor/transform.interceptor'
@@ -68,6 +69,6 @@ import { MessagerController } from '@web-service/controllers/messager.controller
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
-        consumer.apply(LoggerMiddleware).forRoutes('*')
+        consumer.apply(UserAgentMiddleware, LoggerMiddleware).forRoutes('*')
     }
 }
