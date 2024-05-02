@@ -5,15 +5,18 @@ import { Logger } from 'winston'
 import { getClientIp } from 'request-ip'
 import { divineIntNumber } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
+import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger) {}
-    async use(request: Request, response: Response, next: NextFunction) {
+    async use(request: env.Omix<Request>, response: Response, next: NextFunction) {
         const { baseUrl, method, body, query, params, headers } = request
-        const ip = getClientIp(request)
+        const clientIp = getClientIp(request)
         const start = Date.now()
         const requestId = await divineIntNumber({ random: true, bit: 32 })
+        const ip = ['localhost', '::1', '::ffff:127.0.0.1'].includes(clientIp) ? '127.0.0.1' : clientIp.replace(/^.*:/, '')
+
         /**起始日志 startTime**/
         this.logger.info(LoggerMiddleware.name, {
             [web.WEB_COMMON_HEADER_CONTEXTID]: requestId.toString(),
@@ -25,14 +28,17 @@ export class LoggerMiddleware implements NestMiddleware {
                 query,
                 params,
                 host: headers.host ?? '',
+                ip: ip,
                 origin: headers.origin ?? '',
                 referer: headers.referer ?? '',
-                ip: ['localhost', '::1', '::ffff:127.0.0.1'].includes(ip) ? '127.0.0.1' : ip.replace(/^.*:/, ''),
                 ['user-agent']: headers['user-agent'] ?? '',
                 authorization: headers[web.WEB_COMMON_HEADER_AUTHORIZE] ?? ''
             }
         })
 
+        request.headers.ip = ip
+        request.headers.browser = request.useragent.browser
+        request.headers.platform = request.useragent.platform
         request.headers[web.WEB_COMMON_HEADER_STARTTIME] = start.toString()
         request.headers[web.WEB_COMMON_HEADER_CONTEXTID] = requestId.toString()
         response.on('finish', () => {
@@ -47,9 +53,9 @@ export class LoggerMiddleware implements NestMiddleware {
                     query,
                     params,
                     host: headers.host ?? '',
+                    ip: ip,
                     origin: headers.origin ?? '',
                     referer: headers.referer ?? '',
-                    ip: ['localhost', '::1', '::ffff:127.0.0.1'].includes(ip) ? '127.0.0.1' : ip.replace(/^.*:/, ''),
                     ['user-agent']: headers['user-agent'] ?? '',
                     authorization: headers[web.WEB_COMMON_HEADER_AUTHORIZE] ?? ''
                 }

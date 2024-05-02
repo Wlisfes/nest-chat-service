@@ -1,9 +1,8 @@
 import { Entity, Column, Index } from 'typeorm'
 import { hashSync } from 'bcryptjs'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, Length, IsEmail, IsEnum } from 'class-validator'
+import { IsNotEmpty, Length, IsEmail, IsNumber, IsEnum, Min, Max } from 'class-validator'
 import { Type } from 'class-transformer'
-import { IsOptional } from '@/decorator/common.decorator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**用户表: 状态**/
@@ -48,8 +47,8 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '邮箱', nullable: false })
     email: string
 
-    @ApiProperty({ description: '状态描述', required: false, example: '你好，我正在使用Chat盒子' })
-    @IsOptional()
+    @ApiProperty({ description: '状态描述', example: '你好，我正在使用Chat盒子' })
+    @IsNotEmpty({ message: '状态描述必填' })
     @Column({ comment: '状态描述', nullable: false })
     comment: string
 
@@ -78,20 +77,34 @@ export class UserEntier extends CommonEntier {
     @ApiProperty({ description: '涂鸦: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '涂鸦必填' })
     @Type(() => Boolean)
-    @Column({ comment: '涂鸦', nullable: false, default: true })
+    @Column({ comment: '涂鸦: true-开启、false-关闭', nullable: false, default: true })
     paint: boolean
 
     @ApiProperty({ description: '消息通知声音: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '消息通知声音必填' })
     @Type(() => Boolean)
-    @Column({ comment: '消息通知声音', nullable: false, default: true })
+    @Column({ comment: '消息通知声音: true-开启、false-关闭', nullable: false, default: true })
     sound: boolean
 
     @ApiProperty({ description: '消息通知: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '消息通知必填' })
     @Type(() => Boolean)
-    @Column({ comment: '消息通知', nullable: false, default: true })
+    @Column({ comment: '消息通知: true-开启、false-关闭', nullable: false, default: true })
     notify: boolean
+
+    @ApiProperty({ description: '双因子认证: true-开启、false-关闭', enum: [true, false] })
+    @IsNotEmpty({ message: '双因子认证必填' })
+    @Type(() => Boolean)
+    @Column({ comment: '双因子认证: true-开启、false-关闭', nullable: false, default: false })
+    factor: boolean
+
+    @ApiProperty({ description: '错误重登次数' })
+    @IsNotEmpty({ message: '错误重登次数必填' })
+    @IsNumber({}, { message: '错误重登次数必须为数字' })
+    @Min(3, { message: '错误重登次数必须大于3' })
+    @Max(10, { message: '错误重登次数必须小于10' })
+    @Column({ comment: '错误重登次数', nullable: false, default: 5 })
+    limit: number
 }
 
 export class SchemaUser extends UserEntier {

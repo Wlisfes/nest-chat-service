@@ -23,6 +23,7 @@ export interface DivineCustomOption<T> extends env.Omix {
 export class CustomService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @InjectRepository(entities.LoggerEntier) public readonly tableLogger: Repository<entities.LoggerEntier>,
         @InjectRepository(entities.UserEntier) public readonly tableUser: Repository<entities.UserEntier>,
         @InjectRepository(entities.MediaEntier) public readonly tableMedia: Repository<entities.MediaEntier>,
         @InjectRepository(entities.CommunitEntier) public readonly tableCommunit: Repository<entities.CommunitEntier>,

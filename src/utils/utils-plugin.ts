@@ -5,6 +5,7 @@ import { createCanvas } from 'canvas'
 import { divineHandler, divineIntNumber } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
+import * as crypto from 'crypto'
 import * as stream from 'stream'
 import * as sizeOf from 'image-size'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -32,6 +33,13 @@ export async function divineGrapher(scope: env.Omix<{ width: number; height: num
         charPreset: 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789',
         ...scope
     })
+}
+
+/**生成MD5字符串**/
+export async function divineMD5Generate(str: string) {
+    const hash = crypto.createHash('md5')
+    hash.update(str)
+    return hash.digest('hex')
 }
 
 /**获取图片宽高比率**/

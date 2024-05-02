@@ -77,6 +77,17 @@ export function divineLogger(headers: env.Omix<env.Headers> = {}, log: env.Omix 
     }
 }
 
+/**提取日志参数**/
+export function divineBstract(headers: env.Omix<env.Headers> = {}) {
+    return {
+        logId: headers[web.WEB_COMMON_HEADER_CONTEXTID],
+        ua: headers['user-agent'] ?? null,
+        ip: headers.ip ?? null,
+        browser: headers.browser ?? null,
+        platform: headers.platform ?? null
+    }
+}
+
 /**自定义Error信息**/
 export function divineCustomizeError<T = { message: string; status: number }>(scope: env.Omix<T>): env.Omix<env.CustomizeError<T>> {
     const err = new Error(scope.message) as env.CustomizeError<T>

@@ -14,19 +14,23 @@ export class LoggerEntier extends CommonEntier {
     @IsNotEmpty({ message: '日志ID必填' })
     @Index()
     @Column({ length: 32, comment: '日志ID', nullable: false })
-    uid: string
+    logId: string
 
     @ApiProperty({ description: '日志类型: 登录-login', enum: EnumLoggerSource })
     @IsNotEmpty({ message: '日志类型必填' })
     @IsEnum(EnumLoggerSource, { message: '日志类型参数格式错误' })
-    @Column({ comment: '日志类型: 登录-login', nullable: false })
+    @Column({ length: 32, comment: '日志类型: 登录-login', nullable: false })
     source: string
 
     @ApiProperty({ description: '操作用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '操作用户ID必填' })
     @Index()
-    @Column({ comment: '操作用户ID', nullable: false })
+    @Column({ length: 32, comment: '操作用户ID', nullable: false })
     userId: string
+
+    @ApiProperty({ description: 'ip地址' })
+    @Column({ length: 32, comment: 'ip地址', nullable: true })
+    ip: string
 
     @ApiProperty({ description: '请求源' })
     @Column({ comment: '请求源', nullable: true })
@@ -41,11 +45,27 @@ export class LoggerEntier extends CommonEntier {
     ua: string
 
     @ApiProperty({ description: '操作前记录' })
-    @Column({ comment: '操作前记录', nullable: true })
+    @Column({
+        comment: '操作前记录',
+        nullable: true,
+        update: false,
+        transformer: {
+            from: value => JSON.parse(value ?? '{}'),
+            to: value => JSON.stringify(value ?? {})
+        }
+    })
     before: string
 
     @ApiProperty({ description: '操作后记录' })
-    @Column({ comment: '操作后记录', nullable: true })
+    @Column({
+        comment: '操作后记录',
+        nullable: true,
+        update: false,
+        transformer: {
+            from: value => JSON.parse(value ?? '{}'),
+            to: value => JSON.stringify(value ?? {})
+        }
+    })
     after: string
 }
 

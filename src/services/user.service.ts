@@ -4,12 +4,10 @@ import { Logger } from 'winston'
 import { compareSync } from 'bcryptjs'
 import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
-import { UploaderService } from '@/services/uploader/uploader.service'
-import { CommonService } from '@/services/common.service'
 import { RedisService } from '@/services/redis/redis.service'
-import { divineCatchWherer } from '@/utils/utils-plugin'
+import { divineMD5Generate } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineKeyCompose, divineLogger, divineBstract, divineHandler } from '@/utils/utils-common'
 import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -19,38 +17,54 @@ export class UserService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly customService: CustomService,
-        private readonly uploader: UploaderService,
-        private readonly commonService: CommonService,
         private readonly redisService: RedisService
     ) {}
+
+    /**token生成、登录时间存储**/
+    private async fetchJwtTokenSecret(headers: env.Headers, data: entities.UserEntier, scope: env.Omix<{ lasttimeKey: string }>) {
+        const expire = 24 * 60 * 60
+        const schema = { uid: data.uid, status: data.status, email: data.email, password: data.password }
+        const token = await this.customService.divineJwtTokenSecretr(schema, { message: '身份验证失败', expire })
+        /**存储登录时间**/
+        return await this.redisService.setStore(scope.lasttimeKey, Date.now(), 0, headers).then(async () => {
+            const { logId, ua, ip, browser, platform } = divineBstract(headers)
+            await this.customService.divineCreate(this.customService.tableLogger, {
+                headers,
+                state: {
+                    source: entities.EnumLoggerSource.login,
+                    userId: data.uid,
+                    logId,
+                    ua,
+                    ip,
+                    browser,
+                    platform
+                }
+            })
+            this.logger.info(
+                [UserService.name, this.fetchJwtTokenSecret.name].join(':'),
+                divineLogger(headers, { message: '登录成功', user: Object.assign(data, { token, expire }) })
+            )
+            return await divineResolver({ message: '登录成功', token, expire })
+        })
+    }
 
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
+            /**校验邮箱验证码 start**********************/
             const key = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email)
             await this.redisService.getStore(key, null, headers).then(async code => {
-                return await divineCatchWherer(scope.code !== code, {
+                return await this.customService.divineCatchWherer(scope.code !== code, null, {
                     message: '验证码不存在'
                 })
             })
+            /**校验邮箱验证码 end**********************/
             await this.customService.divineNoner(this.customService.tableUser, {
                 headers,
                 message: '邮箱已注册',
                 dispatch: {
                     where: { email: scope.email }
                 }
-            })
-            /**拉取远程随机头像**/ //prettier-ignore
-            const { url } = await this.uploader.httpStreamRemoter(
-                headers,
-                `https://api.uomg.com/api/rand.avatar?sort=女&format=images`
-            ).then(async ({buffer, name, size}) => {
-                return await this.uploader.putStream(headers, {
-                    buffer,
-                    name,
-                    size,
-                    source: entities.MediaEntierSource.image
-                })
             })
             return await this.customService.divineWithTransaction(async manager => {
                 const user = await this.customService.divineCreate(this.customService.tableUser, {
@@ -61,7 +75,7 @@ export class UserService {
                         email: scope.email,
                         nickname: scope.nickname,
                         password: scope.password,
-                        avatar: url,
+                        avatar: `https://chat-oss.lisfes.cn/chat/avatar/2161418838745382965.webp`,
                         comment: `你好，我正在使用Chat盒子`
                     }
                 })
@@ -86,50 +100,63 @@ export class UserService {
     /**登录账号**/
     public async httpUserAuthorizer(headers: env.Headers, request: env.Omix, scope: env.BodyUserAuthorizer) {
         try {
+            /**校验图形验证码 start**********************/
             const sid = request.cookies[web.WEB_COMMON_HEADER_CAPHCHA]
-            const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
-            await this.redisService.getStore<string>(key, null, headers).then(async code => {
-                await divineHandler(Boolean(sid), {
-                    handler: async () => {
-                        return await this.redisService.delStore(key, headers)
-                    }
-                })
-                return await divineCatchWherer(isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase(), {
-                    message: '验证码不存在'
-                })
-            })
-            //prettier-ignore
-            const node = await this.customService.divineHaver(this.customService.tableUser, {
-                headers,
-                message: '账号不存在',
-                dispatch: {
-                    where: { email: scope.email },
-                    select: { uid: true, email: true, status: true, password: true }
+            await divineHandler(Boolean(sid), {
+                failure: () => this.customService.divineCatchWherer(true, null, { message: '验证码不存在' }),
+                handler: async () => {
+                    const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
+                    return await this.redisService.getStore<string>(key, null, headers).then(async code => {
+                        const compared = isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase()
+                        await this.redisService.delStore(key, headers)
+                        return await this.customService.divineCatchWherer(compared, null, {
+                            message: '验证码不存在'
+                        })
+                    })
                 }
-            }).then(async ({ uid, status, email, password }) => {
-                await divineCatchWherer(!compareSync(scope.password, password), {
-                    message: '账号密码错误',
-                    status: HttpStatus.BAD_REQUEST
-                })
-                await divineCatchWherer(status === 'disable', {
-                    message: '账号已被禁用',
-                    status: HttpStatus.FORBIDDEN
-                })
-                return await divineResolver({ uid, status, email, password })
             })
-            //prettier-ignore
-            return await this.customService.divineJwtTokenSecretr(node, {
-                message: '身份验证失败',
-                expire: 24 * 60 * 60
-            }).then(async token => {
+            /**校验图形验证码 end**********************/
+            return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
                 this.logger.info(
                     [UserService.name, this.httpUserAuthorizer.name].join(':'),
-                    divineLogger(headers, {
-                        message: '登录成功',
-                        user: Object.assign(node, { token, expire: 24 * 60 * 60 })
-                    })
+                    divineLogger(headers, { message: `[${this.customService.tableUser.metadata.name}]:查询入参`, dispatch: scope })
                 )
-                return await divineResolver({ message: '登录成功', token, expire: 24 * 60 * 60 })
+                qb.addSelect('t.password')
+                qb.where('t.email = :email', { email: scope.email })
+                return qb.getOne().then(async data => {
+                    this.logger.info(
+                        [UserService.name, this.httpUserAuthorizer.name].join(':'),
+                        divineLogger(headers, { message: `[${this.customService.tableUser.metadata.name}]:查询出参`, node: data })
+                    )
+                    /**验证登录邮箱**/
+                    await this.customService.divineCatchWherer(!Boolean(data), null, {
+                        message: '账号不存在',
+                        status: HttpStatus.BAD_REQUEST
+                    })
+                    /**验证账号密码**/
+                    await this.customService.divineCatchWherer(!compareSync(scope.password, data.password), null, {
+                        message: '账号密码错误',
+                        status: HttpStatus.BAD_REQUEST
+                    })
+                    /**验证账号登录状态**/
+                    await this.customService.divineCatchWherer(data.status === 'disable', null, {
+                        message: '账号已被禁用',
+                        status: HttpStatus.FORBIDDEN
+                    })
+
+                    const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid)
+                    const lasttime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
+                    if (!data.factor || lasttime === 0) {
+                        /**未开启双因子认证、可直接返回前端登录**/
+                        /**redis中没有最后登录时间: 可直接返回登录**/
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey })
+                    } else {
+                        /**已开启双因子认证、需返回前端再次校验**/
+                        const device = await divineMD5Generate(request.useragent.source)
+
+                        return await divineResolver({ message: '登录成功', device })
+                    }
+                })
             })
         } catch (e) {
             this.logger.error(
@@ -152,7 +179,7 @@ export class UserService {
                     qb.leftJoinAndMapOne('t.color', entities.WallpaperEntier, 'color', 't.color = color.keyId')
                     qb.select([
                         ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'uid', 'status', 'nickname', 'avatar']),
-                        ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify']),
+                        ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify', 'factor', 'limit']),
                         ...divineSelection('color', ['keyId', 'light', 'dark'])
                     ])
                     qb.where('t.uid = :uid', { uid: userId })
@@ -199,6 +226,7 @@ export class UserService {
                 await this.customService.divineCatchWherer(!Boolean(data), data, {
                     message: '身份验证失败'
                 })
+                console.log(scope)
                 /**更新用户基础信息**/
                 await this.customService.divineUpdate(this.customService.tableUser, {
                     headers,

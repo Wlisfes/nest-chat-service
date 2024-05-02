@@ -8,3 +8,5 @@ export const CHAT_CHAHE_MAIL_FORGET = 'chat:chahe:mail:forget'
 
 /**用户信息redis存储键**/
 export const CHAT_CHAHE_USER_RESOLVER = 'chat:chahe:user:resolver'
+/**用户最后登录时间redis存储键**/
+export const CHAT_CHAHE_USER_LASTTIME = 'chat:chahe:user:lasttime'
