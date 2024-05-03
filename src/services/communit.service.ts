@@ -7,7 +7,7 @@ import { MessagerService } from '@/services/messager.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 

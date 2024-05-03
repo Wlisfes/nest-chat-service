@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, HttpStatus } from '@nestjs/c
 import { WsException } from '@nestjs/websockets'
 import { CustomService } from '@/services/custom.service'
 import { divineIntNumber } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 
 @Injectable()
 export class WebSocketGuard implements CanActivate {

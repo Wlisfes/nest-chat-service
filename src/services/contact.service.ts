@@ -7,7 +7,7 @@ import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 

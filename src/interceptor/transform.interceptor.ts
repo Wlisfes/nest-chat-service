@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor, HttpStatus 
 import { Observable } from 'rxjs'
 import { map } from 'rxjs/operators'
 import { moment } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {

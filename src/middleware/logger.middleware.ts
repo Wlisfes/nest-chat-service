@@ -4,7 +4,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { getClientIp } from 'request-ip'
 import { divineIntNumber } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()

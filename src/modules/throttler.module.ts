@@ -2,7 +2,7 @@ import { Module, Global } from '@nestjs/common'
 import { APP_GUARD } from '@nestjs/core'
 import { ThrottlerModule as NestThrottlerModule } from '@nestjs/throttler'
 import { AuthThrottlerGuard } from '@/guards/auth.throttler.guard'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 
 @Global()
 @Module({

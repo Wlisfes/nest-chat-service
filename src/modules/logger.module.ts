@@ -1,7 +1,7 @@
 import { Module, Global, DynamicModule } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
 import { divineWherer } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as winston from 'winston'
 import * as chalk from 'chalk'
 import 'winston-daily-rotate-file'

@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { snowflakeId } from 'snowflake-id-maker'
 import { isEmpty } from 'class-validator'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
 import * as timezone from 'dayjs/plugin/timezone'

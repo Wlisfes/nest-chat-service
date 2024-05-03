@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { JwtModule, JwtService } from '@nestjs/jwt'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'

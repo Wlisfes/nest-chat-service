@@ -8,7 +8,7 @@ import { CustomService } from '@/services/custom.service'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineKeyCompose, divineHandler, divineLogger } from '@/utils/utils-common'
 import { divineGrapher } from '@/utils/utils-plugin'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()

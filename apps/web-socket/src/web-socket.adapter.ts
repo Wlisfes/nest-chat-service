@@ -4,7 +4,7 @@ import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { divineCustomizeError, divineIntNumber } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
-import * as web from '@/config/instance.config'
+import * as web from '@/config/web-instance'
 
 export class WebSocketAdapter extends IoAdapter {
     constructor(app, private readonly logger: Logger, private readonly customService: CustomService) {
