@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, Response } from '@nestjs/common'
+import { Controller, Get, Headers, Response } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { CommonService } from '@/services/common.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
@@ -16,15 +16,6 @@ export class CommonController {
     })
     public async httpCommonGrapher(@Response() response, @Headers() headers: env.Headers) {
         return await this.commonService.httpCommonGrapher(headers, response)
-    }
-
-    @Post('/mail/sender')
-    @ApiDecorator({
-        operation: { summary: '发送邮件验证码' },
-        response: { status: 200, description: 'OK', type: env.NoticeResolver }
-    })
-    public async httpCommonNodemailerSender(@Headers() headers: env.Headers, @Body() body: env.BodyCommonNodemailerSender) {
-        return await this.commonService.httpCommonNodemailerSender(headers, body)
     }
 
     @Get('/wallpaper')
