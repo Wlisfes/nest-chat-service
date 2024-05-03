@@ -1,4 +1,5 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Repository, EntityManager, DataSource, DeepPartial, SelectQueryBuilder } from 'typeorm'
 import { InjectRepository } from '@nestjs/typeorm'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
@@ -35,6 +36,7 @@ export class CustomService {
         @InjectRepository(entities.MessagerEntier) public readonly tableMessager: Repository<entities.MessagerEntier>,
         @InjectRepository(entities.MessagerMediaEntier) public readonly tableMessageMediar: Repository<entities.MessagerMediaEntier>,
         @InjectRepository(entities.MessagerReadEntier) public readonly tableMessagerRead: Repository<entities.MessagerReadEntier>,
+        private readonly configService: ConfigService,
         private readonly entityManager: EntityManager,
         private readonly dataSource: DataSource,
         private readonly jwtService: JwtService
@@ -43,7 +45,7 @@ export class CustomService {
     /**jwtToken解析**/
     public async divineJwtTokenParser<T>(token: string, scope: DivineCustomOption<T>): Promise<T> {
         try {
-            return (await this.jwtService.verifyAsync(token, { secret: web.WEB_COMMON_JWT_SECRET })) as T
+            return (await this.jwtService.verifyAsync(token, { secret: this.configService.get('JWT_SECRET') })) as T
         } catch (e) {
             throw new HttpException(scope.message ?? '身份验证失败', scope.status ?? HttpStatus.UNAUTHORIZED)
         }
@@ -55,10 +57,10 @@ export class CustomService {
             if (scope.expire) {
                 return await this.jwtService.signAsync(Object.assign(node, {}), {
                     expiresIn: scope.expire,
-                    secret: web.WEB_COMMON_JWT_SECRET
+                    secret: this.configService.get('JWT_SECRET')
                 })
             } else {
-                return await this.jwtService.signAsync(node, { secret: web.WEB_COMMON_JWT_SECRET })
+                return await this.jwtService.signAsync(node, { secret: this.configService.get('JWT_SECRET') })
             }
         } catch (e) {
             throw new HttpException(scope.message ?? '身份验证失败', scope.status ?? HttpStatus.UNAUTHORIZED)

@@ -14,14 +14,13 @@ export function divineCustomProvider() {
 @Global()
 @Module({
     imports: [
-        ConfigModule.forRoot({
-            isGlobal: true,
-            cache: true
-            //load: [divineCustomProvider]
-        }),
-        JwtModule.register({
-            global: true,
-            secret: web.WEB_COMMON_JWT_SECRET
+        ConfigModule.forRoot({ isGlobal: true, cache: true }),
+        JwtModule.registerAsync({
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => ({
+                global: true,
+                secret: config.get('JWT_SECRET')
+            })
         })
     ],
     controllers: [],
