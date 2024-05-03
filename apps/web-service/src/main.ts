@@ -8,14 +8,14 @@ import * as cookieParser from 'cookie-parser'
 
 async function useSwagger(app) {
     const options = new DocumentBuilder()
-        .setTitle(web.WEB_SERVICE_SWAGGER.titlle)
-        .setDescription(web.WEB_SERVICE_SWAGGER.description)
-        .setVersion(web.WEB_SERVICE_SWAGGER.version)
+        .setTitle('Chat API服务')
+        .setDescription('Chat API Documentation')
+        .setVersion('1.0.0')
         .addBearerAuth({ type: 'apiKey', in: 'header', name: web.WEB_COMMON_HEADER_AUTHORIZE }, web.WEB_COMMON_HEADER_AUTHORIZE)
         .build()
     const document = SwaggerModule.createDocument(app, options)
     SwaggerModule.setup('api-doc', app, document, {
-        customSiteTitle: web.WEB_SERVICE_SWAGGER.customSiteTitle,
+        customSiteTitle: 'Chat 服务API文档',
         swaggerOptions: {
             defaultModelsExpandDepth: -1,
             defaultModelExpandDepth: 5,
@@ -42,12 +42,8 @@ async function bootstrap() {
     //挂载文档
     await useSwagger(app)
     //监听端口服务
-    await app.listen(web.WEB_SERVICE_PORT, () => {
-        console.log(
-            '[web-service]服务启动:',
-            `http://localhost:${web.WEB_SERVICE_PORT}/web-service`,
-            `http://localhost:${web.WEB_SERVICE_PORT}/api-doc`
-        )
+    await app.listen(34570, () => {
+        console.log('[web-service]服务启动:', `http://localhost:34570/web-service`, `http://localhost:34570/api-doc`)
     })
 }
 bootstrap()

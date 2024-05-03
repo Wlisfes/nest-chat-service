@@ -8,10 +8,9 @@ import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
 import { divineLogger, divineResolver } from '@/utils/utils-common'
-import * as web from '@/config/instance.config'
 import * as env from '@/interface/instance.resolver'
 
-@WebSocketGateway(web.WEB_SOCKET_PORT, {
+@WebSocketGateway(34571, {
     cors: { origin: '*' },
     transport: ['websocket'],
     pingInterval: 10000,
@@ -28,7 +27,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
 
     /**服务启动**/
     public async afterInit(server: Server) {
-        console.log('[web-socket]服务启动:', `ws://localhost:${web.WEB_SOCKET_PORT}`)
+        console.log('[web-socket]服务启动:', `ws://localhost:34571`)
         await this.webSocketClientService.setServer(server)
     }
 
