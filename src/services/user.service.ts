@@ -23,11 +23,28 @@ export class UserService {
         private readonly nodemailer: NodemailerService
     ) {}
 
+    /**用户基础redis配置**/
+    private async fetchCommonUserRedis(headers: env.Headers, userId: string) {
+        /**最后登录时间**/
+        const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, userId)
+        const lastTime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
+        /**登录设备编码**/
+        const device = await divineMD5Generate(headers['user-agent'])
+        const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_DEVICE, userId, device)
+        const deviceHave = Boolean(await this.redisService.getStore<string>(deviceKey, null, headers))
+        const deviceCache = Boolean(deviceHave)
+        /**双因子登录间隔时间**/
+        const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, userId)
+        const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
+        const effect = limit * (24 * 60 * 60 * 1000)
+        return { lasttimeKey, lastTime, device, deviceKey, deviceHave, deviceCache, limitKey, limit, effect }
+    }
+
     /**token生成、登录时间存储**/
     private async fetchJwtTokenSecret(
         headers: env.Headers,
         data: entities.UserEntier,
-        scope: env.Omix<{ lasttimeKey: string; deviceCache: boolean; deviceKey: string; device: string }>
+        scope: env.Omix<{ lasttimeKey: string; deviceHave: boolean; deviceKey: string; device: string }>
     ) {
         const expire = 24 * 60 * 60
         const schema = { uid: data.uid, status: data.status, email: data.email, password: data.password }
@@ -39,7 +56,7 @@ export class UserService {
             state: { source: entities.EnumLoggerSource.login, userId: data.uid, logId, ua, ip, browser, platform }
         })
         /**存储登录设备**/
-        await divineHandler(!scope.deviceCache, {
+        await divineHandler(!scope.deviceHave, {
             handler: async () => {
                 return await this.redisService.setStore(scope.deviceKey, { logId, ua, ip, browser, platform }, 0, headers)
             }
@@ -147,17 +164,15 @@ export class UserService {
                         status: HttpStatus.FORBIDDEN
                     })
 
-                    /**最后登录时间**/
-                    const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, data.uid)
-                    const lastTime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
-                    /**登录设备编码**/
-                    const device = await divineMD5Generate(request.useragent.source)
-                    const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_DEVICE, data.uid, device)
-                    const deviceCache = Boolean(await this.redisService.getStore<string>(deviceKey, null, headers))
+                    const { lasttimeKey, lastTime, device, deviceKey, deviceHave, effect } = await this.fetchCommonUserRedis(
+                        headers,
+                        data.uid
+                    )
+
                     if (!data.factor || lastTime === 0) {
                         /**未开启双因子认证、可直接返回前端登录**/
                         /**redis中没有最后登录时间: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceCache, deviceKey, device }).then(
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device }).then(
                             async node => {
                                 await divineHandler(!data.factor, {
                                     handler: () => this.customService.tableUser.update({ uid: data.uid }, { factor: true })
@@ -166,13 +181,10 @@ export class UserService {
                             }
                         )
                     }
-                    /**双因子登录间隔时间**/
-                    const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, data.uid)
-                    const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
-                    const effect = limit * (24 * 60 * 60 * 1000)
-                    if (deviceCache && lastTime + effect > Date.now()) {
+
+                    if (deviceHave && lastTime + effect > Date.now()) {
                         /**不是新的登录源并且最后登录时间未超出15天: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceCache, deviceKey, device })
+                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device })
                     }
                     return await divineResolver({
                         message: '双因子认证',
@@ -223,6 +235,18 @@ export class UserService {
     /**双因子认证登录**/
     public async httpUserfactor(headers: env.Headers, scope: env.BodyUserfactor) {
         try {
+            const data = await this.httpUserResolver(headers, scope.uid)
+            const keyCode = await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, data.email)
+            return await this.redisService.getStore(keyCode, null, headers).then(async code => {
+                await this.customService.divineCatchWherer(scope.code !== code, null, {
+                    message: '验证码不存在'
+                })
+                const { lasttimeKey, device, deviceKey, deviceHave } = await this.fetchCommonUserRedis(headers, data.uid)
+                return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device }).then(async node => {
+                    await this.redisService.delStore(keyCode)
+                    return await divineResolver(node)
+                })
+            })
         } catch (e) {
             this.logger.error(
                 [UserService.name, this.httpUserfactor.name].join(':'),
