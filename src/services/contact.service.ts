@@ -144,6 +144,7 @@ export class ContactService {
                     userId: userId,
                     uid: scope.uid
                 })
+                qb.cache(5000)
                 return qb.getOne().then(async node => {
                     await this.customService.divineCatchWherer(!Boolean(node), node, {
                         message: '该用户不是您的好友，无法查看详情'

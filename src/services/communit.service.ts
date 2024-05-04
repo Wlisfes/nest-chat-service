@@ -198,6 +198,7 @@ export class CommunitService {
                 )
                 qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
                 qb.where(`t.uid = :uid`, { userId: userId, uid: scope.uid })
+                qb.cache(5000)
                 return qb.getOne().then(async (node: env.Omix) => {
                     await this.customService.divineCatchWherer(!Boolean(node), node, {
                         message: '社群ID不存在'
