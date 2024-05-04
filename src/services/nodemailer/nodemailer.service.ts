@@ -3,14 +3,9 @@ import { ConfigService } from '@nestjs/config'
 import { CLIENT_TRANSPORT, ClientTransport, readNodemailer, customNodemailer } from '@/services/nodemailer/nodemailer.provider'
 import * as env from '@/interface/instance.resolver'
 
-export const Events: env.Omix = {
-    [env.EnumMailSource.register]: 'Chat | 注册账号'
-}
-
 @Injectable()
 export class NodemailerService {
     public readonly fromName: string = this.configService.get('SMTP_USER')
-    public readonly Events: typeof Events = Events
     constructor(@Inject(CLIENT_TRANSPORT) private readonly client: ClientTransport, private readonly configService: ConfigService) {}
 
     /**读取自定义模板**/
