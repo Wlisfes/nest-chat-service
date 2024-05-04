@@ -115,7 +115,7 @@ export async function divineMaskCharacter(type: 'email', str: string) {
     if (type === 'email') {
         const prefix = str.substring(0, str.indexOf('@'))
         const suffix = str.substring(str.indexOf('@'), str.length)
-        const fill = prefix.length > 2 ? prefix.substring(0, 3) : prefix
+        const fill = prefix.length >= 2 ? prefix.substring(0, 2) : prefix
         return fill.padEnd(8, '*') + suffix
     }
     return str
