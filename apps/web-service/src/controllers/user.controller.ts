@@ -9,6 +9,15 @@ import * as env from '@/interface/instance.resolver'
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
+    @Post('/common/sender')
+    @ApiDecorator({
+        operation: { summary: '通用验证码接口' },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpCommonUserSender(@Headers() headers: env.Headers, @Body() body: env.BodyCommonUserSender) {
+        return await this.userService.httpCommonUserSender(headers, body)
+    }
+
     @Post('/register')
     @ApiDecorator({
         operation: { summary: '注册账号' },
@@ -66,6 +75,20 @@ export class UserController {
         @Body() body: env.BodyUserUpdate
     ) {
         return await this.userService.httpUserUpdate(headers, request.user.uid, body)
+    }
+
+    @Post('/update/resolver')
+    @ApiDecorator({
+        operation: { summary: '用户账号信息更新' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpUserUpdateResolver(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyUserUpdateResolver
+    ) {
+        return await this.userService.httpUserUpdateResolver(headers, request.user.uid, body)
     }
 
     @Get('/resolver')

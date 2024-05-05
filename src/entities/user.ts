@@ -15,6 +15,12 @@ export enum EnumUserTheme {
     light = 'light',
     dark = 'dark'
 }
+/**验证码类型**/
+export enum EnumUserSource {
+    register = 'register',
+    factor = 'factor',
+    change = 'change'
+}
 
 @Entity({ name: 'user', comment: '用户表' })
 export class UserEntier extends CommonEntier {
@@ -111,6 +117,15 @@ export class SchemaUser extends UserEntier {
     @ApiProperty({ description: '验证码', example: '495673' })
     @IsNotEmpty({ message: '验证码 必填' })
     code: string
+
+    @ApiProperty({ description: '邮箱或手机号' })
+    @IsNotEmpty({ message: '邮箱或手机号 必填' })
+    target: string
+
+    @ApiProperty({ description: '验证码类型: 注册-register、双因子认证-factor、账号标识变更-change', enum: EnumUserSource })
+    @IsNotEmpty({ message: '验证码类型必填' })
+    @IsEnum(EnumUserSource, { message: '验证码类型参数格式错误' })
+    source: string
 
     @ApiProperty({ description: 'Token', example: '6oIWqrg921mcw95UAwVHZb84PEFSH******' })
     token: string

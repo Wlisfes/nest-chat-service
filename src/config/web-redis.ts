@@ -7,6 +7,8 @@ export const CHAT_CHAHE_MAIL_REGISTER = 'chat:chahe:mail:register'
 export const CHAT_CHAHE_MAIL_FORGET = 'chat:chahe:mail:forget'
 /**邮箱双因子认证验证码redis存储键**/
 export const CHAT_CHAHE_MAIL_FACTOR = 'chat:chahe:mail:factor'
+/**邮箱账号信息变更验证码redis存储键**/
+export const CHAT_CHAHE_MAIL_CHANGE = 'chat:chahe:mail:change'
 
 /**用户信息redis存储键**/
 export const CHAT_CHAHE_USER_RESOLVER = 'chat:chahe:user:resolver'

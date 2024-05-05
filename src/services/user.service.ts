@@ -2,7 +2,8 @@ import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { compareSync } from 'bcryptjs'
-import { isEmpty } from 'class-validator'
+import { isEmpty, isEmail } from 'class-validator'
+import { isMobile } from '@/decorator/common.decorator'
 import { CustomService } from '@/services/custom.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { NodemailerService } from '@/services/nodemailer/nodemailer.service'
@@ -69,6 +70,54 @@ export class UserService {
             )
             return await divineResolver({ message: '登录成功', factor: false, token, expire })
         })
+    }
+
+    /**通用验证码接口**/
+    public async httpCommonUserSender(headers: env.Headers, scope: env.BodyCommonUserSender) {
+        try {
+            /**发送邮箱验证码**/
+            if (isEmail(scope.target)) {
+                const { code, key, title } = await divineParameter({ code: await divineIntNumber({ random: true, bit: 6 }) }).then(
+                    async ops => {
+                        if (scope.source === entities.EnumUserSource.register) {
+                            await this.customService.divineNoner(this.customService.tableUser, {
+                                headers,
+                                message: '邮箱已注册',
+                                dispatch: { where: { email: scope.target } }
+                            })
+                            return { ...ops, title: '注册账号', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.target) }
+                        } else if (scope.source === entities.EnumUserSource.factor) {
+                            return { ...ops, title: '双因子认证', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, scope.target) }
+                        } else {
+                            return { ...ops, title: '账号更新', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_CHANGE, scope.target) }
+                        }
+                    }
+                )
+                await this.nodemailer.httpCustomizeNodemailer({
+                    from: `"Chat" <${this.nodemailer.fromName}>`,
+                    to: scope.target,
+                    subject: 'Chat',
+                    html: await this.nodemailer.httpReadCustomize('', { title, code, ttl: '5' })
+                })
+                return await this.redisService.setStore(key, code, 5 * 60, headers).then(async () => {
+                    this.logger.info(
+                        [UserService.name, this.httpUserRegisterSender.name].join(':'),
+                        divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, key, code })
+                    )
+                    return await divineResolver({ message: '发送成功' })
+                })
+            } else if (isMobile(scope.target)) {
+                /**发送手机号验证码**/
+            } else {
+                throw new HttpException(`邮箱或手机号格式错误`, HttpStatus.BAD_REQUEST)
+            }
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpCommonUserSender.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
     /**注册账号**/
@@ -333,6 +382,18 @@ export class UserService {
         } catch (e) {
             this.logger.error(
                 [UserService.name, this.httpUserUpdate.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**用户账号信息更新**/
+    public async httpUserUpdateResolver(headers: env.Headers, userId: string, scope: env.BodyUserUpdateResolver) {
+        try {
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserUpdateResolver.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
