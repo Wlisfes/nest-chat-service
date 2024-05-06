@@ -11,7 +11,8 @@ import { divineLogger, divineResolver } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 @WebSocketGateway(34571, {
-    cors: { origin: '*' },
+    path: '/web-socket',
+    cors: true,
     transport: ['websocket'],
     pingInterval: 10000,
     pingTimeout: 15000
