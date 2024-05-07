@@ -103,7 +103,7 @@ export class UploaderService {
                 size: file.size,
                 source: scope.source
             }).then(async data => {
-                const params: env.Omix<Partial<entities.MediaEntier>> = {
+                const state: env.Omix<Partial<entities.MediaEntier>> = {
                     userId: userId,
                     fileSize: file.size,
                     source: scope.source,
@@ -115,41 +115,37 @@ export class UploaderService {
                     width: 0,
                     height: 0
                 }
-                /**图片资源上传**/
-                if (entities.MediaEntierSource.image === scope.source) {
-                    const { width, height } = await divineImageResize(file.buffer)
-                    params.width = width
-                    params.height = height
-                }
-                /**PDF文档上传**/
+                /**PDF文档缩略图上传**/
                 if (scope.source === entities.MediaEntierSource.document && file.mimetype === 'application/pdf') {
                     const buffer = await divineDocumentThumbnail(file.buffer)
-                    await this.putStream(headers, {
+                    const { fileName, fieldName, folder, url } = await this.putStream(headers, {
                         name: await divineFileNameReplace(data.fileName, 'jpeg'),
                         buffer: buffer,
                         source: entities.MediaEntierSource.image,
                         size: buffer.length
-                    }).then(async response => {
-                        const { fileId, fileName, fieldName, fileURL, folder, fileSize } = await this.httpMediaCreater(headers, {
-                            source: entities.MediaEntierSource.image,
-                            userId: userId,
-                            fileName: response.fileName,
-                            fileSize: buffer.length,
-                            fileId: response.fileId,
-                            fieldName: response.fieldName,
-                            folder: response.folder,
-                            fileURL: response.url,
-                            width: 420,
-                            height: 210
-                        })
-                        ;(data as env.Omix).depater = { fileId, fileName, fieldName, url: fileURL, folder }
-                        return (params.depater = fileId)
+                    })
+                    //prettier-ignore
+                    const depater = {
+                        source: entities.MediaEntierSource.image,
+                        fileSize: buffer.length, fileName, fieldName, folder, url, width: 420, height: 210
+                    } as unknown as string
+                    return await this.httpMediaCreater(headers, { ...state, depater }).then(async response => {
+                        await connect.commitTransaction()
+                        return await divineResolver(response)
+                    })
+                } else if (entities.MediaEntierSource.image === scope.source) {
+                    /**图片资源上传**/
+                    const { width, height } = await divineImageResize(file.buffer)
+                    return await this.httpMediaCreater(headers, { ...state, width, height }).then(async response => {
+                        await connect.commitTransaction()
+                        return await divineResolver(response)
+                    })
+                } else {
+                    return await this.httpMediaCreater(headers, state).then(async response => {
+                        await connect.commitTransaction()
+                        return await divineResolver(response)
                     })
                 }
-                await this.httpMediaCreater(headers, params)
-                return await connect.commitTransaction().then(async () => {
-                    return await divineResolver(data)
-                })
             })
         } catch (e) {
             await connect.rollbackTransaction()
