@@ -21,6 +21,7 @@
         "start:web-alter": "node dist/apps/web-alter/main"
     },
     "dependencies": {
+        "@faker-js/faker": "^8.4.1",
         "@golevelup/nestjs-rabbitmq": "^5.2.0",
         "@nestjs/common": "^10.3.2",
         "@nestjs/config": "^3.2.0",

@@ -1,5 +1,6 @@
 import { Request } from 'express'
 import { snowflakeId } from 'snowflake-id-maker'
+import { zh_CN, Faker } from '@faker-js/faker'
 import { isEmpty } from 'class-validator'
 import * as web from '@/config/web-instance'
 import * as dayjs from 'dayjs'
@@ -15,6 +16,11 @@ export const moment = dayjs
 
 /**Axios请求实例**/
 export const request = axios.default
+
+/**虚拟数据实例**/
+export const faker = new Faker({
+    locale: zh_CN
+})
 
 /**生成纯数字的雪花ID、随机字符串**/
 export async function divineIntNumber(scope: Partial<env.Omix<{ worker: number; epoch: number; random: boolean; bit: number }>> = {}) {

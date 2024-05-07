@@ -194,7 +194,6 @@ export class MessagerService {
                 /**媒体文件联查**/
                 qb.leftJoinAndMapMany('t.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = t.sid')
                 qb.leftJoinAndMapOne('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
-                qb.leftJoinAndMapOne('media.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
                 /**已读用户联查**/
                 qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = :sid', { sid: scope.sid })
                 qb.select([
@@ -205,8 +204,7 @@ export class MessagerService {
                     ...divineSelection('user', ['uid', 'avatar', 'nickname', 'status']),
                     /**媒体文件字段**/
                     ...divineSelection('medias', ['keyId', 'sid', 'fileId']),
-                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
-                    ...divineSelection('depater', ['keyId', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height', 'depater']),
                     /**已读用户字段**/
                     ...divineSelection('reads', ['keyId', 'sid', 'userId'])
                 ])
@@ -241,7 +239,6 @@ export class MessagerService {
                 /**媒体文件联查**/
                 qb.leftJoinAndMapMany('t.medias', entities.MessagerMediaEntier, 'medias', 'medias.sid = t.sid')
                 qb.leftJoinAndMapOne('medias.media', entities.MediaEntier, 'media', 'media.fileId = medias.fileId')
-                qb.leftJoinAndMapOne('media.depater', entities.MediaEntier, 'depater', 'depater.fileId = media.depater')
                 /**已读用户联查**/
                 qb.leftJoinAndMapMany('t.reads', entities.MessagerReadEntier, 'reads', 'reads.sid = t.sid')
                 qb.select([
@@ -252,8 +249,7 @@ export class MessagerService {
                     ...divineSelection('user', ['uid', 'avatar', 'nickname', 'status']),
                     /**媒体文件字段**/
                     ...divineSelection('medias', ['keyId', 'sid', 'fileId']),
-                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
-                    ...divineSelection('depater', ['keyId', 'fileName', 'fileSize', 'fileURL', 'width', 'height']),
+                    ...divineSelection('media', ['keyId', 'source', 'fileName', 'fileSize', 'fileURL', 'width', 'height', 'depater']),
                     /**已读用户字段**/
                     ...divineSelection('reads', ['keyId', 'sid', 'userId'])
                 ])
