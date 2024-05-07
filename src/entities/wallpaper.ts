@@ -5,6 +5,11 @@ import { CommonEntier } from '@/utils/utils-typeorm'
 
 @Entity({ name: 'wallpaper', comment: '涂鸦背景主题色表' })
 export class WallpaperEntier extends CommonEntier {
+    @ApiProperty({ description: 'waid' })
+    @IsNotEmpty({ message: 'WAID必填' })
+    @Column({ comment: 'WAID', length: 32, nullable: false })
+    waid: string
+
     @ApiProperty({ description: '浅色模式颜色' })
     @IsNotEmpty({ message: '浅色模式颜色必填' })
     @IsHexColor({ message: '浅色模式颜色必须为16进制颜色' })

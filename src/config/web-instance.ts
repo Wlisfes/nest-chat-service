@@ -1,3 +1,4 @@
-export * from './web-common'
-export * from './web-redis'
-export * from './web-throttle'
+export * from '@/config/web-common'
+export * from '@/config/web-redis'
+export * from '@/config/web-throttle'
+export * from '@/config/web-wallpaper'

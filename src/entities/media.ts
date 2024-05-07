@@ -1,6 +1,6 @@
 import { Entity, Column, Index } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsEnum } from 'class-validator'
+import { isEmpty, IsNotEmpty, IsEnum } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**媒体文件表: 文件类型**/
@@ -15,19 +15,19 @@ export enum MediaEntierSource {
 export class MediaEntier extends CommonEntier {
     @ApiProperty({ description: '上传用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '上传用户ID必填' })
-    @Column({ comment: '上传用户ID', nullable: false })
+    @Column({ comment: '上传用户ID', length: 32, nullable: false })
     @Index()
     userId: string
 
     @ApiProperty({ description: '上传类型: image-图片、document-文档、audio-音频、video-视频', enum: MediaEntierSource })
     @IsNotEmpty({ message: '上传类型必填' })
     @IsEnum(MediaEntierSource, { message: '上传类型参数格式错误' })
-    @Column({ comment: '上传类型: image-图片、document-文档、audio-音频、video-视频', nullable: false })
+    @Column({ comment: '上传类型: image-图片、document-文档、audio-音频、video-视频', length: 32, nullable: false })
     source: string
 
     @ApiProperty({ description: '文件ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '文件ID必填' })
-    @Column({ comment: '文件ID', nullable: false })
+    @Column({ comment: '文件ID', length: 32, nullable: false })
     @Index()
     fileId: string
 
@@ -66,9 +66,16 @@ export class MediaEntier extends CommonEntier {
     @Column({ comment: '文件高度', nullable: true, default: 0 })
     height: number
 
-    @ApiProperty({ description: '下级数据ID', example: '2149446185344106496' })
-    @IsNotEmpty({ message: '下级数据ID必填' })
-    @Column({ comment: '下级数据ID', nullable: true })
+    @ApiProperty({ description: '基础联合数据' })
+    @Column({
+        comment: '基础联合数据',
+        length: 512,
+        nullable: true,
+        transformer: {
+            from: value => (isEmpty(value) ? null : JSON.parse(value)),
+            to: value => (isEmpty(value) ? null : JSON.stringify(value))
+        }
+    })
     depater: string
 }
 
