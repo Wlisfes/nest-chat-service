@@ -2,9 +2,6 @@ import { ApiProperty, PickType, PartialType, IntersectionType } from '@nestjs/sw
 import { IsOptional } from '@/decorator/common.decorator'
 import * as entities from '@/entities/instance'
 
-/**通用验证码接口**/
-export class BodyCommonUserSender extends PickType(entities.SchemaUser, ['target', 'source']) {}
-
 /**注册账号**/
 export class BodyUserRegister extends PickType(entities.SchemaUser, ['nickname', 'email', 'password', 'code']) {}
 /**发送注册验证码**/

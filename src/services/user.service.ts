@@ -32,20 +32,19 @@ export class UserService {
         /**登录设备编码**/
         const device = await divineMD5Generate(headers['user-agent'])
         const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_DEVICE, userId, device)
-        const deviceHave = Boolean(await this.redisService.getStore<string>(deviceKey, null, headers))
-        const deviceCache = Boolean(deviceHave)
+        const deviceStore = await this.redisService.getStore<string>(deviceKey, null, headers)
         /**双因子登录间隔时间**/
         const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, userId)
         const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
         const effect = limit * (24 * 60 * 60 * 1000)
-        return { lasttimeKey, lastTime, device, deviceKey, deviceHave, deviceCache, limitKey, limit, effect }
+        return { lasttimeKey, lastTime, device, deviceKey, deviceStore, limitKey, limit, effect }
     }
 
     /**token生成、登录时间存储**/
     private async fetchJwtTokenSecret(
         headers: env.Headers,
         data: entities.UserEntier,
-        scope: env.Omix<{ lasttimeKey: string; deviceHave: boolean; deviceKey: string; device: string }>
+        scope: env.Omix<{ lasttimeKey: string; deviceKey: string }>
     ) {
         const expire = 24 * 60 * 60
         const schema = { uid: data.uid, status: data.status, email: data.email, password: data.password }
@@ -57,11 +56,7 @@ export class UserService {
             state: { source: entities.EnumLoggerSource.login, userId: data.uid, logId, ua, ip, browser, platform }
         })
         /**存储登录设备**/
-        await divineHandler(!scope.deviceHave, {
-            handler: async () => {
-                return await this.redisService.setStore(scope.deviceKey, { logId, ua, ip, browser, platform }, 0, headers)
-            }
-        })
+        await this.redisService.setStore(scope.deviceKey, { logId, ua, ip, browser, platform }, 0, headers)
         /**存储登录时间**/
         return await this.redisService.setStore(scope.lasttimeKey, Date.now(), 0, headers).then(async () => {
             this.logger.info(
@@ -72,60 +67,14 @@ export class UserService {
         })
     }
 
-    /**通用验证码接口**/
-    public async httpCommonUserSender(headers: env.Headers, scope: env.BodyCommonUserSender) {
-        try {
-            /**发送邮箱验证码**/
-            if (isEmail(scope.target)) {
-                const { code, key, title } = await divineParameter({ code: await divineIntNumber({ random: true, bit: 6 }) }).then(
-                    async ops => {
-                        if (scope.source === entities.EnumUserSource.register) {
-                            await this.customService.divineNoner(this.customService.tableUser, {
-                                headers,
-                                message: '邮箱已注册',
-                                dispatch: { where: { email: scope.target } }
-                            })
-                            return { ...ops, title: '注册账号', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.target) }
-                        } else if (scope.source === entities.EnumUserSource.factor) {
-                            return { ...ops, title: '双因子认证', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, scope.target) }
-                        } else {
-                            return { ...ops, title: '账号更新', key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_CHANGE, scope.target) }
-                        }
-                    }
-                )
-                await this.nodemailer.httpCustomizeNodemailer({
-                    from: `"Chat" <${this.nodemailer.fromName}>`,
-                    to: scope.target,
-                    subject: 'Chat',
-                    html: await this.nodemailer.httpReadCustomize('', { title, code, ttl: '5' })
-                })
-                return await this.redisService.setStore(key, code, 5 * 60, headers).then(async () => {
-                    this.logger.info(
-                        [UserService.name, this.httpUserRegisterSender.name].join(':'),
-                        divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, key, code })
-                    )
-                    return await divineResolver({ message: '发送成功' })
-                })
-            } else if (isMobile(scope.target)) {
-                /**发送手机号验证码**/
-            } else {
-                throw new HttpException(`邮箱或手机号格式错误`, HttpStatus.BAD_REQUEST)
-            }
-        } catch (e) {
-            this.logger.error(
-                [UserService.name, this.httpCommonUserSender.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
-
     /**注册账号**/
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         try {
             const { keyName } = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email).then(async keyName => {
                 const code = await this.redisService.getStore(keyName, null, headers)
-                await this.customService.divineCatchWherer(scope.code !== code, null, { message: '验证码不存在' })
+                await this.customService.divineCatchWherer(scope.code !== code, null, {
+                    message: '验证码不存在'
+                })
                 /**邮箱注册校验**/
                 await this.customService.divineNoner(this.customService.tableUser, {
                     headers,
@@ -174,21 +123,22 @@ export class UserService {
                 message: '邮箱已注册',
                 dispatch: { where: { email: scope.email } }
             })
-            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(async code => {
-                return { code, key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email) }
-            })
-            await this.nodemailer.httpCustomizeNodemailer({
-                from: `"Chat" <${this.nodemailer.fromName}>`,
-                to: scope.email,
-                subject: 'Chat',
-                html: await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '注册账号' })
-            })
-            return await this.redisService.setStore(key, code, 5 * 60, headers).then(async () => {
-                this.logger.info(
-                    [UserService.name, this.httpUserRegisterSender.name].join(':'),
-                    divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, key, code })
-                )
-                return await divineResolver({ message: '发送成功' })
+            const code = await divineIntNumber({ random: true, bit: 6 })
+            const keyName = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email)
+            return await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '注册账号' }).then(async html => {
+                await this.nodemailer.httpCustomizeNodemailer(headers, {
+                    from: this.nodemailer.fromName,
+                    subject: 'Chat',
+                    to: scope.email,
+                    html
+                })
+                await this.redisService.setStore(keyName, code, 5 * 60, headers)
+                return await divineResolver({ message: '发送成功' }, () => {
+                    this.logger.info(
+                        [UserService.name, this.httpUserRegisterSender.name].join(':'),
+                        divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, keyName, code })
+                    )
+                })
             })
         } catch (e) {
             this.logger.error(
@@ -245,27 +195,20 @@ export class UserService {
                         status: HttpStatus.FORBIDDEN
                     })
 
-                    const { lasttimeKey, lastTime, device, deviceKey, deviceHave, effect } = await this.fetchCommonUserRedis(
-                        headers,
-                        data.uid
-                    )
+                    const store = await this.fetchCommonUserRedis(headers, data.uid)
 
-                    if (!data.factor || lastTime === 0) {
+                    if (!data.factor || store.lastTime === 0) {
                         /**未开启双因子认证、可直接返回前端登录**/
                         /**redis中没有最后登录时间: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device }).then(
-                            async node => {
-                                await divineHandler(!data.factor, {
-                                    handler: () => this.customService.tableUser.update({ uid: data.uid }, { factor: true })
-                                })
-                                return await divineResolver(node)
-                            }
-                        )
-                    }
-
-                    if (deviceHave && lastTime + effect > Date.now()) {
+                        return await this.fetchJwtTokenSecret(headers, data, store).then(async node => {
+                            await divineHandler(store.lastTime === 0, {
+                                handler: () => this.customService.tableUser.update({ uid: data.uid }, { factor: true })
+                            })
+                            return await divineResolver(node)
+                        })
+                    } else if (store.deviceStore && store.lastTime + store.effect > Date.now()) {
                         /**不是新的登录源并且最后登录时间未超出15天: 可直接返回登录**/
-                        return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device })
+                        return await this.fetchJwtTokenSecret(headers, data, store)
                     }
                     return await divineResolver({
                         message: '双因子认证',
@@ -288,21 +231,22 @@ export class UserService {
     public async httpUserfactorSender(headers: env.Headers, scope: env.BodyUserfactorSender) {
         try {
             const node = await this.httpUserResolver(headers, scope.uid)
-            const { code, key } = await divineIntNumber({ random: true, bit: 6 }).then(async code => {
-                return { code, key: await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, node.email) }
-            })
-            await this.nodemailer.httpCustomizeNodemailer({
-                from: `"Chat" <${this.nodemailer.fromName}>`,
-                to: node.email,
-                subject: 'Chat',
-                html: await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '双因子认证' })
-            })
-            return await this.redisService.setStore(key, code, 5 * 60, headers).then(async () => {
-                this.logger.info(
-                    [UserService.name, this.httpUserfactorSender.name].join(':'),
-                    divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, key, code })
-                )
-                return await divineResolver({ message: '发送成功' })
+            const code = await divineIntNumber({ random: true, bit: 6 })
+            const keyName = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, node.email)
+            return await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '双因子认证' }).then(async html => {
+                await this.nodemailer.httpCustomizeNodemailer(headers, {
+                    from: this.nodemailer.fromName,
+                    subject: 'Chat',
+                    to: node.email,
+                    html
+                })
+                await this.redisService.setStore(keyName, code, 5 * 60, headers)
+                return await divineResolver({ message: '发送成功' }, () => {
+                    this.logger.info(
+                        [UserService.name, this.httpUserfactorSender.name].join(':'),
+                        divineLogger(headers, { message: '验证码发送成功', seconds: 5 * 60, keyName, code })
+                    )
+                })
             })
         } catch (e) {
             this.logger.error(
@@ -322,8 +266,8 @@ export class UserService {
                 await this.customService.divineCatchWherer(scope.code !== code, null, {
                     message: '验证码不存在'
                 })
-                const { lasttimeKey, device, deviceKey, deviceHave } = await this.fetchCommonUserRedis(headers, data.uid)
-                return await this.fetchJwtTokenSecret(headers, data, { lasttimeKey, deviceHave, deviceKey, device }).then(async node => {
+                const store = await this.fetchCommonUserRedis(headers, data.uid)
+                return await this.fetchJwtTokenSecret(headers, data, store).then(async node => {
                     await this.redisService.delStore(keyCode)
                     return await divineResolver(node)
                 })

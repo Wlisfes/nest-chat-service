@@ -15,6 +15,11 @@ export enum EnumUserTheme {
     light = 'light',
     dark = 'dark'
 }
+/**验证类型**/
+export enum EnumUserType {
+    email = 'email',
+    phone = 'phone'
+}
 /**验证码类型**/
 export enum EnumUserSource {
     register = 'register',
@@ -101,7 +106,7 @@ export class UserEntier extends CommonEntier {
     @ApiProperty({ description: '双因子认证: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '双因子认证必填' })
     @Type(() => Boolean)
-    @Column({ comment: '双因子认证: true-开启、false-关闭', nullable: false, default: false })
+    @Column({ comment: '双因子认证: true-开启、false-关闭', nullable: false, default: true })
     factor: boolean
 
     @ApiProperty({ description: '双因子认证间隔天数' })
@@ -118,9 +123,14 @@ export class SchemaUser extends UserEntier {
     @IsNotEmpty({ message: '验证码 必填' })
     code: string
 
-    @ApiProperty({ description: '邮箱或手机号' })
-    @IsNotEmpty({ message: '邮箱或手机号 必填' })
+    @ApiProperty({ description: '邮箱、手机号、UID' })
+    @IsNotEmpty({ message: 'target参数必填' })
     target: string
+
+    @ApiProperty({ description: '验证类型: 邮箱-email、手机号-phone', enum: EnumUserType })
+    @IsNotEmpty({ message: '验证类型必填' })
+    @IsEnum(EnumUserSource, { message: '验证类型参数格式错误' })
+    type: string
 
     @ApiProperty({ description: '验证码类型: 注册-register、双因子认证-factor、账号标识变更-change', enum: EnumUserSource })
     @IsNotEmpty({ message: '验证码类型必填' })

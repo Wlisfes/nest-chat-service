@@ -30,7 +30,8 @@ export async function divineIntNumber(scope: Partial<env.Omix<{ worker: number; 
 /**返回包装**/
 export async function divineResolver<
     T = Partial<env.Omix<{ message: string; list: Array<env.Omix>; total: number; page: number; size: number }>>
->(data: T) {
+>(data: T, handler?: Function) {
+    await divineHandler(Boolean(handler), { handler })
     return data
 }
 

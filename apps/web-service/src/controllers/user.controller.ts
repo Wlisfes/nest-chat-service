@@ -9,15 +9,6 @@ import * as env from '@/interface/instance.resolver'
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    @Post('/common/sender')
-    @ApiDecorator({
-        operation: { summary: '通用验证码接口' },
-        response: { status: 200, description: 'OK', type: env.NoticeResolver }
-    })
-    public async httpCommonUserSender(@Headers() headers: env.Headers, @Body() body: env.BodyCommonUserSender) {
-        return await this.userService.httpCommonUserSender(headers, body)
-    }
-
     @Post('/register')
     @ApiDecorator({
         operation: { summary: '注册账号' },
