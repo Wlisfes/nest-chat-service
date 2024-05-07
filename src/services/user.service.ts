@@ -93,7 +93,7 @@ export class UserService {
                         nickname: scope.nickname,
                         password: scope.password,
                         color: web.WEB_WALLPAPER_WAID[0],
-                        avatar: `https://chat-oss.lisfes.cn/chat/avatar/2161418838745382965.webp`,
+                        avatar: `https://chat-oss.lisfes.cn/chat/image/2161418838745382965.jpeg`,
                         comment: `你好，我正在使用Chat盒子`
                     }
                 })
