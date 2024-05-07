@@ -2,6 +2,7 @@ import { Module, Global } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm'
 import { CustomService } from '@/services/custom.service'
+import { InitializeService } from '@/services/initialize.service'
 import {
     UserEntier,
     MediaEntier,
@@ -53,7 +54,7 @@ export const forEntities = [
         }),
         TypeOrmModule.forFeature(forEntities)
     ],
-    providers: [CustomService],
+    providers: [CustomService, InitializeService],
     exports: [CustomService]
 })
 export class DatabaseModule {}

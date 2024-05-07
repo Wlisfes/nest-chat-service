@@ -84,10 +84,10 @@ export class UserEntier extends CommonEntier {
     @Column({ comment: '主题: 浅色模式-light、深色模式-dark', length: 32, default: 'light', nullable: false })
     theme: string
 
-    @ApiProperty({ description: '涂鸦背景主题色ID' })
-    @IsNotEmpty({ message: '涂鸦背景主题色ID必填' })
-    @Column({ comment: '涂鸦背景主题色ID', nullable: false })
-    color: number
+    @ApiProperty({ description: '涂鸦背景主题色WAID' })
+    @IsNotEmpty({ message: '涂鸦背景主题色WAID必填' })
+    @Column({ comment: '涂鸦背景主题色WAID', length: 32, nullable: false })
+    color: string
 
     @ApiProperty({ description: '涂鸦: true-开启、false-关闭', enum: [true, false] })
     @IsNotEmpty({ message: '涂鸦必填' })

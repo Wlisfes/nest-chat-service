@@ -29,3 +29,5 @@ export const WEB_WALLPAPER = {
     '2163890933907652634': { light: '#fffda7', dark: '#262619' },
     '2163890933907652635': { light: '#e7e8d3', dark: '#23231f' }
 }
+
+export const WEB_WALLPAPER_WAID = Object.keys(WEB_WALLPAPER)

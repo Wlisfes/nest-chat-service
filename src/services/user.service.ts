@@ -92,7 +92,7 @@ export class UserService {
                         email: scope.email,
                         nickname: scope.nickname,
                         password: scope.password,
-                        color: 1,
+                        color: web.WEB_WALLPAPER_WAID[0],
                         avatar: `https://chat-oss.lisfes.cn/chat/avatar/2161418838745382965.webp`,
                         comment: `你好，我正在使用Chat盒子`
                     }
@@ -295,8 +295,8 @@ export class UserService {
                     })
                 }
             })
-            const UserKeyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-            return await this.redisService.getStore(UserKeyName, null, headers).then(async data => {
+            const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
+            return await this.redisService.getStore(keyName, null, headers).then(async data => {
                 await this.customService.divineCatchWherer(!Boolean(data), data, {
                     message: '身份验证失败'
                 })
@@ -308,7 +308,14 @@ export class UserService {
                         }
                     })
                     await divineHandler(Boolean(scope.color), {
-                        handler: () => (params.color = scope.color ?? data.color.keyId)
+                        handler: async () => {
+                            await this.customService.divineHaver(this.customService.tableWallpaper, {
+                                headers,
+                                message: 'color ID不存在',
+                                dispatch: { where: { waid: scope.color } }
+                            })
+                            return (params.color = scope.color)
+                        }
                     })
                     return await divineResolver(params)
                 })
@@ -347,17 +354,17 @@ export class UserService {
     /**账号信息**/
     public async httpUserResolver(headers: env.Headers, userId: string, refresh?: boolean) {
         try {
-            const UserKeyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-            return await this.redisService.getStore(UserKeyName, null, headers).then(async node => {
+            const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
+            return await this.redisService.getStore(keyName, null, headers).then(async node => {
                 if (node && !refresh) {
                     return await divineResolver(node)
                 }
                 return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
-                    qb.leftJoinAndMapOne('t.color', entities.WallpaperEntier, 'color', 't.color = color.keyId')
+                    qb.leftJoinAndMapOne('t.color', entities.WallpaperEntier, 'color', 't.color = color.waid')
                     qb.select([
                         ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'uid', 'status', 'nickname', 'avatar']),
                         ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify', 'factor', 'limit']),
-                        ...divineSelection('color', ['keyId', 'light', 'dark'])
+                        ...divineSelection('color', ['keyId', 'waid', 'light', 'dark'])
                     ])
                     qb.where('t.uid = :uid', { uid: userId })
                     return qb.getOne().then(async data => {
@@ -369,7 +376,7 @@ export class UserService {
                             headers,
                             message: '身份验证失败'
                         })
-                        return await this.redisService.setStore(UserKeyName, data, 0, headers).then(async () => {
+                        return await this.redisService.setStore(keyName, data, 0, headers).then(async () => {
                             return await divineResolver(data)
                         })
                     })
