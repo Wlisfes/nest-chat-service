@@ -9,7 +9,7 @@ export enum EnumSessionSource {
     communit = 'communit'
 }
 
-@Entity({ name: 'session', comment: '会话记录表' })
+@Entity({ name: 'session', comment: '会话聊天室表' })
 export class SessionEntier extends CommonEntier {
     @ApiProperty({ description: '会话SID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '会话SID必填' })
