@@ -33,7 +33,6 @@ export class CustomService {
         @InjectRepository(entities.ContactEntier) public readonly tableContact: Repository<entities.ContactEntier>,
         @InjectRepository(entities.NotificationEntier) public readonly tableNotification: Repository<entities.NotificationEntier>,
         @InjectRepository(entities.SessionEntier) public readonly tableSession: Repository<entities.SessionEntier>,
-        @InjectRepository(entities.SessionMemberEntier) public readonly tableSessionMember: Repository<entities.SessionMemberEntier>,
         @InjectRepository(entities.MessagerEntier) public readonly tableMessager: Repository<entities.MessagerEntier>,
         @InjectRepository(entities.MessagerMediaEntier) public readonly tableMessageMediar: Repository<entities.MessagerMediaEntier>,
         @InjectRepository(entities.MessagerReadEntier) public readonly tableMessagerRead: Repository<entities.MessagerReadEntier>,
