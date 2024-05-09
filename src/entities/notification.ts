@@ -1,7 +1,6 @@
 import { Entity, Column } from 'typeorm'
 import { ApiProperty } from '@nestjs/swagger'
-import { IsNotEmpty, IsEnum } from 'class-validator'
-import { IsOptional } from '@/decorator/common.decorator'
+import { IsNotEmpty, IsEnum, Length } from 'class-validator'
 import { CommonEntier } from '@/utils/utils-typeorm'
 
 /**通知记录表: 通知类型**/
@@ -50,6 +49,12 @@ export class NotificationEntier extends CommonEntier {
     @IsEnum(EnumNotificationStatus, { message: '通知状态错误' })
     @Column({ comment: '通知状态', nullable: false })
     status: string
+
+    @ApiProperty({ description: '描述', example: '你好，我是张三' })
+    @IsNotEmpty({ message: '描述必填' })
+    @Length(4, 128, { message: '状态描述必须保持4~128位' })
+    @Column({ comment: '状态描述', length: 128, nullable: false })
+    comment: string
 }
 
 export class SchemaNotification extends NotificationEntier {}

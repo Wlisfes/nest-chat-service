@@ -1,13 +1,11 @@
-import { Injectable, Inject, forwardRef, HttpException, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { Brackets, In } from 'typeorm'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
-import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -20,13 +18,16 @@ export class ContactService {
     ) {}
 
     /**申请添加好友**/
-    public async httpContactInvite(headers: env.Headers, userId: string, { niveId }: env.BodyContactInvite) {
+    public async httpContactInvite(headers: env.Headers, userId: string, scope: env.BodyContactInvite) {
         const connect = await this.customService.divineConnectTransaction()
         try {
-            await divineCatchWherer(userId === niveId, { message: '不能申请自己添加好友' })
+            await divineCatchWherer(userId === scope.niveId, { message: '不能申请自己添加好友' })
             /**验证是否存在绑定好友关系、以及申请目标用户是否存在**/
             await this.customService.divineBuilder(this.customService.tableContact, async qb => {
-                qb.where('(t.userId = :userId AND t.niveId = :niveId) OR (t.userId = :niveId AND t.userId = :userId)', { userId, niveId })
+                qb.where('(t.userId = :userId AND t.niveId = :niveId) OR (t.userId = :niveId AND t.userId = :userId)', {
+                    userId,
+                    niveId: scope.niveId
+                })
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
@@ -34,13 +35,13 @@ export class ContactService {
                             divineLogger(headers, { message: '存在好友绑定关系', node })
                         )
                     }
-                    return await divineCatchWherer(node && node.status === 'enable', {
+                    return await divineCatchWherer(node && node.status === entities.EnumContactStatus.enable, {
                         message: '该用户已经是您的好友了，无法重复添加'
                     }).then(async () => {
                         return await this.customService.divineHaver(this.customService.tableUser, {
                             headers,
                             message: '账号不存在',
-                            dispatch: { where: { uid: niveId } }
+                            dispatch: { where: { uid: scope.niveId } }
                         })
                     })
                 })
@@ -49,7 +50,7 @@ export class ContactService {
             const node = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 qb.where(
                     '(t.userId = :userId AND t.niveId = :niveId AND t.source = :source) OR (t.userId = :niveId AND t.niveId = :userId AND t.source = :source)',
-                    { source: 'contact', userId, niveId }
+                    { userId, niveId: scope.niveId, source: entities.EnumNotificationSource.contact }
                 )
                 return qb.getOne()
             })
@@ -63,12 +64,17 @@ export class ContactService {
                 await this.customService.divineUpdate(this.customService.tableNotification, {
                     headers,
                     where: { keyId: node.keyId },
-                    state: { userId, niveId, status: 'waitze' }
+                    state: {
+                        userId,
+                        niveId: scope.niveId,
+                        comment: scope.comment,
+                        status: entities.EnumNotificationStatus.waitze
+                    }
                 })
                 return await connect.commitTransaction().then(async () => {
                     this.logger.info(
                         [ContactService.name, this.httpContactInvite.name].join(':'),
-                        divineLogger(headers, { message: '申请好友成功', userId, niveId })
+                        divineLogger(headers, { message: '申请好友成功', userId, niveId: scope.niveId })
                     )
                     return await divineResolver({ message: '申请成功' })
                 })
@@ -78,10 +84,11 @@ export class ContactService {
                 headers,
                 state: {
                     uid: await divineIntNumber(),
-                    source: 'contact',
-                    status: 'waitze',
                     userId,
-                    niveId
+                    niveId: scope.niveId,
+                    comment: scope.comment,
+                    source: entities.EnumNotificationSource.contact,
+                    status: entities.EnumNotificationStatus.waitze,
                 }
             }).then(async result => {
                 return await connect.commitTransaction().then(async () => {
