@@ -390,4 +390,25 @@ export class UserService {
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+    /**查看用户信息**/
+    public async httpUserCurrentResolver(headers: env.Headers, userId: string, scope: env.BodyUserCurrentResolver) {
+        try {
+            return await this.httpUserResolver(headers, scope.uid).then(async data => {
+                return await divineResolver({
+                    uid: data.uid,
+                    comment: data.comment,
+                    nickname: data.nickname,
+                    avatar: data.avatar,
+                    email: await divineMaskCharacter('email', data.email)
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [UserService.name, this.httpUserCurrentResolver.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 }

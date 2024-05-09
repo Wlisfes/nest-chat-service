@@ -21,6 +21,8 @@ export class RestUserfactor extends PickType(entities.SchemaUser, ['token', 'exp
 
 /**账号信息**/
 export class RestUserResolver extends entities.UserEntier {}
+/**查看用户信息**/
+export class BodyUserCurrentResolver extends PickType(entities.SchemaUser, ['uid']) {}
 
 /**用户基础信息更新**/
 export class BodyUserUpdate extends IntersectionType(

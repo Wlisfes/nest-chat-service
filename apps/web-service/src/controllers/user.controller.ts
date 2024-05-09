@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Headers, Request } from '@nestjs/common'
+import { Controller, Get, Post, Body, Query, Headers, Request } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
 import { UserService } from '@/services/user.service'
 import { ApiDecorator } from '@/decorator/compute.decorator'
@@ -90,5 +90,19 @@ export class UserController {
     })
     public async httpUserResolver(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
         return await this.userService.httpUserResolver(headers, request.user.uid)
+    }
+
+    @Get('/current/resolver')
+    @ApiDecorator({
+        operation: { summary: '查看用户信息' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.RestUserResolver }
+    })
+    public async httpUserCurrentResolver(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.BodyUserCurrentResolver
+    ) {
+        return await this.userService.httpUserCurrentResolver(headers, request.user.uid, query)
     }
 }
