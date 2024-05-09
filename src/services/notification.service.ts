@@ -1,5 +1,4 @@
-import { Injectable, Inject, forwardRef, HttpException, HttpStatus } from '@nestjs/common'
-import { Response } from 'express'
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
@@ -27,9 +26,9 @@ export class NotificationService {
                 /**社群申请记录联查**/
                 qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
-                //prettier-ignore
                 qb.select([
-                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source', 'userId', 'niveId', 'communitId', 'status']),
+                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
+                    ...divineSelection('t', ['userId', 'niveId', 'communitId', 'status', 'comment']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status']),
