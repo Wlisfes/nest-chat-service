@@ -214,7 +214,7 @@ export class CommunitService {
                     { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
                 )
                 qb.select([
-                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak']),
+                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak', 'comment']),
                     ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'role', 'speak', 'status']),
                     ...divineSelection('poster', ['fileId', 'fileURL', 'height', 'width'])
                 ])

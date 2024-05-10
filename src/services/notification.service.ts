@@ -29,8 +29,8 @@ export class NotificationService {
                 qb.select([
                     ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
                     ...divineSelection('t', ['userId', 'niveId', 'communitId', 'status', 'comment']),
-                    ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
-                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
+                    ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
+                    ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
                     ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
                 ])
