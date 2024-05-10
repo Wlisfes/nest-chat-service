@@ -6,6 +6,7 @@ import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
+import { divineSelection } from '@/utils/utils-typeorm'
 import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose } from '@/utils/utils-common'
 import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
@@ -205,16 +206,18 @@ export class CommunitService {
         try {
             return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
                 qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
-                qb.innerJoinAndMapMany(
+                qb.leftJoinAndMapOne(
                     't.member',
                     entities.CommunitMemberEntier,
                     'member',
-                    'member.communitId = t.uid AND member.status = :status',
-                    {
-                        status: entities.EnumCommunitMemberStatus.enable
-                    }
+                    'member.communitId = t.uid AND member.status = :status AND member.userId = :userId',
+                    { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
                 )
-                qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
+                qb.select([
+                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak']),
+                    ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'role', 'speak', 'status']),
+                    ...divineSelection('poster', ['fileId', 'fileURL', 'height', 'width'])
+                ])
                 qb.where(`member.userId = :userId`, { userId: userId })
                 return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                     return await divineResolver({ total, list })

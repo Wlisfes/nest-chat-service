@@ -31,7 +31,7 @@ export class NotificationService {
                     ...divineSelection('t', ['userId', 'niveId', 'communitId', 'status', 'comment']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status']),
-                    ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status']),
+                    ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
                     ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
                 ])
                 qb.orderBy('t.updateTime', 'DESC')
