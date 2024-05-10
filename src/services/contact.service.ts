@@ -18,7 +18,7 @@ export class ContactService {
     ) {}
 
     /**申请添加好友**/
-    public async httpContactInvite(headers: env.Headers, userId: string, scope: env.BodyContactInvite) {
+    public async httpContactInviteJoiner(headers: env.Headers, userId: string, scope: env.BodyContactInvite) {
         const connect = await this.customService.divineConnectTransaction()
         try {
             await divineCatchWherer(userId === scope.niveId, { message: '不能申请自己添加好友' })
@@ -31,7 +31,7 @@ export class ContactService {
                 return qb.getOne().then(async node => {
                     if (node) {
                         this.logger.info(
-                            [ContactService.name, this.httpContactInvite.name].join(':'),
+                            [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
                             divineLogger(headers, { message: '存在好友绑定关系', node })
                         )
                     }
@@ -57,7 +57,7 @@ export class ContactService {
             if (node) {
                 /**存在申请记录**/
                 this.logger.info(
-                    [ContactService.name, this.httpContactInvite.name].join(':'),
+                    [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
                     divineLogger(headers, { message: '存在申请记录', node })
                 )
                 /**通知状态切换到waitze-待处理**/
@@ -73,7 +73,7 @@ export class ContactService {
                 })
                 return await connect.commitTransaction().then(async () => {
                     this.logger.info(
-                        [ContactService.name, this.httpContactInvite.name].join(':'),
+                        [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
                         divineLogger(headers, { message: '申请好友成功', userId, niveId: scope.niveId })
                     )
                     return await divineResolver({ message: '申请成功' })
@@ -93,7 +93,7 @@ export class ContactService {
             }).then(async result => {
                 return await connect.commitTransaction().then(async () => {
                     this.logger.info(
-                        [ContactService.name, this.httpContactInvite.name].join(':'),
+                        [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
                         divineLogger(headers, { message: '申请好友成功', node: result })
                     )
                     return await divineResolver({ message: '申请成功' })
@@ -102,7 +102,7 @@ export class ContactService {
         } catch (e) {
             await connect.rollbackTransaction()
             this.logger.error(
-                [ContactService.name, this.httpContactInvite.name].join(':'),
+                [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

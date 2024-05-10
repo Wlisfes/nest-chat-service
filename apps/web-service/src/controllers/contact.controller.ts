@@ -9,18 +9,18 @@ import * as env from '@/interface/instance.resolver'
 export class ContactController {
     constructor(private readonly contactService: ContactService) {}
 
-    @Post('/invite')
+    @Post('/invite/joiner')
     @ApiDecorator({
         operation: { summary: '申请添加好友' },
         authorize: { check: true, next: false },
         response: { status: 200, description: 'OK', type: env.NoticeResolver }
     })
-    public async httpContactInvite(
+    public async httpContactInviteJoiner(
         @Headers() headers: env.Headers,
         @Request() request: env.Omix<{ user: env.RestUserResolver }>,
         @Body() body: env.BodyContactInvite
     ) {
-        return await this.contactService.httpContactInvite(headers, request.user.uid, body)
+        return await this.contactService.httpContactInviteJoiner(headers, request.user.uid, body)
     }
 
     @Get('/column')
