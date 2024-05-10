@@ -46,4 +46,18 @@ export class ContactController {
     ) {
         return await this.contactService.httpContactResolver(headers, request.user.uid, query)
     }
+
+    @Get('/column/search')
+    @ApiDecorator({
+        operation: { summary: '关键字列表搜索' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpContactSearch(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.BodyContactSearch
+    ) {
+        return await this.contactService.httpContactSearch(headers, request.user.uid, query)
+    }
 }

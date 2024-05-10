@@ -1,11 +1,12 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineMaskCharacter } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -162,6 +163,35 @@ export class ContactService {
         } catch (e) {
             this.logger.error(
                 [ContactService.name, this.httpContactResolver.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**关键字列表搜索**/
+    public async httpContactSearch(headers: env.Headers, userId: string, scope: env.BodyContactSearch) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
+                if (isNotEmpty(scope.keyword)) {
+                    qb.where('t.uid LIKE :uid OR t.email LIKE :email OR t.nickname LIKE :nickname', {
+                        uid: `%${scope.keyword}%`,
+                        email: `%${scope.keyword}%`,
+                        nickname: `%${scope.keyword}%`
+                    })
+                }
+                qb.select(divineSelection('t', ['keyId', 'uid', 'nickname', 'avatar', 'status', 'email', 'comment']))
+                qb.skip(0)
+                qb.take(100)
+                qb.cache(5000)
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    const mask = list.map(async item => ({ ...item, email: await divineMaskCharacter('email', item.email) }))
+                    return await divineResolver({ total, list: await Promise.all(mask) })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [ContactService.name, this.httpContactSearch.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

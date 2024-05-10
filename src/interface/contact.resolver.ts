@@ -16,3 +16,10 @@ export class BodyContactCreater extends PickType(entities.SchemaUser, ['uid']) {
 
 /**好友关系详情**/
 export class QueryContactResolver extends PickType(entities.SchemaContact, ['uid']) {}
+
+/**关键字列表搜索**/
+export class BodyContactSearch {
+    @ApiProperty({ description: 'UID/邮箱/用户昵称', required: false })
+    @IsOptional()
+    keyword: string
+}
