@@ -37,6 +37,30 @@ export class CommunitController {
         return await this.communitService.httpCommunitInviteJoiner(headers, request.user.uid, body)
     }
 
+    @Post('/column/search')
+    @ApiDecorator({
+        operation: { summary: '关键字列表搜索' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpCommunitSearch(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyCommunitSearch
+    ) {
+        return await this.communitService.httpCommunitSearch(headers, request.user.uid, body)
+    }
+
+    @Get('/column')
+    @ApiDecorator({
+        operation: { summary: '社群列表' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpCommunitColumn(@Headers() headers: env.Headers, @Request() request: env.Omix<{ user: env.RestUserResolver }>) {
+        return await this.communitService.httpCommunitColumn(headers, request.user.uid)
+    }
+
     @Get('/resolver')
     @ApiDecorator({
         operation: { summary: '社群详情' },

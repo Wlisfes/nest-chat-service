@@ -23,6 +23,20 @@ export class ContactController {
         return await this.contactService.httpContactInviteJoiner(headers, request.user.uid, body)
     }
 
+    @Post('/column/search')
+    @ApiDecorator({
+        operation: { summary: '关键字列表搜索' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.NoticeResolver }
+    })
+    public async httpContactSearch(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Body() body: env.BodyContactSearch
+    ) {
+        return await this.contactService.httpContactSearch(headers, request.user.uid, body)
+    }
+
     @Get('/column')
     @ApiDecorator({
         operation: { summary: '好友列表' },
@@ -45,19 +59,5 @@ export class ContactController {
         @Query() query: env.QueryContactResolver
     ) {
         return await this.contactService.httpContactResolver(headers, request.user.uid, query)
-    }
-
-    @Get('/column/search')
-    @ApiDecorator({
-        operation: { summary: '关键字列表搜索' },
-        authorize: { check: true, next: false },
-        response: { status: 200, description: 'OK', type: env.NoticeResolver }
-    })
-    public async httpContactSearch(
-        @Headers() headers: env.Headers,
-        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
-        @Query() query: env.BodyContactSearch
-    ) {
-        return await this.contactService.httpContactSearch(headers, request.user.uid, query)
     }
 }

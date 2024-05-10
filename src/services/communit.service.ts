@@ -143,7 +143,10 @@ export class CommunitService {
                 await this.customService.divineUpdate(this.customService.tableNotification, {
                     headers,
                     where: { keyId: node.keyId },
-                    state: { status: entities.EnumNotificationStatus.waitze }
+                    state: {
+                        comment: scope.comment,
+                        status: entities.EnumNotificationStatus.waitze
+                    }
                 })
                 return await connect.commitTransaction().then(async () => {
                     this.logger.info(
@@ -161,6 +164,7 @@ export class CommunitService {
                     source: entities.EnumNotificationSource.communit,
                     status: entities.EnumNotificationStatus.waitze,
                     communitId: scope.uid,
+                    comment: scope.comment,
                     userId: userId
                 }
             }).then(async result => {
@@ -181,6 +185,47 @@ export class CommunitService {
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         } finally {
             await connect.release()
+        }
+    }
+
+    /**关键字列表搜索**/
+    public async httpCommunitSearch(headers: env.Headers, userId: string, scope: env.BodyCommunitSearch) {
+        try {
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitSearch.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    /**社群列表**/
+    public async httpCommunitColumn(headers: env.Headers, userId: string) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+                qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
+                qb.innerJoinAndMapMany(
+                    't.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = t.uid AND member.status = :status',
+                    {
+                        status: entities.EnumCommunitMemberStatus.enable
+                    }
+                )
+                qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
+                qb.where(`member.userId = :userId`, { userId: userId })
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    return await divineResolver({ total, list })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [CommunitService.name, this.httpCommunitSearch.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 

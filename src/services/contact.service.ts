@@ -112,6 +112,39 @@ export class ContactService {
         }
     }
 
+    /**关键字列表搜索**/
+    public async httpContactSearch(headers: env.Headers, userId: string, scope: env.BodyContactSearch) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
+                if (isNotEmpty(scope.keyword)) {
+                    qb.where('t.uid != :userId AND (t.uid LIKE :uid OR t.email LIKE :email OR t.nickname LIKE :nickname)', {
+                        userId: userId,
+                        uid: `%${scope.keyword}%`,
+                        email: `%${scope.keyword}%`,
+                        nickname: `%${scope.keyword}%`
+                    })
+                } else {
+                    qb.where('t.uid != :userId', { userId: userId })
+                }
+                qb.select(divineSelection('t', ['keyId', 'uid', 'nickname', 'avatar', 'status', 'email', 'comment']))
+                qb.skip(0)
+                qb.take(100)
+                qb.cache(5000)
+                qb.orderBy('t.keyId', 'DESC')
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    const mask = list.map(async item => ({ ...item, email: await divineMaskCharacter('email', item.email) }))
+                    return await divineResolver({ total, list: await Promise.all(mask) })
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [ContactService.name, this.httpContactSearch.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
     /**好友列表**/
     public async httpContactColumn(headers: env.Headers, userId: string) {
         try {
@@ -163,35 +196,6 @@ export class ContactService {
         } catch (e) {
             this.logger.error(
                 [ContactService.name, this.httpContactResolver.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
-
-    /**关键字列表搜索**/
-    public async httpContactSearch(headers: env.Headers, userId: string, scope: env.BodyContactSearch) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableUser, async qb => {
-                if (isNotEmpty(scope.keyword)) {
-                    qb.where('t.uid LIKE :uid OR t.email LIKE :email OR t.nickname LIKE :nickname', {
-                        uid: `%${scope.keyword}%`,
-                        email: `%${scope.keyword}%`,
-                        nickname: `%${scope.keyword}%`
-                    })
-                }
-                qb.select(divineSelection('t', ['keyId', 'uid', 'nickname', 'avatar', 'status', 'email', 'comment']))
-                qb.skip(0)
-                qb.take(100)
-                qb.cache(5000)
-                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
-                    const mask = list.map(async item => ({ ...item, email: await divineMaskCharacter('email', item.email) }))
-                    return await divineResolver({ total, list: await Promise.all(mask) })
-                })
-            })
-        } catch (e) {
-            this.logger.error(
-                [ContactService.name, this.httpContactSearch.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
