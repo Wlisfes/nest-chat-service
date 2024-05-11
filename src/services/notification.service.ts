@@ -64,21 +64,6 @@ export class NotificationService {
     public async httpNotificationUpdate(headers: env.Headers, userId: string, scope: env.BodyNotificationUpdate) {
         const connect = await this.customService.divineConnectTransaction()
         try {
-            const node = await this.customService.divineHaver(this.customService.tableNotification, {
-                headers,
-                message: 'UID不存在',
-                dispatch: {
-                    where: { uid: scope.uid }
-                }
-            })
-            /**好友申请验证**/
-            // if (node.source === entities.EnumNotificationSource.contact) {
-            //     const info = (node.join as unknown as env.Omix)[userId]
-            //     if (info)
-            //     console.log(node)
-            // }
-
-            return await divineResolver({ message: '添加成功' })
             /**验证通知信息**/
             const data = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 /**社群申请记录联查**/
@@ -98,12 +83,9 @@ export class NotificationService {
                     })
                     /**好友申请**/
                     if (node.source === entities.EnumNotificationSource.contact) {
-                        const info = (node.join as unknown as env.Omix)[userId]
-                        if (!Boolean(info)) {
-                            await this.customService.divineCatchWherer(node.niveId !== userId, node, {
-                                message: 'UID不存在'
-                            })
-                        }
+                        await this.customService.divineCatchWherer(!node.command.includes(userId), node, {
+                            message: '申请者不可操作'
+                        })
                     } else if (node.source === entities.EnumNotificationSource.communit) {
                         /**群聊申请**/
                         await this.customService.divineCatchWherer(!Boolean(node.communit.member), node, {
@@ -115,12 +97,16 @@ export class NotificationService {
                             { message: '权限不足、请通知群主审核' }
                         )
                     }
-                    await this.customService.divineCatchWherer(node.status !== entities.EnumNotificationStatus.waitze, node, {
-                        message: '通知信息已处理，不可再次操作'
-                    })
-                    await this.customService.divineCatchWherer(scope.status === entities.EnumNotificationStatus.waitze, node, {
-                        message: '通知状态不可更新成waitze'
-                    })
+                    if (node.status !== entities.EnumNotificationStatus.waitze) {
+                        return await this.customService.divineCatchWherer(true, node, {
+                            message: '通知信息已处理，不可再次操作'
+                        })
+                    }
+                    if (scope.status === entities.EnumNotificationStatus.waitze) {
+                        return await this.customService.divineCatchWherer(true, node, {
+                            message: '通知状态参数格式错误'
+                        })
+                    }
                     return await divineResolver(node)
                 })
             })

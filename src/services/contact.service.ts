@@ -61,6 +61,18 @@ export class ContactService {
                         divineLogger(headers, { message: '存在申请记录', node })
                     )
                     /**通知状态切换到waitze-待处理**/
+                    const { json, command } = await divineParameter({}).then(() => {
+                        if (node.status === entities.EnumNotificationStatus.waitze) {
+                            return {
+                                command: [...new Set([...node.command, scope.niveId])],
+                                json: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
+                            }
+                        }
+                        return {
+                            command: [scope.niveId],
+                            json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
+                        }
+                    })
                     await this.customService.divineUpdate(this.customService.tableNotification, {
                         headers,
                         where: { keyId: node.keyId },
@@ -68,10 +80,8 @@ export class ContactService {
                             userId: userId,
                             niveId: scope.niveId,
                             status: entities.EnumNotificationStatus.waitze,
-                            command: [...new Set([...node.command, scope.niveId])],
-                            json: Object.assign(node.json, {
-                                [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
-                            })
+                            command: command,
+                            json: json
                         }
                     })
                     return await connect.commitTransaction().then(async () => {
