@@ -126,55 +126,61 @@ export class CommunitService {
                 }
             })
             /**处理申请记录**/
-            const node = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
+            return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 qb.where('t.userId = :userId AND t.communitId = :communitId AND t.source = :source', {
                     source: entities.EnumNotificationSource.communit,
                     userId: userId,
                     communitId: scope.uid
                 })
-                return qb.getOne()
-            })
-            if (node) {
-                /**存在社群申请记录**/
-                this.logger.info(
-                    [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
-                    divineLogger(headers, { message: '存在社群申请记录', node })
-                )
-                /**通知状态切换到waitze-待处理**/
-                await this.customService.divineUpdate(this.customService.tableNotification, {
-                    headers,
-                    where: { keyId: node.keyId },
-                    state: {
-                        comment: scope.comment,
-                        status: entities.EnumNotificationStatus.waitze
-                    }
-                })
-                return await connect.commitTransaction().then(async () => {
+                const node = await qb.getOne()
+                if (node) {
+                    /**存在社群申请记录**/
                     this.logger.info(
                         [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
-                        divineLogger(headers, { message: '申请加入社群成功', node })
+                        divineLogger(headers, { message: '存在社群申请记录', node })
                     )
-                    return await divineResolver({ message: '申请成功' })
-                })
-            }
-            /**不存在申请记录、新增一条申请记录**/ //prettier-ignore
-            return await this.customService.divineCreate(this.customService.tableNotification, {
-                headers,
-                state: {
-                    uid: await divineIntNumber(),
-                    source: entities.EnumNotificationSource.communit,
-                    status: entities.EnumNotificationStatus.waitze,
-                    communitId: scope.uid,
-                    comment: scope.comment,
-                    userId: userId
+                    /**通知状态切换到waitze-待处理**/
+                    await this.customService.divineUpdate(this.customService.tableNotification, {
+                        headers,
+                        where: { keyId: node.keyId },
+                        state: {
+                            status: entities.EnumNotificationStatus.waitze,
+                            join: JSON.stringify(
+                                Object.assign(node.join, {
+                                    [userId]: { userId, comment: scope.comment, date: Date.now() }
+                                })
+                            )
+                        }
+                    })
+                    return await connect.commitTransaction().then(async () => {
+                        this.logger.info(
+                            [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
+                            divineLogger(headers, { message: '申请加入社群成功', node })
+                        )
+                        return await divineResolver({ message: '申请成功' })
+                    })
                 }
-            }).then(async result => {
-                return await connect.commitTransaction().then(async () => {
-                    this.logger.info(
-                        [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
-                        divineLogger(headers, { message: '申请加入社群成功', node: result })
-                    )
-                    return await divineResolver({ message: '申请成功' })
+                /**不存在申请记录、新增一条申请记录**/ //prettier-ignore
+                return await this.customService.divineCreate(this.customService.tableNotification, {
+                    headers,
+                    state: {
+                        uid: await divineIntNumber(),
+                        source: entities.EnumNotificationSource.communit,
+                        status: entities.EnumNotificationStatus.waitze,
+                        communitId: scope.uid,
+                        userId: userId,
+                        join: JSON.stringify({
+                            [userId]: { userId, comment: scope.comment, date: Date.now() }
+                        })
+                    }
+                }).then(async result => {
+                    return await connect.commitTransaction().then(async () => {
+                        this.logger.info(
+                            [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
+                            divineLogger(headers, { message: '申请加入社群成功', node: result })
+                        )
+                        return await divineResolver({ message: '申请成功' })
+                    })
                 })
             })
         } catch (e) {

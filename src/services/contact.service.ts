@@ -6,7 +6,7 @@ import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineMaskCharacter } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineWherer, divineMaskCharacter } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -48,56 +48,60 @@ export class ContactService {
                 })
             })
             /**处理申请记录**/
-            const node = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
+            return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 qb.where(
                     '(t.userId = :userId AND t.niveId = :niveId AND t.source = :source) OR (t.userId = :niveId AND t.niveId = :userId AND t.source = :source)',
                     { userId, niveId: scope.niveId, source: entities.EnumNotificationSource.contact }
                 )
-                return qb.getOne()
-            })
-            if (node) {
-                /**存在申请记录**/
-                this.logger.info(
-                    [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
-                    divineLogger(headers, { message: '存在申请记录', node })
-                )
-                /**通知状态切换到waitze-待处理**/
-                await this.customService.divineUpdate(this.customService.tableNotification, {
-                    headers,
-                    where: { keyId: node.keyId },
-                    state: {
-                        userId,
-                        niveId: scope.niveId,
-                        comment: scope.comment,
-                        status: entities.EnumNotificationStatus.waitze
-                    }
-                })
-                return await connect.commitTransaction().then(async () => {
+                const node = await qb.getOne()
+                if (node) {
+                    /**存在申请记录**/
                     this.logger.info(
                         [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
-                        divineLogger(headers, { message: '申请好友成功', userId, niveId: scope.niveId })
+                        divineLogger(headers, { message: '存在申请记录', node })
                     )
-                    return await divineResolver({ message: '申请成功' })
-                })
-            }
-            /**不存在申请记录、新增一条申请记录**/ //prettier-ignore
-            return await this.customService.divineCreate(this.customService.tableNotification, {
-                headers,
-                state: {
-                    uid: await divineIntNumber(),
-                    userId,
-                    niveId: scope.niveId,
-                    comment: scope.comment,
-                    source: entities.EnumNotificationSource.contact,
-                    status: entities.EnumNotificationStatus.waitze,
+                    /**通知状态切换到waitze-待处理**/
+                    await this.customService.divineUpdate(this.customService.tableNotification, {
+                        headers,
+                        where: { keyId: node.keyId },
+                        state: {
+                            status: entities.EnumNotificationStatus.waitze,
+                            join: JSON.stringify(
+                                Object.assign(node.join, {
+                                    [userId]: { userId, comment: scope.comment, date: Date.now() }
+                                })
+                            )
+                        }
+                    })
+                    return await connect.commitTransaction().then(async () => {
+                        this.logger.info(
+                            [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
+                            divineLogger(headers, { message: '申请好友成功', userId, niveId: scope.niveId })
+                        )
+                        return await divineResolver({ message: '申请成功' })
+                    })
                 }
-            }).then(async result => {
-                return await connect.commitTransaction().then(async () => {
-                    this.logger.info(
-                        [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
-                        divineLogger(headers, { message: '申请好友成功', node: result })
-                    )
-                    return await divineResolver({ message: '申请成功' })
+                /**不存在申请记录、新增一条申请记录**/ //prettier-ignore
+                return await this.customService.divineCreate(this.customService.tableNotification, {
+                    headers,
+                    state: {
+                        uid: await divineIntNumber(),
+                        userId: userId,
+                        niveId: scope.niveId,
+                        source: entities.EnumNotificationSource.contact,
+                        status: entities.EnumNotificationStatus.waitze,
+                        join: JSON.stringify({
+                            [userId]: { userId, comment: scope.comment, date: Date.now() }
+                        })
+                    }
+                }).then(async result => {
+                    return await connect.commitTransaction().then(async () => {
+                        this.logger.info(
+                            [ContactService.name, this.httpContactInviteJoiner.name].join(':'),
+                            divineLogger(headers, { message: '申请好友成功', node: result })
+                        )
+                        return await divineResolver({ message: '申请成功' })
+                    })
                 })
             })
         } catch (e) {

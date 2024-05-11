@@ -28,7 +28,7 @@ export class NotificationService {
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
                 qb.select([
                     ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
-                    ...divineSelection('t', ['userId', 'niveId', 'communitId', 'status', 'comment']),
+                    ...divineSelection('t', ['userId', 'niveId', 'join', 'communitId', 'status']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),

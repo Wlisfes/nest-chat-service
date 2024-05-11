@@ -39,6 +39,14 @@ export class NotificationEntier extends CommonEntier {
     @Column({ comment: '接收用户ID', nullable: true })
     niveId: string
 
+    @ApiProperty({ description: '申请用户记录' })
+    @Column({
+        comment: '申请用户记录',
+        nullable: true,
+        transformer: { from: value => JSON.parse(value ?? '{}'), to: value => value }
+    })
+    join: string
+
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })
     @Column({ comment: '社群ID', nullable: true })
@@ -49,12 +57,11 @@ export class NotificationEntier extends CommonEntier {
     @IsEnum(EnumNotificationStatus, { message: '通知状态错误' })
     @Column({ comment: '通知状态', nullable: false })
     status: string
-
-    @ApiProperty({ description: '描述', example: '你好，我是张三' })
-    @IsNotEmpty({ message: '描述必填' })
-    @Length(4, 128, { message: '状态描述必须保持4~128位' })
-    @Column({ comment: '状态描述', length: 128, nullable: false })
-    comment: string
 }
 
-export class SchemaNotification extends NotificationEntier {}
+export class SchemaNotification extends NotificationEntier {
+    @ApiProperty({ description: '描述', example: '你好，我是张三' })
+    @IsNotEmpty({ message: '描述必填' })
+    @Length(2, 64, { message: '状态描述必须保持2~64位' })
+    comment: string
+}
