@@ -20,43 +20,55 @@ export enum EnumNotificationStatus {
 export class NotificationEntier extends CommonEntier {
     @ApiProperty({ description: '通知记录ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '通知记录ID必填' })
-    @Column({ comment: '通知记录ID', nullable: false })
+    @Column({ comment: '通知记录ID', type: 'varchar', length: 32, nullable: false })
     uid: string
 
     @ApiProperty({ description: '通知类型: 好友申请-contact、群聊申请-communit', enum: EnumNotificationSource })
     @IsNotEmpty({ message: '通知类型必填' })
     @IsEnum(EnumNotificationSource, { message: '通知类型错误' })
-    @Column({ comment: '通知类型: 好友申请-contact、群聊申请-communit', nullable: false })
+    @Column({ comment: '通知类型: 好友申请-contact、群聊申请-communit', type: 'varchar', length: 32, nullable: false })
     source: string
 
     @ApiProperty({ description: '申请用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '申请用户ID必填' })
-    @Column({ comment: '申请用户ID', nullable: false })
+    @Column({ comment: '申请用户ID', type: 'varchar', length: 32, nullable: false })
     userId: string
 
     @ApiProperty({ description: '接收用户ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '接收用户ID必填' })
-    @Column({ comment: '接收用户ID', nullable: true })
+    @Column({ comment: '接收用户ID', type: 'varchar', length: 32, nullable: true })
     niveId: string
-
-    @ApiProperty({ description: '申请用户记录' })
-    @Column({
-        comment: '申请用户记录',
-        nullable: true,
-        transformer: { from: value => JSON.parse(value ?? '{}'), to: value => value }
-    })
-    join: string
 
     @ApiProperty({ description: '社群ID', example: '2149446185344106496' })
     @IsNotEmpty({ message: '社群ID必填' })
-    @Column({ comment: '社群ID', nullable: true })
+    @Column({ comment: '社群ID', type: 'varchar', length: 32, nullable: true })
     communitId: string
 
     @ApiProperty({ description: '通知状态: waitze-待处理、resolve-通过、reject-拒绝', enum: EnumNotificationStatus })
     @IsNotEmpty({ message: '通知状态必填' })
     @IsEnum(EnumNotificationStatus, { message: '通知状态错误' })
-    @Column({ comment: '通知状态', nullable: false })
+    @Column({ comment: '通知状态', type: 'varchar', length: 32, nullable: false })
     status: string
+
+    @ApiProperty({ description: '可操作用户', enum: EnumNotificationStatus })
+    @IsNotEmpty({ message: '可操作用户必填' })
+    @Column({
+        comment: '可操作用户',
+        type: 'varchar',
+        length: 64,
+        nullable: false,
+        transformer: { from: value => JSON.parse(value ?? '[]'), to: value => JSON.stringify(value ?? []) }
+    })
+    command: Array<string>
+
+    @ApiProperty({ description: '申请用户记录' })
+    @Column({
+        comment: '申请用户记录',
+        type: 'varchar',
+        nullable: false,
+        transformer: { from: value => JSON.parse(value ?? '{}'), to: value => JSON.stringify(value ?? {}) }
+    })
+    json: Object
 }
 
 export class SchemaNotification extends NotificationEntier {

@@ -6,7 +6,7 @@ import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineWherer, divineMaskCharacter } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineParameter, divineMaskCharacter } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -65,12 +65,13 @@ export class ContactService {
                         headers,
                         where: { keyId: node.keyId },
                         state: {
+                            userId: userId,
+                            niveId: scope.niveId,
                             status: entities.EnumNotificationStatus.waitze,
-                            join: JSON.stringify(
-                                Object.assign(node.join, {
-                                    [userId]: { userId, comment: scope.comment, date: Date.now() }
-                                })
-                            )
+                            command: [...new Set([...node.command, scope.niveId])],
+                            json: Object.assign(node.json, {
+                                [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                            })
                         }
                     })
                     return await connect.commitTransaction().then(async () => {
@@ -90,9 +91,10 @@ export class ContactService {
                         niveId: scope.niveId,
                         source: entities.EnumNotificationSource.contact,
                         status: entities.EnumNotificationStatus.waitze,
-                        join: JSON.stringify({
-                            [userId]: { userId, comment: scope.comment, date: Date.now() }
-                        })
+                        command: [scope.niveId],
+                        json: {
+                            [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                        }
                     }
                 }).then(async result => {
                     return await connect.commitTransaction().then(async () => {

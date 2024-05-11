@@ -3,7 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
-import { divineResolver, divineIntNumber, divineLogger } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -28,7 +28,7 @@ export class NotificationService {
                 qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
                 qb.select([
                     ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
-                    ...divineSelection('t', ['userId', 'niveId', 'join', 'communitId', 'status']),
+                    ...divineSelection('t', ['userId', 'niveId', 'json', 'communitId', 'status', 'command']),
                     ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                     ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                     ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
@@ -64,6 +64,21 @@ export class NotificationService {
     public async httpNotificationUpdate(headers: env.Headers, userId: string, scope: env.BodyNotificationUpdate) {
         const connect = await this.customService.divineConnectTransaction()
         try {
+            const node = await this.customService.divineHaver(this.customService.tableNotification, {
+                headers,
+                message: 'UID不存在',
+                dispatch: {
+                    where: { uid: scope.uid }
+                }
+            })
+            /**好友申请验证**/
+            // if (node.source === entities.EnumNotificationSource.contact) {
+            //     const info = (node.join as unknown as env.Omix)[userId]
+            //     if (info)
+            //     console.log(node)
+            // }
+
+            return await divineResolver({ message: '添加成功' })
             /**验证通知信息**/
             const data = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 /**社群申请记录联查**/
@@ -83,9 +98,12 @@ export class NotificationService {
                     })
                     /**好友申请**/
                     if (node.source === entities.EnumNotificationSource.contact) {
-                        await this.customService.divineCatchWherer(node.niveId !== userId, node, {
-                            message: 'UID不存在'
-                        })
+                        const info = (node.join as unknown as env.Omix)[userId]
+                        if (!Boolean(info)) {
+                            await this.customService.divineCatchWherer(node.niveId !== userId, node, {
+                                message: 'UID不存在'
+                            })
+                        }
                     } else if (node.source === entities.EnumNotificationSource.communit) {
                         /**群聊申请**/
                         await this.customService.divineCatchWherer(!Boolean(node.communit.member), node, {

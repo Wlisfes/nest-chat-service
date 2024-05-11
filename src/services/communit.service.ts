@@ -144,12 +144,12 @@ export class CommunitService {
                         headers,
                         where: { keyId: node.keyId },
                         state: {
-                            status: entities.EnumNotificationStatus.waitze,
-                            join: JSON.stringify(
-                                Object.assign(node.join, {
-                                    [userId]: { userId, comment: scope.comment, date: Date.now() }
-                                })
-                            )
+                            status: entities.EnumNotificationStatus.waitze
+                            // join: JSON.stringify(
+                            //     Object.assign(node.join, {
+                            //         [userId]: { userId, comment: scope.comment, date: Date.now() }
+                            //     })
+                            // )
                         }
                     })
                     return await connect.commitTransaction().then(async () => {
@@ -169,9 +169,9 @@ export class CommunitService {
                         status: entities.EnumNotificationStatus.waitze,
                         communitId: scope.uid,
                         userId: userId,
-                        join: JSON.stringify({
-                            [userId]: { userId, comment: scope.comment, date: Date.now() }
-                        })
+                        // join: JSON.stringify({
+                        //     [userId]: { userId, comment: scope.comment, date: Date.now() }
+                        // })
                     }
                 }).then(async result => {
                     return await connect.commitTransaction().then(async () => {
