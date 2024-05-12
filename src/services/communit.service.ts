@@ -1,6 +1,7 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
@@ -198,6 +199,20 @@ export class CommunitService {
     /**关键字列表搜索**/
     public async httpCommunitSearch(headers: env.Headers, userId: string, scope: env.BodyCommunitSearch) {
         try {
+            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+                if (isNotEmpty(scope.keyword)) {
+                    qb.where('t.ownId != :userId AND (t.uid LIKE :uid OR t.name LIKE :name)', {
+                        userId: userId,
+                        uid: `%${scope.keyword}%`,
+                        name: `%${scope.keyword}%`
+                    })
+                } else {
+                    qb.where('t.ownId != :userId', { userId })
+                }
+                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                    return await divineResolver({ total, list })
+                })
+            })
         } catch (e) {
             this.logger.error(
                 [CommunitService.name, this.httpCommunitSearch.name].join(':'),
