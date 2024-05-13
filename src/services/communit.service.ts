@@ -8,7 +8,7 @@ import { MessagerService } from '@/services/messager.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineParameter } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineCaseWherer, divineParameter } from '@/utils/utils-common'
 import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -142,25 +142,25 @@ export class CommunitService {
                         divineLogger(headers, { message: '存在社群申请记录', node })
                     )
                     /**通知状态切换到waitze-待处理**/
-                    const { json, command } = await divineParameter({}).then(() => {
-                        if (node.status === entities.EnumNotificationStatus.waitze) {
-                            return {
-                                command: [...new Set([...node.command, communit.ownId])],
-                                json: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                            }
-                        }
-                        return {
-                            command: [communit.ownId],
-                            json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                        }
-                    })
+                    const IsWaitze = node.status === entities.EnumNotificationStatus.waitze
                     await this.customService.divineUpdate(this.customService.tableNotification, {
                         headers,
                         where: { keyId: node.keyId },
                         state: {
                             status: entities.EnumNotificationStatus.waitze,
-                            json,
-                            command
+                            command: divineCaseWherer(IsWaitze, {
+                                value: [...new Set([...node.command, communit.ownId])],
+                                fallback: [communit.ownId]
+                            }),
+                            json: divineCaseWherer(IsWaitze, {
+                                value: {
+                                    ...node.json,
+                                    [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                                },
+                                fallback: {
+                                    [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                                }
+                            })
                         }
                     })
                     return await connect.commitTransaction().then(async () => {

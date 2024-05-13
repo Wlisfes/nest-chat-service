@@ -62,14 +62,6 @@ export class ContactService {
                     )
                     /**通知状态切换到waitze-待处理**/
                     const IsWaitze = node.status === entities.EnumNotificationStatus.waitze
-                    const command = divineCaseWherer(IsWaitze, {
-                        value: [...new Set([...node.command, scope.niveId])],
-                        fallback: [scope.niveId]
-                    })
-                    const json = divineCaseWherer(IsWaitze, {
-                        value: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } },
-                        fallback: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                    })
                     await this.customService.divineUpdate(this.customService.tableNotification, {
                         headers,
                         where: { keyId: node.keyId },
@@ -77,8 +69,19 @@ export class ContactService {
                             userId: userId,
                             niveId: scope.niveId,
                             status: entities.EnumNotificationStatus.waitze,
-                            command: command,
-                            json: json
+                            command: divineCaseWherer(IsWaitze, {
+                                value: [...new Set([...node.command, scope.niveId])],
+                                fallback: [scope.niveId]
+                            }),
+                            json: divineCaseWherer(IsWaitze, {
+                                value: {
+                                    ...node.json,
+                                    [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                                },
+                                fallback: {
+                                    [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                                }
+                            })
                         }
                     })
                     return await connect.commitTransaction().then(async () => {
