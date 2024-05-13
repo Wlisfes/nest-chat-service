@@ -1,6 +1,6 @@
 import { Module, Global, DynamicModule } from '@nestjs/common'
 import { WinstonModule } from 'nest-winston'
-import { divineWherer } from '@/utils/utils-common'
+import { divineCaseWherer } from '@/utils/utils-common'
 import * as web from '@/config/web-instance'
 import * as winston from 'winston'
 import * as chalk from 'chalk'
@@ -33,9 +33,18 @@ export class LoggerModule {
 									const timestamp = chalk.hex('#fb9300')(`${data.timestamp}`)
                                     const contextId = chalk.hex("#536dfe")(`上下文ID:[${data[web.WEB_COMMON_HEADER_CONTEXTID] ?? ''}]`)
 									const message = chalk.hex("#ff3d68")(`执行方法:[${data.message}]`)
-                                    const duration = divineWherer(Boolean(data.duration), chalk.hex("#ff3d68")(`耗时:${data.duration ?? '[]'}`), '')
-                                    const url = divineWherer(Boolean(data.log?.url), chalk.hex('#fc5404')(`接口地址:[${data.log?.url ?? ''}]`, '')) 
-									const level = divineWherer(data.level === 'error',  chalk.red('ERROR'), chalk.green(data.level.toUpperCase()))
+                                    const duration = divineCaseWherer(Boolean(data.duration), {
+                                        value: chalk.hex("#ff3d68")(`耗时:${data.duration ?? '[]'}`),
+                                        defaultValue: ''
+                                    })
+                                    const url = divineCaseWherer(Boolean(data.log?.url), {
+                                        value: chalk.hex('#fc5404')(`接口地址:[${data.log?.url ?? ''}]`, ''),
+                                        defaultValue: ""
+                                    })
+                                    const level = divineCaseWherer(data.level === 'error', {
+                                        value: chalk.red('ERROR'),
+                                        fallback: chalk.green(data.level.toUpperCase())
+                                    })
 									const module = `${name}  ${pid}  ${timestamp}  ${level}  ${contextId}  ${message}`
 									if (typeof data.log === 'string') {
                                         if (data.duration) {

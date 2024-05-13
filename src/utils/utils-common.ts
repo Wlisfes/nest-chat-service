@@ -1,7 +1,7 @@
 import { Request } from 'express'
 import { snowflakeId } from 'snowflake-id-maker'
 import { zh_CN, Faker } from '@faker-js/faker'
-import { isEmpty } from 'class-validator'
+import { isNotEmpty } from 'class-validator'
 import * as web from '@/config/web-instance'
 import * as dayjs from 'dayjs'
 import * as utc from 'dayjs/plugin/utc'
@@ -65,8 +65,11 @@ export function divineDelay(delay = 100, handler?: Function) {
 }
 
 /**条件值返回**/
-export function divineWherer<T>(where: boolean, value: T, defaultValue: T = undefined): T {
-    return where ? value : defaultValue
+export function divineCaseWherer<T>(where: boolean, scope: env.Omix<{ value: T; fallback?: T; defaultValue?: T }>): T {
+    if (where) {
+        return scope.value ?? scope.defaultValue
+    }
+    return scope.fallback ?? scope.defaultValue
 }
 
 /**参数组合**/
@@ -79,7 +82,7 @@ export function divineLogger(headers: env.Omix<env.Headers> = {}, log: env.Omix 
     const duration = headers[web.WEB_COMMON_HEADER_STARTTIME]
     return {
         log,
-        duration: divineWherer(isEmpty(duration), null, `${Date.now() - Number(duration)}ms`),
+        duration: divineCaseWherer(isNotEmpty(duration), { value: `${Date.now() - Number(duration)}ms`, defaultValue: null }),
         [web.WEB_COMMON_HEADER_CONTEXTID]: headers[web.WEB_COMMON_HEADER_CONTEXTID]
     }
 }
@@ -114,7 +117,7 @@ export async function divineBytefor(byte: number, dec: number = 2) {
 
 /**redis存储键组合方法**/
 export async function divineKeyCompose(namespaces: string, ...args: string[]) {
-    return [namespaces, ...args].filter(key => !isEmpty(key)).join(':')
+    return [namespaces, ...args].filter(key => isNotEmpty(key)).join(':')
 }
 
 /**邮箱号混淆**/

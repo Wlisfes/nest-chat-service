@@ -6,7 +6,7 @@ import { CustomService } from '@/services/custom.service'
 import { MessagerService } from '@/services/messager.service'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { RedisService } from '@/services/redis/redis.service'
-import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineWherer } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineCaseWherer } from '@/utils/utils-common'
 import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -94,11 +94,10 @@ export class SessionService {
                     `((contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)) AND t.source IN (:...source)`,
                     {
                         userId,
-                        source: divineWherer(
-                            Boolean(scope.source),
-                            [scope.source],
-                            [entities.EnumSessionSource.contact, entities.EnumSessionSource.communit]
-                        )
+                        source: divineCaseWherer(Boolean(scope.source), {
+                            value: [scope.source],
+                            fallback: [entities.EnumSessionSource.contact, entities.EnumSessionSource.communit]
+                        })
                     }
                 )
                 qb.orderBy('message.createTime', 'DESC')

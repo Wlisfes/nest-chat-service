@@ -6,7 +6,7 @@ import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineParameter, divineMaskCharacter } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineParameter, divineCaseWherer, divineMaskCharacter } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -61,17 +61,14 @@ export class ContactService {
                         divineLogger(headers, { message: '存在申请记录', node })
                     )
                     /**通知状态切换到waitze-待处理**/
-                    const { json, command } = await divineParameter({}).then(() => {
-                        if (node.status === entities.EnumNotificationStatus.waitze) {
-                            return {
-                                command: [...new Set([...node.command, scope.niveId])],
-                                json: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                            }
-                        }
-                        return {
-                            command: [scope.niveId],
-                            json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                        }
+                    const IsWaitze = node.status === entities.EnumNotificationStatus.waitze
+                    const command = divineCaseWherer(IsWaitze, {
+                        value: [...new Set([...node.command, scope.niveId])],
+                        fallback: [scope.niveId]
+                    })
+                    const json = divineCaseWherer(IsWaitze, {
+                        value: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } },
+                        fallback: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
                     })
                     await this.customService.divineUpdate(this.customService.tableNotification, {
                         headers,
