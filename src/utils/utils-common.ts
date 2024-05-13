@@ -53,6 +53,21 @@ export async function divineHandler<T>(where: boolean | Function, scope: env.Omi
     }
 }
 
+/**批量执行异步方法**/
+export async function divineBatchHandler(handlers: Array<any>, scope: env.Omix<{ handler?: Function; failure?: Function }> = {}) {
+    try {
+        return await Promise.all(handlers).then(async response => {
+            return await divineHandler(Boolean(scope.handler), {
+                handler: () => scope.handler(response)
+            })
+        })
+    } catch (e) {
+        return await divineHandler(Boolean(scope.failure), {
+            handler: () => scope.failure!(e)
+        })
+    }
+}
+
 /**延时方法**/
 export function divineDelay(delay = 100, handler?: Function) {
     return new Promise(resolve => {

@@ -1,10 +1,15 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { ClientProxy } from '@nestjs/microservices'
 import { CustomService } from '@/services/custom.service'
+import { RedisService } from '@/services/redis/redis.service'
+import { UserService } from '@/services/user.service'
 import { SessionService } from '@/services/session.service'
+import { MessagerService } from '@/services/messager.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
+import { divineClientSender } from '@/utils/utils-microservices'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler, divineParameter, divineBatchHandler } from '@/utils/utils-common'
 import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -13,7 +18,11 @@ import * as entities from '@/entities/instance'
 export class NotificationService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
+        private readonly redisService: RedisService,
         private readonly customService: CustomService,
+        private readonly userService: UserService,
+        private readonly messagerService: MessagerService,
         private readonly sessionService: SessionService
     ) {}
 
@@ -66,6 +75,11 @@ export class NotificationService {
         const connect = await this.customService.divineConnectTransaction()
         try {
             return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
+                // return divineClientSender(this.socketClient, {
+                //     eventName: 'web-socket-refresh-session',
+                //     headers,
+                //     state: { userId: userId, sid: scope.uid }
+                // })
                 qb.where('t.uid = :uid', { uid: scope.uid })
                 return qb.getOne().then(async (node: env.Omix<entities.NotificationEntier>) => {
                     this.logger.info(
@@ -180,51 +194,82 @@ export class NotificationService {
                     niveId: scope.niveId
                 })
                 return qb.getOne().then(async node => {
-                    /**存在好友关联记录**/
-                    if (node) {
-                        this.logger.info(
-                            [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
-                            divineLogger(headers, { message: '存在好友关联记录', node })
-                        )
-                        /**好友状态切换到启用-enable**/
-                        await this.customService.divineUpdate(this.customService.tableContact, {
-                            headers,
-                            where: { keyId: node.keyId },
-                            state: {
-                                status: entities.EnumContactStatus.enable,
-                                userId: scope.userId,
-                                niveId: scope.niveId
-                            }
-                        })
-                        /**新建私聊会话**/
-                        await this.sessionService.httpSessionContactCreater(headers, {
-                            contactId: node.uid
-                        })
-                        this.logger.info(
-                            [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
-                            divineLogger(headers, { message: '更新好友状态', scope })
-                        )
-                        return await divineResolver({ message: '添加成功' })
-                    }
-
-                    /**不存在好友关联记录、新增一条记录**/
-                    const result = await this.customService.divineCreate(this.customService.tableContact, {
-                        headers,
-                        state: {
-                            uid: await divineIntNumber(),
-                            status: entities.EnumContactStatus.enable,
-                            userId: scope.userId,
-                            niveId: scope.niveId
+                    /**输出记录日志**/
+                    await divineHandler(Boolean(node), {
+                        handler: () => {
+                            this.logger.info(
+                                [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
+                                divineLogger(headers, { message: '存在好友关联记录', node })
+                            )
                         }
                     })
-                    /**新建私聊会话**/
-                    await this.sessionService.httpSessionContactCreater(headers, {
-                        contactId: result.uid
+                    const data = await divineParameter(scope).then(async ({ userId, niveId }) => {
+                        const { nickname } = await this.userService.httpUserResolver(headers, scope.userId)
+                        if (Boolean(node)) {
+                            /**存在好友关联记录**/
+                            await this.customService.divineUpdate(this.customService.tableContact, {
+                                headers,
+                                where: { keyId: node.keyId },
+                                state: {
+                                    userId: scope.userId,
+                                    niveId: scope.niveId,
+                                    status: entities.EnumContactStatus.enable
+                                }
+                            })
+                            /**查询会话数据**/
+                            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                                qb.where('t.contactId = :contactId AND t.source = :source', {
+                                    source: entities.EnumSessionSource.contact,
+                                    contactId: node.uid
+                                })
+                                return qb.getOne().then(({ sid }) => {
+                                    return { userId, niveId, nickname, contactId: node.uid, sessionId: sid }
+                                })
+                            })
+                        } else {
+                            /**不存在好友关联记录**/
+                            const sid = await divineIntNumber()
+                            const cid = await divineIntNumber()
+                            /**新增好友绑定记录**/
+                            await this.customService.divineCreate(this.customService.tableContact, {
+                                headers,
+                                state: { uid: cid, userId, niveId, status: entities.EnumContactStatus.enable }
+                            })
+                            /**新增好友会话记录**/
+                            await this.customService.divineCreate(this.customService.tableSession, {
+                                headers,
+                                state: { contactId: cid, sid: sid, source: entities.EnumSessionSource.contact }
+                            })
+                            return { userId, niveId, nickname, contactId: cid, sessionId: sid }
+                        }
                     })
-                    this.logger.info(
-                        [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
-                        divineLogger(headers, { message: '新增好友关联记录', node: result })
-                    )
+                    /**新增用户Socket会话房间**/
+                    await divineClientSender(this.socketClient, {
+                        eventName: 'web-socket-refresh-session',
+                        headers,
+                        state: { userId: data.userId, sid: data.sessionId }
+                    })
+                    await divineClientSender(this.socketClient, {
+                        eventName: 'web-socket-refresh-session',
+                        headers,
+                        state: { userId: data.niveId, sid: data.sessionId }
+                    })
+                    /**插入申请用户招呼记录**/
+                    await this.messagerService.httpCommonCustomizeMessager(headers, data.userId, {
+                        source: entities.EnumMessagerSource.text,
+                        referrer: entities.EnumMessagerReferrer.http,
+                        sessionId: data.sessionId,
+                        text: `我是${data.nickname}`,
+                        fileId: ''
+                    })
+                    /**插入被申请用户招呼记录**/
+                    await this.messagerService.httpCommonCustomizeMessager(headers, data.niveId, {
+                        source: entities.EnumMessagerSource.text,
+                        referrer: entities.EnumMessagerReferrer.http,
+                        sessionId: data.sessionId,
+                        text: `我通过了您的好友申请，现在我们可以聊天了`,
+                        fileId: ''
+                    })
                     return await divineResolver({ message: '添加成功' })
                 })
             })
