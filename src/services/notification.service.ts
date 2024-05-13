@@ -296,52 +296,76 @@ export class NotificationService {
                     userId: scope.userId
                 })
                 return qb.getOne().then(async node => {
-                    /**存在社群成员关联记录**/
-                    if (node) {
-                        this.logger.info(
-                            [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
-                            divineLogger(headers, { message: '存在社群成员关联记录', node })
-                        )
-                        /**社群成员角色切换成 “群众” 初始状态**/
-                        await this.customService.divineUpdate(this.customService.tableCommunitMember, {
-                            headers,
-                            where: { keyId: node.keyId },
-                            state: {
-                                role: entities.EnumCommunitMemberRole.masses,
-                                status: entities.EnumContactStatus.enable,
-                                speak: false
-                            }
-                        })
-                        /**更新社群成员角色状态**/
-                        this.logger.info(
-                            [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
-                            divineLogger(headers, {
-                                message: '更新社群成员角色状态',
-                                scope: Object.assign(scope, {
+                    /**输出记录日志**/
+                    await divineHandler(Boolean(node), {
+                        handler: () => {
+                            this.logger.info(
+                                [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
+                                divineLogger(headers, { message: '存在社群成员关联记录', node })
+                            )
+                        }
+                    })
+                    const data = await divineParameter(scope).then(async ({ userId, communitId }) => {
+                        const { nickname } = await this.userService.httpUserResolver(headers, userId)
+                        if (Boolean(node)) {
+                            /**存在社群成员关联记录、成员角色切换成 “群众” 初始状态**/
+                            await this.customService.divineUpdate(this.customService.tableCommunitMember, {
+                                headers,
+                                where: { keyId: node.keyId },
+                                state: {
                                     role: entities.EnumCommunitMemberRole.masses,
                                     status: entities.EnumContactStatus.enable,
                                     speak: false
+                                }
+                            })
+                            /**查询会话数据**/
+                            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                                qb.where('t.communitId = :communitId AND t.source = :source', {
+                                    source: entities.EnumSessionSource.communit,
+                                    communitId: communitId
+                                })
+                                return qb.getOne().then(({ sid }) => {
+                                    return { userId, nickname, communitId, sessionId: sid }
                                 })
                             })
-                        )
-                        return await divineResolver({ message: '添加成功' })
-                    }
-
-                    /**存在社群成员关联记录、新增一条记录**/
-                    const result = await this.customService.divineCreate(this.customService.tableCommunitMember, {
-                        headers,
-                        state: {
-                            role: entities.EnumCommunitMemberRole.masses,
-                            status: entities.EnumContactStatus.enable,
-                            userId: scope.userId,
-                            communitId: scope.communitId,
-                            speak: false
+                        } else {
+                            /**不存在社群成员关联记录、新增社群成员关联记录**/
+                            await this.customService.divineCreate(this.customService.tableCommunitMember, {
+                                headers,
+                                state: {
+                                    role: entities.EnumCommunitMemberRole.masses,
+                                    status: entities.EnumContactStatus.enable,
+                                    userId: userId,
+                                    communitId: communitId,
+                                    speak: false
+                                }
+                            })
+                            /**查询会话数据**/
+                            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                                qb.where('t.communitId = :communitId AND t.source = :source', {
+                                    source: entities.EnumSessionSource.communit,
+                                    communitId: communitId
+                                })
+                                return qb.getOne().then(({ sid }) => {
+                                    return { userId, nickname, communitId, sessionId: sid }
+                                })
+                            })
                         }
                     })
-                    this.logger.info(
-                        [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
-                        divineLogger(headers, { message: '社群成员关联记录', node: result })
-                    )
+                    /**新增用户Socket会话房间**/
+                    await divineClientSender(this.socketClient, {
+                        eventName: 'web-socket-refresh-session',
+                        headers,
+                        state: { userId: data.userId, sid: data.sessionId }
+                    })
+                    /**插入被申请用户招呼记录**/
+                    await this.messagerService.httpCommonCustomizeMessager(headers, data.userId, {
+                        source: entities.EnumMessagerSource.text,
+                        referrer: entities.EnumMessagerReferrer.http,
+                        sessionId: data.sessionId,
+                        text: `${data.nickname}加入了社群`,
+                        fileId: ''
+                    })
                     return await divineResolver({ message: '添加成功' })
                 })
             })
