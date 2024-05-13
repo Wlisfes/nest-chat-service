@@ -81,7 +81,7 @@ export class NotificationService {
                 //     state: { userId: userId, sid: scope.uid }
                 // })
                 qb.where('t.uid = :uid', { uid: scope.uid })
-                return qb.getOne().then(async (node: env.Omix<entities.NotificationEntier>) => {
+                return qb.getOne().then(async node => {
                     this.logger.info(
                         [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
                         divineLogger(headers, { message: `[${this.customService.tableNotification.metadata.name}]:查询出参`, node })
@@ -95,8 +95,8 @@ export class NotificationService {
                     await divineCatchWherer(node.status !== entities.EnumNotificationStatus.waitze, {
                         message: '通知信息已处理，不可再次操作'
                     })
-                    /**好友申请**/
                     if (node.source === entities.EnumNotificationSource.contact) {
+                        /**好友申请**/
                         await divineCatchWherer(!node.command.includes(userId), {
                             message: '申请者不可操作'
                         })
@@ -114,8 +114,36 @@ export class NotificationService {
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })
                         })
-                    } else if (node.source === entities.EnumNotificationSource.communit) {
+                    } else {
                         /**群聊申请**/
+                        return this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+                            qb.leftJoinAndMapOne(
+                                't.member',
+                                entities.CommunitMemberEntier,
+                                'member',
+                                'member.communitId = t.uid AND member.status = :status AND member.userId = :userId',
+                                { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
+                            )
+                            qb.where('t.uid = :uid', { uid: node.communitId })
+                            return qb.getOne().then(async data => {
+                                await divineCatchWherer(!Boolean(data), {
+                                    message: 'UID不存在'
+                                })
+                                await this.customService.divineHaver(this.customService.tableCommunitMember, {
+                                    headers,
+                                    message: '权限不足、请通知群主审核',
+                                    dispatch: { where: { userId: userId, communitId: node.communitId } }
+                                })
+                                // await divineCatchWherer(data, {
+                                //     message: 'UID不存在'
+                                // })
+                                // await divineCatchWherer(
+                                //         data.member.role !== entities.EnumCommunitMemberRole.master,
+                                //         node,
+                                //         { message: '权限不足、请通知群主审核' }
+                                //     )
+                            })
+                        })
                         // await this.customService.divineCatchWherer(!Boolean(node.communit.member), node, {
                         //     message: 'UID不存在'
                         // })
