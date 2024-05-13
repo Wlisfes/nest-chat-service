@@ -7,6 +7,12 @@ import * as env from '@/interface/instance.resolver'
 export class WebSocketController {
     constructor(private readonly webSocketService: WebSocketService) {}
 
+    /**刷新用户Socket会话房间**/
+    @MessagePattern('web-socket-refresh-session')
+    public async httpSocketRefreshSession(@Payload() scope: env.ClientPayload<{ userId: string; sid: string }>) {
+        return await this.webSocketService.httpSocketRefreshSession(scope.headers, scope.state)
+    }
+
     /**Socket推送消息至客户端**/
     @MessagePattern('web-socket-push-messager')
     public async httpSocketPushCustomizeMessager(@Payload() scope: env.ClientPayload<env.BodySocketPushCustomizeMessager>) {

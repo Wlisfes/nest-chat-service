@@ -1,7 +1,7 @@
-import { Injectable, Inject, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { SessionService } from '@/services/session.service'
+import { CustomService } from '@/services/custom.service'
 import { MessagerService } from '@/services/messager.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
@@ -14,10 +14,39 @@ export class WebSocketService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly webSocketClientService: WebSocketClientService,
-        private readonly sessionService: SessionService,
+        private readonly customService: CustomService,
         private readonly messagerService: MessagerService,
         private readonly rabbitmqService: RabbitmqService
     ) {}
+
+    /**获取当前用户所有会话房间**/
+    public async httpSocketColumnSession(headers: env.Headers, userId: string) {
+        try {
+            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
+                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                qb.leftJoinAndMapOne(
+                    'communit.member',
+                    entities.CommunitMemberEntier,
+                    'member',
+                    'member.communitId = communit.uid AND member.userId = :userId',
+                    { userId: userId }
+                )
+                qb.where(`(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)`, {
+                    userId: userId
+                })
+                return qb.getMany().then(async list => {
+                    return await divineResolver(list.map(node => node.sid))
+                })
+            })
+        } catch (e) {
+            this.logger.error(
+                [WebSocketService.name, this.httpSocketColumnSession.name].join(':'),
+                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+            )
+            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
 
     /**初始化连接、开启会话房间**/
     public async httpSocketConnection(socket: env.AuthSocket, userId: string) {
@@ -26,10 +55,8 @@ export class WebSocketService {
                 [WebSocketService.name, this.httpSocketConnection.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '开启长连接-初始化开始', socketId: socket.id, user: socket.user })
             )
-            await this.sessionService.httpSocketConnection(socket.handshake.headers, userId).then(async sessions => {
-                sessions.forEach(sid => {
-                    socket.join(sid)
-                })
+            await this.httpSocketColumnSession(socket.handshake.headers, userId).then(async sessions => {
+                socket.join(sessions)
                 this.logger.info(
                     [WebSocketService.name, this.httpSocketConnection.name].join(':'),
                     divineLogger(socket.handshake.headers, {
@@ -80,6 +107,36 @@ export class WebSocketService {
                 message: e.message,
                 status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
             })
+        }
+    }
+
+    /**用户临时加入会话房间**/
+    public async httpSocketRefreshSession(headers: env.Headers, scope: { userId: string; sid: string }) {
+        try {
+            const socket = await this.webSocketClientService.getClient(scope.userId)
+            return await divineHandler(Boolean(socket) && socket.connected, {
+                failure: () => {
+                    return this.logger.info(
+                        [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
+                        divineLogger(headers, { message: '用户不在线' })
+                    )
+                },
+                handler: () => {
+                    socket.join(scope.sid)
+                    return this.logger.info(
+                        [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
+                        divineLogger(headers, { message: '会话房间加入成功', socketId: socket.id, user: socket.user, sid: scope.sid })
+                    )
+                }
+            })
+        } catch (e) {
+            this.logger.error(
+                [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
+                divineLogger(headers, {
+                    message: e.message,
+                    status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+                })
+            )
         }
     }
 

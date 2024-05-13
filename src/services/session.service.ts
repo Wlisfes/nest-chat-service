@@ -229,17 +229,24 @@ export class SessionService {
                                 sid: await divineIntNumber()
                             }
                         })
-                        /**刷新用户Socket会话房间**/
-                        await divineClientSender(this.socketClient, {
-                            eventName: 'web-socket-refresh-session',
-                            headers,
-                            state: { userId: contact.userId }
-                        })
-                        await divineClientSender(this.socketClient, {
-                            eventName: 'web-socket-refresh-session',
-                            headers,
-                            state: { userId: contact.niveId }
-                        })
+                        try {
+                            /**刷新用户Socket会话房间**/
+                            await divineClientSender(this.socketClient, {
+                                eventName: 'web-socket-refresh-session',
+                                headers,
+                                state: { userId: contact.userId, sid: result.sid }
+                            })
+                            await divineClientSender(this.socketClient, {
+                                eventName: 'web-socket-refresh-session',
+                                headers,
+                                state: { userId: contact.niveId, sid: result.sid }
+                            })
+                        } catch (err) {
+                            this.logger.info(
+                                [SessionService.name, this.httpSessionContactCreater.name].join(':'),
+                                divineLogger(headers, { message: 'socket服务异常' })
+                            )
+                        }
                         /**插入申请用户招呼记录**/
                         await this.messagerService.httpCommonCustomizeMessager(headers, contact.userId, {
                             source: entities.EnumMessagerSource.text,
