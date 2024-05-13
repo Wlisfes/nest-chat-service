@@ -9,8 +9,8 @@ export class WebSocketController {
 
     /**刷新用户Socket会话房间**/
     @MessagePattern('web-socket-refresh-session')
-    public async httpSocketRefreshSession(@Payload() scope: env.ClientPayload<{ userId: string; sid: string }>) {
-        return await this.webSocketService.httpSocketRefreshSession(scope.headers, scope.state)
+    public async httpSocketJoinSession(@Payload() scope: env.ClientPayload<{ userId: string; sid: string }>) {
+        return await this.webSocketService.httpSocketJoinSession(scope.headers, scope.state)
     }
 
     /**Socket推送消息至客户端**/

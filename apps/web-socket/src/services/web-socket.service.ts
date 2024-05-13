@@ -111,27 +111,29 @@ export class WebSocketService {
     }
 
     /**用户临时加入会话房间**/
-    public async httpSocketRefreshSession(headers: env.Headers, scope: { userId: string; sid: string }) {
+    public async httpSocketJoinSession(headers: env.Headers, scope: { userId: string; sid: string }) {
         try {
             const socket = await this.webSocketClientService.getClient(scope.userId)
             return await divineHandler(Boolean(socket) && socket.connected, {
-                failure: () => {
-                    return this.logger.info(
-                        [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
-                        divineLogger(headers, { message: '用户不在线' })
+                failure: async () => {
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
+                        divineLogger(headers, { message: '用户不在线', node: scope })
                     )
+                    return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
-                handler: () => {
+                handler: async () => {
                     socket.join(scope.sid)
-                    return this.logger.info(
-                        [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
                         divineLogger(headers, { message: '会话房间加入成功', socketId: socket.id, user: socket.user, sid: scope.sid })
                     )
+                    return await divineResolver({ message: '会话房间加入成功', status: HttpStatus.OK })
                 }
             })
         } catch (e) {
             this.logger.error(
-                [WebSocketService.name, this.httpSocketRefreshSession.name].join(':'),
+                [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
                 divineLogger(headers, {
                     message: e.message,
                     status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR
