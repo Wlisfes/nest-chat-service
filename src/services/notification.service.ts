@@ -115,15 +115,8 @@ export class NotificationService {
                             return await divineResolver({ message: message })
                         })
                     } else {
-                        /**群聊申请**/
-                        return this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
-                            qb.leftJoinAndMapOne(
-                                't.member',
-                                entities.CommunitMemberEntier,
-                                'member',
-                                'member.communitId = t.uid AND member.status = :status AND member.userId = :userId',
-                                { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
-                            )
+                        /**群聊申请、验证社群状态**/
+                        await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
                             qb.where('t.uid = :uid', { uid: node.communitId })
                             return qb.getOne().then(async data => {
                                 await divineCatchWherer(!Boolean(data), {
@@ -132,38 +125,37 @@ export class NotificationService {
                                 await divineCatchWherer(Boolean(data) && data.status === entities.EnumCommunitStatus.dissolve, {
                                     message: '社群已解散'
                                 })
-                                await this.customService.divineBuilder(this.customService.tableCommunitMember, async qb => {
-                                    qb.where(
-                                        't.userId = :userId AND t.communitId = :communitId AND t.status = :status ADN t.role IN (:...role)',
-                                        {
-                                            userId: userId,
-                                            communitId: node.communitId,
-                                            status: entities.EnumCommunitMemberStatus.enable,
-                                            role: [entities.EnumCommunitMemberRole.master, entities.EnumCommunitMemberRole.manager]
-                                        }
-                                    )
-                                    return await qb.getOne().then(async member => {
-                                        await divineCatchWherer(!Boolean(member), {
-                                            message: '权限不足、无法审核操作'
-                                        })
-                                        return await divineResolver(member)
-                                    })
-                                })
-                                return await this.httpNotificationCommunitUpdate(headers, {
-                                    status: scope.status,
-                                    userId: userId,
-                                    communitId: node.communitId
-                                }).then(async ({ message }) => {
-                                    /**更新通知状态**/
-                                    await this.customService.divineUpdate(this.customService.tableNotification, {
-                                        headers,
-                                        where: { uid: data.uid },
-                                        state: { status: scope.status }
-                                    })
-                                    await connect.commitTransaction()
-                                    return await divineResolver({ message: message })
-                                })
+                                return await divineResolver(data)
                             })
+                        })
+                        /**验证操作者身份**/
+                        await this.customService.divineBuilder(this.customService.tableCommunitMember, async qb => {
+                            qb.where('t.userId = :userId AND t.communitId = :communitId AND t.status = :status ADN t.role IN (:...role)', {
+                                userId: userId,
+                                communitId: node.communitId,
+                                status: entities.EnumCommunitMemberStatus.enable,
+                                role: [entities.EnumCommunitMemberRole.master, entities.EnumCommunitMemberRole.manager]
+                            })
+                            return await qb.getOne().then(async member => {
+                                await divineCatchWherer(!Boolean(member), {
+                                    message: '权限不足、无法审核操作'
+                                })
+                                return await divineResolver(member)
+                            })
+                        })
+                        return await this.httpNotificationCommunitUpdate(headers, {
+                            status: scope.status,
+                            userId: userId,
+                            communitId: node.communitId
+                        }).then(async ({ message }) => {
+                            /**更新通知状态**/
+                            await this.customService.divineUpdate(this.customService.tableNotification, {
+                                headers,
+                                where: { uid: node.uid },
+                                state: { status: scope.status }
+                            })
+                            await connect.commitTransaction()
+                            return await divineResolver({ message: message })
                         })
                     }
                 })
@@ -292,7 +284,7 @@ export class NotificationService {
             if (scope.status === entities.EnumNotificationStatus.reject) {
                 /**拒绝加入社群**/
                 this.logger.info(
-                    [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
+                    [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
                     divineLogger(headers, { message: '拒绝加入社群', scope })
                 )
                 return await divineResolver({ message: '拒绝成功' })
@@ -307,7 +299,7 @@ export class NotificationService {
                     /**存在社群成员关联记录**/
                     if (node) {
                         this.logger.info(
-                            [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
+                            [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
                             divineLogger(headers, { message: '存在社群成员关联记录', node })
                         )
                         /**社群成员角色切换成 “群众” 初始状态**/
@@ -322,7 +314,7 @@ export class NotificationService {
                         })
                         /**更新社群成员角色状态**/
                         this.logger.info(
-                            [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
+                            [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
                             divineLogger(headers, {
                                 message: '更新社群成员角色状态',
                                 scope: Object.assign(scope, {
@@ -347,7 +339,7 @@ export class NotificationService {
                         }
                     })
                     this.logger.info(
-                        [NotificationService.name, this.httpNotificationContactUpdate.name].join(':'),
+                        [NotificationService.name, this.httpNotificationCommunitUpdate.name].join(':'),
                         divineLogger(headers, { message: '社群成员关联记录', node: result })
                     )
                     return await divineResolver({ message: '添加成功' })
