@@ -8,7 +8,7 @@ import { MessagerService } from '@/services/messager.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineParameter } from '@/utils/utils-common'
 import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -105,26 +105,27 @@ export class CommunitService {
         const connect = await this.customService.divineConnectTransaction()
         try {
             /**判断社群是否存在**/ //prettier-ignore
-            await this.customService.divineHaver(this.customService.tableCommunit, {
+            const communit = await this.customService.divineHaver(this.customService.tableCommunit, {
                 headers,
                 message: '社群不存在',
                 dispatch: { where: { uid: scope.uid } }
             }).then(async node => {
-                return await divineCatchWherer(node && node.status === entities.EnumCommunitStatus.dissolve, {
+                await divineCatchWherer(node && node.status === entities.EnumCommunitStatus.dissolve, {
                     message: '该社群已解散'
                 })
-            })
-            /**判断用户是否已加入社群**/
-            await this.customService.divineNoner(this.customService.tableCommunitMember, {
-                headers,
-                message: '您已加入该社群',
-                dispatch: {
-                    where: {
-                        communitId: scope.uid,
-                        userId: userId,
-                        status: entities.EnumCommunitMemberStatus.enable
+                /**判断用户是否已加入社群**/
+                await this.customService.divineNoner(this.customService.tableCommunitMember, {
+                    headers,
+                    message: '您已加入该社群',
+                    dispatch: {
+                        where: {
+                            communitId: scope.uid,
+                            userId: userId,
+                            status: entities.EnumCommunitMemberStatus.enable
+                        }
                     }
-                }
+                })
+                return await divineResolver(node)
             })
             /**处理申请记录**/
             return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
@@ -141,16 +142,25 @@ export class CommunitService {
                         divineLogger(headers, { message: '存在社群申请记录', node })
                     )
                     /**通知状态切换到waitze-待处理**/
+                    const { json, command } = await divineParameter({}).then(() => {
+                        if (node.status === entities.EnumNotificationStatus.waitze) {
+                            return {
+                                command: [...new Set([...node.command, communit.ownId])],
+                                json: { ...node.json, [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
+                            }
+                        }
+                        return {
+                            command: [communit.ownId],
+                            json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
+                        }
+                    })
                     await this.customService.divineUpdate(this.customService.tableNotification, {
                         headers,
                         where: { keyId: node.keyId },
                         state: {
-                            status: entities.EnumNotificationStatus.waitze
-                            // join: JSON.stringify(
-                            //     Object.assign(node.join, {
-                            //         [userId]: { userId, comment: scope.comment, date: Date.now() }
-                            //     })
-                            // )
+                            status: entities.EnumNotificationStatus.waitze,
+                            json,
+                            command
                         }
                     })
                     return await connect.commitTransaction().then(async () => {
@@ -170,9 +180,10 @@ export class CommunitService {
                         status: entities.EnumNotificationStatus.waitze,
                         communitId: scope.uid,
                         userId: userId,
-                        // join: JSON.stringify({
-                        //     [userId]: { userId, comment: scope.comment, date: Date.now() }
-                        // })
+                        command: [communit.ownId],
+                        json: {
+                            [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                        }
                     }
                 }).then(async result => {
                     return await connect.commitTransaction().then(async () => {
