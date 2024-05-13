@@ -1,5 +1,6 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common'
 import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core'
+import { ClientsModule, Transport } from '@nestjs/microservices'
 import { UserAgentMiddleware } from '@/middleware/useragent.middleware'
 import { LoggerMiddleware } from '@/middleware/logger.middleware'
 import { AuthGuard } from '@/guards/auth.guard'
@@ -34,6 +35,17 @@ import { MessagerController } from '@web-service/controllers/messager.controller
 @Module({
     imports: [
         LoggerModule.forRoot({ name: 'web-service' }),
+        ClientsModule.register([
+            {
+                name: 'WEB-SOCKET',
+                transport: Transport.REDIS,
+                options: {
+                    host: process.env.REDIS_HOST,
+                    port: Number(process.env.REDIS_PORT),
+                    password: process.env.REDIS_PASSWORD
+                }
+            }
+        ]),
         ConfigerModule,
         ThrottlerModule,
         RedisModule,

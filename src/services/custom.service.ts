@@ -8,7 +8,6 @@ import { JwtService } from '@nestjs/jwt'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineLogger } from '@/utils/utils-common'
 import * as entities from '@/entities/instance'
-import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 
 export interface DivineCustomOption<T> extends env.Omix {

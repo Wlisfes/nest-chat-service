@@ -3,6 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { CustomService } from '@/services/custom.service'
 import { SessionService } from '@/services/session.service'
+import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
@@ -64,88 +65,91 @@ export class NotificationService {
     public async httpNotificationUpdate(headers: env.Headers, userId: string, scope: env.BodyNotificationUpdate) {
         const connect = await this.customService.divineConnectTransaction()
         try {
-            /**验证通知信息**/
-            const data = await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
-                /**社群申请记录联查**/
-                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
-                qb.leftJoinAndMapOne(
-                    'communit.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = communit.uid AND member.userId = :userId',
-                    { userId }
-                )
+            return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
                 qb.where('t.uid = :uid', { uid: scope.uid })
                 return qb.getOne().then(async (node: env.Omix<entities.NotificationEntier>) => {
-                    /**不存在UID数据**/
-                    await this.customService.divineCatchWherer(!Boolean(node), node, {
+                    this.logger.info(
+                        [NotificationService.name, this.httpNotificationUpdate.name].join(':'),
+                        divineLogger(headers, { message: `[${this.customService.tableNotification.metadata.name}]:查询出参`, node })
+                    )
+                    await divineCatchWherer(!Boolean(node), {
                         message: 'UID不存在'
+                    })
+                    await divineCatchWherer(scope.status === entities.EnumNotificationStatus.waitze, {
+                        message: '通知状态参数格式错误'
+                    })
+                    await divineCatchWherer(node.status !== entities.EnumNotificationStatus.waitze, {
+                        message: '通知信息已处理，不可再次操作'
                     })
                     /**好友申请**/
                     if (node.source === entities.EnumNotificationSource.contact) {
-                        await this.customService.divineCatchWherer(!node.command.includes(userId), node, {
+                        await divineCatchWherer(!node.command.includes(userId), {
                             message: '申请者不可操作'
+                        })
+                        return await this.httpNotificationContactUpdate(headers, {
+                            status: scope.status,
+                            userId: node.userId,
+                            niveId: node.niveId
+                        }).then(async ({ message }) => {
+                            /**更新通知状态**/
+                            await this.customService.divineUpdate(this.customService.tableNotification, {
+                                headers,
+                                where: { uid: node.uid },
+                                state: { status: scope.status }
+                            })
+                            await connect.commitTransaction()
+                            return await divineResolver({ message: message })
                         })
                     } else if (node.source === entities.EnumNotificationSource.communit) {
                         /**群聊申请**/
-                        await this.customService.divineCatchWherer(!Boolean(node.communit.member), node, {
-                            message: 'UID不存在'
-                        })
-                        await this.customService.divineCatchWherer(
-                            node.communit.member.role !== entities.EnumCommunitMemberRole.master,
-                            node,
-                            { message: '权限不足、请通知群主审核' }
-                        )
-                    }
-                    if (node.status !== entities.EnumNotificationStatus.waitze) {
-                        return await this.customService.divineCatchWherer(true, node, {
-                            message: '通知信息已处理，不可再次操作'
-                        })
-                    }
-                    if (scope.status === entities.EnumNotificationStatus.waitze) {
-                        return await this.customService.divineCatchWherer(true, node, {
-                            message: '通知状态参数格式错误'
-                        })
+                        // await this.customService.divineCatchWherer(!Boolean(node.communit.member), node, {
+                        //     message: 'UID不存在'
+                        // })
+                        // await this.customService.divineCatchWherer(
+                        //     node.communit.member.role !== entities.EnumCommunitMemberRole.master,
+                        //     node,
+                        //     { message: '权限不足、请通知群主审核' }
+                        // )
                     }
                     return await divineResolver(node)
                 })
             })
 
             /**好友申请**/
-            if (data.source === entities.EnumNotificationSource.contact) {
-                return await this.httpNotificationContactUpdate(headers, {
-                    status: scope.status,
-                    userId: data.userId,
-                    niveId: data.niveId
-                }).then(async ({ message }) => {
-                    /**更新通知状态**/
-                    await this.customService.divineUpdate(this.customService.tableNotification, {
-                        headers,
-                        where: { uid: data.uid },
-                        state: { status: scope.status }
-                    })
-                    await connect.commitTransaction()
-                    return await divineResolver({ message: message })
-                })
-            }
+            // if (data.source === entities.EnumNotificationSource.contact) {
+            //     return await this.httpNotificationContactUpdate(headers, {
+            //         status: scope.status,
+            //         userId: data.userId,
+            //         niveId: data.niveId
+            //     }).then(async ({ message }) => {
+            //         /**更新通知状态**/
+            //         await this.customService.divineUpdate(this.customService.tableNotification, {
+            //             headers,
+            //             where: { uid: data.uid },
+            //             state: { status: scope.status }
+            //         })
+            //         await connect.commitTransaction()
+            //         return await divineResolver({ message: message })
+            //     })
+            // }
 
             /**群聊申请**/
-            if (data.source === entities.EnumNotificationSource.communit) {
-                return await this.httpNotificationCommunitUpdate(headers, {
-                    status: scope.status,
-                    userId: data.userId,
-                    communitId: data.communitId
-                }).then(async ({ message }) => {
-                    /**更新通知状态**/
-                    await this.customService.divineUpdate(this.customService.tableNotification, {
-                        headers,
-                        where: { uid: data.uid },
-                        state: { status: scope.status }
-                    })
-                    await connect.commitTransaction()
-                    return await divineResolver({ message: message })
-                })
-            }
+            // if (data.source === entities.EnumNotificationSource.communit) {
+            //     return await this.httpNotificationCommunitUpdate(headers, {
+            //         status: scope.status,
+            //         userId: data.userId,
+            //         communitId: data.communitId
+            //     }).then(async ({ message }) => {
+            //         /**更新通知状态**/
+            //         await this.customService.divineUpdate(this.customService.tableNotification, {
+            //             headers,
+            //             where: { uid: data.uid },
+            //             state: { status: scope.status }
+            //         })
+            //         await connect.commitTransaction()
+            //         return await divineResolver({ message: message })
+            //     })
+            // }
         } catch (e) {
             await connect.rollbackTransaction()
             this.logger.error(

@@ -163,7 +163,7 @@ export class CommunitService {
                                 json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
                             }
                         })
-                    } else if (Boolean(node)) {
+                    } else {
                         /**不存在申请记录**/
                         await this.customService.divineCreate(this.customService.tableNotification, {
                             headers,
