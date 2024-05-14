@@ -6,7 +6,6 @@ import { isEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { MessagerService } from '@/services/messager.service'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { RedisService } from '@/services/redis/redis.service'
 import { divineResolver, divineIntNumber, divineLogger, divineKeyCompose, divineCaseWherer } from '@/utils/utils-common'
 import { divineClientSender } from '@/utils/utils-microservices'
 import * as web from '@/config/web-instance'
@@ -19,7 +18,6 @@ export class SessionService {
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @Inject('WEB-SOCKET') private socketClient: ClientProxy,
         private readonly customService: CustomService,
-        private readonly redisService: RedisService,
         private readonly messagerService: MessagerService
     ) {}
 
@@ -176,152 +174,6 @@ export class SessionService {
         } catch (e) {
             this.logger.error(
                 [SessionService.name, this.httpSessionColumn.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
-
-    /**新建私聊会话**/
-    public async httpSessionContactCreater(headers: env.Headers, scope: env.BodySessionContactCreater) {
-        const connect = await this.customService.divineConnectTransaction()
-        try {
-            const contact = await this.customService.divineHaver(this.customService.tableContact, {
-                headers,
-                message: '好友不存在',
-                dispatch: {
-                    where: { uid: scope.contactId }
-                }
-            })
-            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.where('t.contactId = :contactId AND t.source = :source', {
-                    source: 'contact',
-                    contactId: scope.contactId
-                })
-                return qb.getOne().then(async node => {
-                    /**插入打招呼消息语句**/
-                    const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, contact.userId)
-                    const user = await this.redisService.getStore(key, null, headers)
-                    if (node) {
-                        /**存在私聊会话记录**/
-                        this.logger.info(
-                            [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                            divineLogger(headers, { message: '存在私聊会话记录', node })
-                        )
-                        /**插入被申请用户招呼记录**/
-                        await this.messagerService.httpCommonCustomizeMessager(headers, contact.niveId, {
-                            source: entities.EnumMessagerSource.text,
-                            referrer: entities.EnumMessagerReferrer.http,
-                            sessionId: node.sid,
-                            text: `我通过了您的好友申请，现在我们可以聊天了`,
-                            fileId: ''
-                        })
-                        return await connect.commitTransaction().then(async () => {
-                            return await divineResolver(node)
-                        })
-                    } else {
-                        /**不存在私聊会话记录、新建一条会话**/
-                        const result = await this.customService.divineCreate(this.customService.tableSession, {
-                            headers,
-                            state: {
-                                source: 'contact',
-                                contactId: scope.contactId,
-                                sid: await divineIntNumber()
-                            }
-                        })
-                        try {
-                            /**刷新用户Socket会话房间**/
-                            await divineClientSender(this.socketClient, {
-                                eventName: 'web-socket-refresh-session',
-                                headers,
-                                state: { userId: contact.userId, sid: result.sid }
-                            })
-                            await divineClientSender(this.socketClient, {
-                                eventName: 'web-socket-refresh-session',
-                                headers,
-                                state: { userId: contact.niveId, sid: result.sid }
-                            })
-                        } catch (err) {
-                            this.logger.info(
-                                [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                                divineLogger(headers, { message: 'socket服务异常' })
-                            )
-                        }
-                        /**插入申请用户招呼记录**/
-                        await this.messagerService.httpCommonCustomizeMessager(headers, contact.userId, {
-                            source: entities.EnumMessagerSource.text,
-                            referrer: entities.EnumMessagerReferrer.http,
-                            sessionId: result.sid,
-                            text: `我是${user.nickname}`,
-                            fileId: ''
-                        })
-                        /**插入被申请用户招呼记录**/
-                        await this.messagerService.httpCommonCustomizeMessager(headers, contact.niveId, {
-                            source: entities.EnumMessagerSource.text,
-                            referrer: entities.EnumMessagerReferrer.http,
-                            sessionId: result.sid,
-                            text: `我通过了您的好友申请，现在我们可以聊天了`,
-                            fileId: ''
-                        })
-                        return await connect.commitTransaction().then(async () => {
-                            this.logger.info(
-                                [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                                divineLogger(headers, { message: '创建私聊会话记录', node: result })
-                            )
-                            return await divineResolver(result)
-                        })
-                    }
-                })
-            })
-        } catch (e) {
-            await connect.rollbackTransaction()
-            this.logger.error(
-                [SessionService.name, this.httpSessionContactCreater.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        } finally {
-            await connect.release()
-        }
-    }
-
-    /**新建群聊会话**/
-    public async httpSessionCommunitCreater(headers: env.Headers, scope: env.BodySessionCommunitCreater) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.where('t.communitId = :communitId AND t.source = :source', {
-                    source: 'communit',
-                    communitId: scope.communitId
-                })
-                return qb.getOne().then(async node => {
-                    if (node) {
-                        /**存在群聊会话记录**/
-                        this.logger.info(
-                            [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
-                            divineLogger(headers, { message: '存在群聊会话记录', node })
-                        )
-                        return await divineResolver(node)
-                    }
-                    /**不存在群聊会话记录、新建一条记录**/ //prettier-ignore
-                    return await this.customService.divineCreate(this.customService.tableSession, {
-                        headers,
-                        state: {
-                            source: 'communit',
-                            communitId: scope.communitId,
-                            sid: await divineIntNumber()
-                        }
-                    }).then(async result => {
-                        this.logger.info(
-                            [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
-                            divineLogger(headers, { message: '群聊会话记录创建成功', node: result })
-                        )
-                        return await divineResolver(result)
-                    })
-                })
-            })
-        } catch (e) {
-            this.logger.error(
-                [SessionService.name, this.httpSessionCommunitCreater.name].join(':'),
                 divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
             )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)

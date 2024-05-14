@@ -1,23 +1,15 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { ClientProxy } from '@nestjs/microservices'
 import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
-import { SessionService } from '@/services/session.service'
+import { UserService } from '@/services/user.service'
 import { MessagerService } from '@/services/messager.service'
-import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import {
-    divineResolver,
-    divineIntNumber,
-    divineLogger,
-    divineKeyCompose,
-    divineHandler,
-    divineCaseWherer,
-    divineParameter
-} from '@/utils/utils-common'
-import * as web from '@/config/web-instance'
+import { divineClientSender } from '@/utils/utils-microservices'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -25,10 +17,10 @@ import * as entities from '@/entities/instance'
 export class CommunitService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
         private readonly customService: CustomService,
-        private readonly sessionService: SessionService,
-        private readonly messagerService: MessagerService,
-        private readonly redisService: RedisService
+        private readonly userService: UserService,
+        private readonly messagerService: MessagerService
     ) {}
 
     /**新建社群**/
@@ -52,10 +44,13 @@ export class CommunitService {
                 }
             })
             /**新建社群记录**/
+            const communitId = await divineIntNumber()
+            const sessionId = await divineIntNumber()
+            const { nickname } = await this.userService.httpUserResolver(headers, userId)
             const communit = await this.customService.divineCreate(this.customService.tableCommunit, {
                 headers,
                 state: {
-                    uid: await divineIntNumber(),
+                    uid: communitId,
                     status: entities.EnumCommunitStatus.enable,
                     name: scope.name,
                     poster: scope.poster,
@@ -76,17 +71,26 @@ export class CommunitService {
                 }
             })
             /**新建群聊会话**/
-            const session = await this.sessionService.httpSessionCommunitCreater(headers, {
-                communitId: communit.uid
+            await this.customService.divineCreate(this.customService.tableSession, {
+                headers,
+                state: {
+                    sid: sessionId,
+                    source: entities.EnumSessionSource.communit,
+                    communitId: communitId
+                }
             })
-            const key = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-            const user = await this.redisService.getStore(key, null, headers)
+            /**新增用户Socket会话房间**/
+            await divineClientSender(this.socketClient, {
+                eventName: 'web-socket-refresh-session',
+                headers,
+                state: { userId: userId, sid: sessionId }
+            })
             /**插入一条记录**/
             await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
                 source: entities.EnumMessagerSource.text,
                 referrer: entities.EnumMessagerReferrer.http,
-                sessionId: session.sid,
-                text: `${user.nickname}创建了社群：“${scope.name}”`,
+                sessionId: sessionId,
+                text: `${nickname}创建了社群：“${scope.name}”`,
                 fileId: ''
             })
             return await connect.commitTransaction().then(async () => {
