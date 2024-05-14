@@ -159,19 +159,28 @@ export class CommunitService {
                         /**存在申请记录**/
                         await this.customService.divineUpdate(this.customService.tableNotification, {
                             headers,
-                            where: { keyId: node.keyId },
+                            where: { uid: node.uid },
                             state: {
                                 status: entities.EnumNotificationStatus.waitze,
                                 command: [communit.ownId],
                                 json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
                             }
                         })
+                        await divineClientSender(this.socketClient, {
+                            eventName: 'web-socket-push-notification',
+                            headers,
+                            state: {
+                                userId: communit.ownId,
+                                data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
+                            }
+                        })
                     } else {
                         /**不存在申请记录**/
+                        const notifyId = await divineIntNumber()
                         await this.customService.divineCreate(this.customService.tableNotification, {
                             headers,
                             state: {
-                                uid: await divineIntNumber(),
+                                uid: notifyId,
                                 source: entities.EnumNotificationSource.communit,
                                 status: entities.EnumNotificationStatus.waitze,
                                 communitId: scope.uid,
@@ -180,6 +189,14 @@ export class CommunitService {
                                 json: {
                                     [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
                                 }
+                            }
+                        })
+                        await divineClientSender(this.socketClient, {
+                            eventName: 'web-socket-push-notification',
+                            headers,
+                            state: {
+                                userId: communit.ownId,
+                                data: await this.customService.tableNotification.findOne({ where: { uid: notifyId } })
                             }
                         })
                     }
