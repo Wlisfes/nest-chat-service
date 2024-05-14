@@ -1,12 +1,11 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
+import { Injectable, Inject, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
-import { CustomService } from '@/services/custom.service'
 import { MessagerService } from '@/services/messager.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
+import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { divineLogger, divineResolver, divineHandler } from '@/utils/utils-common'
-import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -15,39 +14,10 @@ export class WebSocketService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         private readonly webSocketClientService: WebSocketClientService,
-        private readonly customService: CustomService,
+        private dataBaseService: WebSocketDataBaseService,
         private readonly messagerService: MessagerService,
         private readonly rabbitmqService: RabbitmqService
     ) {}
-
-    /**获取当前用户所有会话房间**/
-    public async httpSocketColumnSession(headers: env.Headers, userId: string) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
-                qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
-                qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
-                qb.leftJoinAndMapOne(
-                    'communit.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = communit.uid AND member.userId = :userId',
-                    { userId: userId }
-                )
-                qb.where(`(contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId)`, {
-                    userId: userId
-                })
-                return qb.getMany().then(async list => {
-                    return await divineResolver(list.map(node => node.sid))
-                })
-            })
-        } catch (e) {
-            this.logger.error(
-                [WebSocketService.name, this.httpSocketColumnSession.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
-    }
 
     /**初始化连接、开启会话房间**/
     public async httpSocketConnection(socket: env.AuthSocket, userId: string) {
@@ -56,7 +26,7 @@ export class WebSocketService {
                 [WebSocketService.name, this.httpSocketConnection.name].join(':'),
                 divineLogger(socket.handshake.headers, { message: '开启长连接-初始化开始', socketId: socket.id, user: socket.user })
             )
-            await this.httpSocketColumnSession(socket.handshake.headers, userId).then(async sessions => {
+            await this.dataBaseService.fetchSocketColumnSession(userId).then(async sessions => {
                 socket.join(sessions)
                 this.logger.info(
                     [WebSocketService.name, this.httpSocketConnection.name].join(':'),
@@ -257,32 +227,15 @@ export class WebSocketService {
                     return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
                 handler: async () => {
-                    return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
-                        /**好友申请记录联查**/
-                        qb.leftJoinAndMapOne('t.user', entities.UserEntier, 'user', 'user.uid = t.userId')
-                        qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
-                        /**社群申请记录联查**/
-                        qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
-                        qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
-                        qb.select([
-                            ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
-                            ...divineSelection('t', ['userId', 'niveId', 'json', 'communitId', 'status', 'command']),
-                            ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
-                            ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
-                            ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
-                            ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
-                        ])
-                        qb.where(`t.uid = :uid`, { uid: scope.notifyId })
-                        return await qb.getOne().then(async node => {
-                            if (Boolean(node)) {
-                                socket.emit(typeName, node)
-                                this.logger.info(
-                                    [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
-                                    divineLogger(headers, { message: 'Socket推送操作通知消息至客户端成功', node })
-                                )
-                            }
-                            return await divineResolver({ message: '通知消息推送成功', status: HttpStatus.OK })
-                        })
+                    return await this.dataBaseService.fetchNotificationResolver(scope.notifyId).then(async node => {
+                        if (Boolean(node)) {
+                            socket.emit(typeName, node)
+                            this.logger.info(
+                                [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
+                                divineLogger(headers, { message: 'Socket推送操作通知消息至客户端成功', node })
+                            )
+                        }
+                        return await divineResolver({ message: '通知消息推送成功', status: HttpStatus.OK })
                     })
                 }
             })
