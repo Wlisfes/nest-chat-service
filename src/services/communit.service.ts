@@ -1,6 +1,5 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
-import { Logger } from 'winston'
+import { LoggerService, Logger } from '@/services/logger.service'
 import { ClientProxy } from '@nestjs/microservices'
 import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
@@ -14,16 +13,18 @@ import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
 @Injectable()
-export class CommunitService {
+export class CommunitService extends LoggerService {
     constructor(
-        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @Inject('WEB-SOCKET') private socketClient: ClientProxy,
         private readonly customService: CustomService,
         private readonly userService: UserService,
         private readonly messagerService: MessagerService
-    ) {}
+    ) {
+        super()
+    }
 
     /**新建社群**/
+    @Logger
     public async httpCommunitCreater(headers: env.Headers, userId: string, scope: env.BodyCommunitCreater) {
         const connect = await this.customService.divineConnectTransaction()
         try {
@@ -93,18 +94,11 @@ export class CommunitService {
                 fileId: ''
             })
             return await connect.commitTransaction().then(async () => {
-                this.logger.info(
-                    [CommunitService.name, this.httpCommunitCreater.name].join(':'),
-                    divineLogger(headers, { message: '新建社群成功', communit })
-                )
+                this.logger.info(divineLogger(headers))
                 return await divineResolver({ message: '新建成功' })
             })
         } catch (e) {
             await connect.rollbackTransaction()
-            this.logger.error(
-                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         } finally {
             await connect.release()
@@ -112,6 +106,7 @@ export class CommunitService {
     }
 
     /**申请加入社群**/
+    @Logger
     public async httpCommunitInviteJoiner(headers: env.Headers, userId: string, scope: env.BodyCommunitInviteJoiner) {
         const connect = await this.customService.divineConnectTransaction()
         try {
@@ -148,12 +143,7 @@ export class CommunitService {
                 return await qb.getOne().then(async node => {
                     /**输出申请记录日志**/
                     await divineHandler(Boolean(node), {
-                        handler: () => {
-                            this.logger.info(
-                                [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
-                                divineLogger(headers, { message: '存在申请记录', node })
-                            )
-                        }
+                        handler: () => this.logger.info({ message: '存在申请记录', node })
                     })
                     if (Boolean(node)) {
                         /**存在申请记录**/
@@ -195,20 +185,13 @@ export class CommunitService {
                         })
                     }
                     return await connect.commitTransaction().then(async () => {
-                        this.logger.info(
-                            [CommunitService.name, this.httpCommunitInviteJoiner.name].join(':'),
-                            divineLogger(headers, { message: '申请加入社群成功', userId, communitId: scope.uid })
-                        )
+                        this.logger.info({ message: '申请加入社群成功', userId, communitId: scope.uid })
                         return await divineResolver({ message: '申请成功' })
                     })
                 })
             })
         } catch (e) {
             await connect.rollbackTransaction()
-            this.logger.error(
-                [CommunitService.name, this.httpCommunitCreater.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
             throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
         } finally {
             await connect.release()
@@ -216,93 +199,72 @@ export class CommunitService {
     }
 
     /**关键字列表搜索**/
+    @Logger
     public async httpCommunitSearch(headers: env.Headers, userId: string, scope: env.BodyCommunitSearch) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
-                if (isNotEmpty(scope.keyword)) {
-                    qb.where('t.ownId != :userId AND (t.uid LIKE :uid OR t.name LIKE :name)', {
-                        userId: userId,
-                        uid: `%${scope.keyword}%`,
-                        name: `%${scope.keyword}%`
-                    })
-                } else {
-                    qb.where('t.ownId != :userId', { userId })
-                }
-                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
-                    return await divineResolver({ total, list })
+        return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+            if (isNotEmpty(scope.keyword)) {
+                qb.where('t.ownId != :userId AND (t.uid LIKE :uid OR t.name LIKE :name)', {
+                    userId: userId,
+                    uid: `%${scope.keyword}%`,
+                    name: `%${scope.keyword}%`
                 })
+            } else {
+                qb.where('t.ownId != :userId', { userId })
+            }
+            return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                return await divineResolver({ total, list })
             })
-        } catch (e) {
-            this.logger.error(
-                [CommunitService.name, this.httpCommunitSearch.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
-            )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+        })
     }
 
     /**社群列表**/
+    @Logger
     public async httpCommunitColumn(headers: env.Headers, userId: string) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
-                qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
-                qb.leftJoinAndMapOne(
-                    't.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = t.uid AND member.status = :status AND member.userId = :userId',
-                    { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
-                )
-                qb.select([
-                    ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak', 'comment']),
-                    ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'speak', 'status']),
-                    ...divineSelection('poster', ['fileId', 'fileURL', 'height', 'width'])
-                ])
-                qb.where(`member.userId = :userId`, { userId: userId })
-                return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
-                    return await divineResolver({ total, list })
-                })
-            })
-        } catch (e) {
-            this.logger.error(
-                [CommunitService.name, this.httpCommunitSearch.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+        return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+            qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
+            qb.leftJoinAndMapOne(
+                't.member',
+                entities.CommunitMemberEntier,
+                'member',
+                'member.communitId = t.uid AND member.status = :status AND member.userId = :userId',
+                { userId: userId, status: entities.EnumCommunitMemberStatus.enable }
             )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+            qb.select([
+                ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak', 'comment']),
+                ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'speak', 'status']),
+                ...divineSelection('poster', ['fileId', 'fileURL', 'height', 'width'])
+            ])
+            qb.where(`member.userId = :userId`, { userId: userId })
+            return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
+                return await divineResolver({ total, list })
+            })
+        })
     }
 
     /**社群详情**/
+    @Logger
     public async httpCommunitResolver(headers: env.Headers, userId: string, scope: env.QueryCommunitResolver) {
-        try {
-            return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
-                qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
-                qb.innerJoinAndMapMany(
-                    't.member',
-                    entities.CommunitMemberEntier,
-                    'member',
-                    'member.communitId = t.uid AND member.status = :status',
-                    { status: entities.EnumCommunitMemberStatus.enable }
-                )
-                qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
-                qb.where(`t.uid = :uid`, { userId: userId, uid: scope.uid })
-                qb.cache(5000)
-                return qb.getOne().then(async (node: env.Omix) => {
-                    await this.customService.divineCatchWherer(!Boolean(node), node, {
-                        message: '社群ID不存在'
-                    })
-                    await this.customService.divineCatchWherer(!node.member.some(item => item.userId === userId), node, {
-                        message: '您不是该社群成员，无法查看详情'
-                    })
-                    return await divineResolver(node)
-                })
-            })
-        } catch (e) {
-            this.logger.error(
-                [CommunitService.name, this.httpCommunitResolver.name].join(':'),
-                divineLogger(headers, { message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
+        return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+            qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
+            qb.innerJoinAndMapMany(
+                't.member',
+                entities.CommunitMemberEntier,
+                'member',
+                'member.communitId = t.uid AND member.status = :status',
+                { status: entities.EnumCommunitMemberStatus.enable }
             )
-            throw new HttpException(e.message, e.status ?? HttpStatus.INTERNAL_SERVER_ERROR)
-        }
+            qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
+            qb.where(`t.uid = :uid`, { userId: userId, uid: scope.uid })
+            qb.cache(5000)
+            return qb.getOne().then(async (node: env.Omix) => {
+                await this.customService.divineCatchWherer(!Boolean(node), node, {
+                    message: '社群ID不存在'
+                })
+                await this.customService.divineCatchWherer(!node.member.some(item => item.userId === userId), node, {
+                    message: '您不是该社群成员，无法查看详情'
+                })
+                return await divineResolver(node)
+            })
+        })
     }
 }
