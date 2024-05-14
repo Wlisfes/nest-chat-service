@@ -5,13 +5,22 @@ import { divineLogger } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 class NestLogger {
-    constructor(protected readonly logger: WinstonLogger, protected readonly className: string, protected readonly FnName: string) {}
-    info(headers: env.Headers, args: env.Omix) {
-        this.logger.info([this.className, this.FnName].join(':'), divineLogger(headers, args))
+    constructor(
+        protected readonly logger: WinstonLogger,
+        protected readonly loggerOption: {
+            headers: env.Headers
+            className: string
+            propertyName: string
+        }
+    ) {}
+    info(args: env.Omix) {
+        const { headers, className, propertyName } = this.loggerOption
+        this.logger.info([className, propertyName].join(':'), divineLogger(headers, args))
     }
-    error(headers: env.Headers, args: env.Omix) {
+    error(args: env.Omix) {
+        const { headers, className, propertyName } = this.loggerOption
         this.logger.error(
-            [this.className, this.FnName].join(':'),
+            [className, propertyName].join(':'),
             divineLogger(headers, {
                 message: args.message,
                 status: args.status ?? HttpStatus.INTERNAL_SERVER_ERROR
@@ -23,13 +32,16 @@ class NestLogger {
 export function Logger(target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
     descriptor.value = function (...args: any[]) {
-        const headers = args[0]
-        this.logger = new NestLogger(this.loggerService, this.constructor.name, propertyName)
+        this.logger = new NestLogger(this.loggerService, {
+            headers: args[0],
+            className: this.constructor.name,
+            propertyName: propertyName
+        })
         try {
             const result = originalMethod.apply(this, args)
             if (result && typeof result.then === 'function' && typeof result.catch === 'function') {
                 result.catch(err => {
-                    this.logger.error(headers, {
+                    this.logger.error({
                         message: err.message,
                         status: err.status ?? HttpStatus.INTERNAL_SERVER_ERROR
                     })
@@ -37,7 +49,7 @@ export function Logger(target: any, propertyName: string, descriptor: PropertyDe
             }
             return result
         } catch (err) {
-            this.logger.error(headers, {
+            this.logger.error({
                 message: err.message,
                 status: err.status ?? HttpStatus.INTERNAL_SERVER_ERROR
             })
