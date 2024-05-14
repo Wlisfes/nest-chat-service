@@ -1,17 +1,23 @@
 import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common'
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
+import { ClientProxy } from '@nestjs/microservices'
 import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler, divineCaseWherer, divineMaskCharacter } from '@/utils/utils-common'
+import { divineClientSender } from '@/utils/utils-microservices'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler, divineMaskCharacter, divineParameter } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
 @Injectable()
 export class ContactService {
-    constructor(@Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger, private readonly customService: CustomService) {}
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
+        private readonly customService: CustomService
+    ) {}
 
     /**申请添加好友**/
     public async httpContactInviteJoiner(headers: env.Headers, userId: string, scope: env.BodyContactInvite) {
@@ -70,44 +76,58 @@ export class ContactService {
                             }
                         }
                     })
-                    if (Boolean(node) && node.status === entities.EnumNotificationStatus.waitze) {
-                        /**存在申请记录、并且是待处理状态**/
-                        await this.customService.divineUpdate(this.customService.tableNotification, {
-                            headers,
-                            where: { keyId: node.keyId },
-                            state: {
-                                json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                            }
-                        })
-                    } else if (Boolean(node)) {
-                        /**存在申请记录、并且不是待处理状态**/
-                        await this.customService.divineUpdate(this.customService.tableNotification, {
-                            headers,
-                            where: { keyId: node.keyId },
-                            state: {
-                                userId: userId,
-                                niveId: scope.niveId,
-                                command: [scope.niveId],
-                                json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
-                            }
-                        })
-                    } else {
-                        /**不存在申请记录**/
-                        await this.customService.divineCreate(this.customService.tableNotification, {
-                            headers,
-                            state: {
-                                uid: await divineIntNumber(),
-                                source: entities.EnumNotificationSource.contact,
-                                status: entities.EnumNotificationStatus.waitze,
-                                userId: userId,
-                                niveId: scope.niveId,
-                                command: [scope.niveId],
-                                json: {
-                                    [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                    const { notifyId } = await divineParameter({}).then(async () => {
+                        const notifyId = await divineIntNumber()
+                        if (Boolean(node) && node.status === entities.EnumNotificationStatus.waitze) {
+                            /**存在申请记录、并且是待处理状态**/
+                            await this.customService.divineUpdate(this.customService.tableNotification, {
+                                headers,
+                                where: { uid: node.uid },
+                                state: {
+                                    json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
                                 }
-                            }
-                        })
-                    }
+                            })
+                            return { notifyId: node.uid }
+                        } else if (Boolean(node)) {
+                            /**存在申请记录、并且不是待处理状态**/
+                            await this.customService.divineUpdate(this.customService.tableNotification, {
+                                headers,
+                                where: { uid: node.uid },
+                                state: {
+                                    userId: userId,
+                                    niveId: scope.niveId,
+                                    command: [scope.niveId],
+                                    json: { [userId]: { uid: userId, comment: scope.comment, date: Date.now() } }
+                                }
+                            })
+                            return { notifyId: node.uid }
+                        } else {
+                            /**不存在申请记录**/
+                            await this.customService.divineCreate(this.customService.tableNotification, {
+                                headers,
+                                state: {
+                                    uid: notifyId,
+                                    source: entities.EnumNotificationSource.contact,
+                                    status: entities.EnumNotificationStatus.waitze,
+                                    userId: userId,
+                                    niveId: scope.niveId,
+                                    command: [scope.niveId],
+                                    json: {
+                                        [userId]: { uid: userId, comment: scope.comment, date: Date.now() }
+                                    }
+                                }
+                            })
+                            return { notifyId: notifyId }
+                        }
+                    })
+                    await divineClientSender(this.socketClient, {
+                        eventName: 'web-socket-push-notification',
+                        headers,
+                        state: {
+                            userId: scope.niveId,
+                            data: await this.customService.tableNotification.findOne({ where: { uid: notifyId } })
+                        }
+                    })
                     return await connect.commitTransaction().then(async () => {
                         this.logger.info(
                             [ContactService.name, this.httpContactInviteJoiner.name].join(':'),

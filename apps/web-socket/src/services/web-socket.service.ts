@@ -241,4 +241,38 @@ export class WebSocketService {
             )
         }
     }
+
+    /**Socket推送操作通知消息至客户端**/
+    public async httpSocketPushNotification(headers: env.Headers, scope: env.Omix<{ userId: string; data: env.Omix }>) {
+        try {
+            const socket = await this.webSocketClientService.getClient(scope.userId)
+            const typeName = `server-notification-messager`
+            return await divineHandler(Boolean(socket) && socket.connected, {
+                failure: async () => {
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
+                        divineLogger(headers, { message: '用户不在线', node: scope })
+                    )
+                    return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
+                },
+                handler: async () => {
+                    socket.emit(typeName, scope.data)
+                    this.logger.info(
+                        [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
+                        divineLogger(headers, { message: '会话房间加入成功', socketId: socket.id, user: socket.user, sid: scope.sid })
+                    )
+                    return await divineResolver({ message: '会话房间加入成功', status: HttpStatus.OK })
+                }
+            })
+        } catch (e) {
+            this.logger.error(
+                [WebSocketService.name, this.httpSocketPushNotification.name].join(':'),
+                divineLogger(headers, {
+                    message: `Socket推送操作通知消息至客户端失败: ${e.message}`,
+                    status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+                    data: scope
+                })
+            )
+        }
+    }
 }

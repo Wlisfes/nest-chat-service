@@ -59,7 +59,7 @@ export class SessionService {
                     /**社群联查字段**/
                     ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
                     ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
-                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
+                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'status', 'speak'])
                 ])
                 qb.cache(5000)
                 qb.where(
@@ -144,7 +144,7 @@ export class SessionService {
                     /**社群联查字段**/
                     ...divineSelection('communit', ['keyId', 'uid', 'poster', 'name', 'ownId', 'status', 'comment', 'speak']),
                     ...divineSelection('poster', ['keyId', 'width', 'height', 'fileId', 'fileURL']),
-                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'role', 'status', 'speak'])
+                    ...divineSelection('member', ['keyId', 'communitId', 'userId', 'status', 'speak'])
                 ])
                 qb.where('t.sid = :sid AND ((contact.userId = :userId OR contact.niveId = :userId) OR (member.userId = :userId))', {
                     userId: userId,

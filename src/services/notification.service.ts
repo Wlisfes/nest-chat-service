@@ -106,6 +106,14 @@ export class NotificationService {
                                 where: { uid: node.uid },
                                 state: { status: scope.status }
                             })
+                            await divineClientSender(this.socketClient, {
+                                eventName: 'web-socket-push-notification',
+                                headers,
+                                state: {
+                                    userId: node.userId,
+                                    data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
+                                }
+                            })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })
                         })
@@ -136,6 +144,14 @@ export class NotificationService {
                                 headers,
                                 where: { uid: node.uid },
                                 state: { status: scope.status }
+                            })
+                            await divineClientSender(this.socketClient, {
+                                eventName: 'web-socket-push-notification',
+                                headers,
+                                state: {
+                                    userId: node.userId,
+                                    data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
+                                }
                             })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })

@@ -244,7 +244,7 @@ export class CommunitService {
                 )
                 qb.select([
                     ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'name', 'status', 'ownId', 'speak', 'comment']),
-                    ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'role', 'speak', 'status']),
+                    ...divineSelection('member', ['keyId', 'createTime', 'updateTime', 'userId', 'communitId', 'speak', 'status']),
                     ...divineSelection('poster', ['fileId', 'fileURL', 'height', 'width'])
                 ])
                 qb.where(`member.userId = :userId`, { userId: userId })

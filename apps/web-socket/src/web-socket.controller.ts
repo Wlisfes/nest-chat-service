@@ -24,4 +24,10 @@ export class WebSocketController {
     public async httpSocketPushChangeMessager(@Payload() scope: env.ClientPayload<env.BodySocketPushCustomizeMessager>) {
         return await this.webSocketService.httpSocketPushChangeMessager(scope.headers, scope.state)
     }
+
+    /**Socket推送操作通知消息至客户端**/
+    @MessagePattern('web-socket-push-notification')
+    public async httpSocketPushNotification(@Payload() scope: env.ClientPayload<{ userId: string; data: env.Omix }>) {
+        return await this.webSocketService.httpSocketPushNotification(scope.headers, scope.state)
+    }
 }
