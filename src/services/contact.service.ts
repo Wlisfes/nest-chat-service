@@ -123,10 +123,7 @@ export class ContactService {
                     await divineClientSender(this.socketClient, {
                         eventName: 'web-socket-push-notification',
                         headers,
-                        state: {
-                            userId: scope.niveId,
-                            data: await this.customService.tableNotification.findOne({ where: { uid: notifyId } })
-                        }
+                        state: { notifyId, userId: scope.niveId }
                     })
                     return await connect.commitTransaction().then(async () => {
                         this.logger.info(

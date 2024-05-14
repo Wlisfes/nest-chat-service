@@ -6,6 +6,7 @@ import { MessagerService } from '@/services/messager.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { divineLogger, divineResolver, divineHandler } from '@/utils/utils-common'
+import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -243,7 +244,7 @@ export class WebSocketService {
     }
 
     /**Socket推送操作通知消息至客户端**/
-    public async httpSocketPushNotification(headers: env.Headers, scope: env.Omix<{ userId: string; data: env.Omix }>) {
+    public async httpSocketPushNotification(headers: env.Headers, scope: env.Omix<{ userId: string; notifyId: string }>) {
         try {
             const socket = await this.webSocketClientService.getClient(scope.userId)
             const typeName = `server-notification-messager`
@@ -256,12 +257,33 @@ export class WebSocketService {
                     return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
                 handler: async () => {
-                    socket.emit(typeName, scope.data)
-                    this.logger.info(
-                        [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
-                        divineLogger(headers, { message: '会话房间加入成功', socketId: socket.id, user: socket.user, sid: scope.sid })
-                    )
-                    return await divineResolver({ message: '会话房间加入成功', status: HttpStatus.OK })
+                    return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
+                        /**好友申请记录联查**/
+                        qb.leftJoinAndMapOne('t.user', entities.UserEntier, 'user', 'user.uid = t.userId')
+                        qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
+                        /**社群申请记录联查**/
+                        qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+                        qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
+                        qb.select([
+                            ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
+                            ...divineSelection('t', ['userId', 'niveId', 'json', 'communitId', 'status', 'command']),
+                            ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
+                            ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
+                            ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
+                            ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
+                        ])
+                        qb.where(`t.uid = :uid`, { uid: scope.notifyId })
+                        return await qb.getOne().then(async node => {
+                            if (Boolean(node)) {
+                                socket.emit(typeName, node)
+                                this.logger.info(
+                                    [WebSocketService.name, this.httpSocketJoinSession.name].join(':'),
+                                    divineLogger(headers, { message: 'Socket推送操作通知消息至客户端成功', node })
+                                )
+                            }
+                            return await divineResolver({ message: '通知消息推送成功', status: HttpStatus.OK })
+                        })
+                    })
                 }
             })
         } catch (e) {

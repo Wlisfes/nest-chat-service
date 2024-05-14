@@ -27,7 +27,7 @@ export class WebSocketController {
 
     /**Socket推送操作通知消息至客户端**/
     @MessagePattern('web-socket-push-notification')
-    public async httpSocketPushNotification(@Payload() scope: env.ClientPayload<{ userId: string; data: env.Omix }>) {
+    public async httpSocketPushNotification(@Payload() scope: env.ClientPayload<{ userId: string; notifyId: string }>) {
         return await this.webSocketService.httpSocketPushNotification(scope.headers, scope.state)
     }
 }

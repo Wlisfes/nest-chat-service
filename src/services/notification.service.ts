@@ -3,9 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger } from 'winston'
 import { ClientProxy } from '@nestjs/microservices'
 import { CustomService } from '@/services/custom.service'
-import { RedisService } from '@/services/redis/redis.service'
 import { UserService } from '@/services/user.service'
-import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineClientSender } from '@/utils/utils-microservices'
@@ -19,11 +17,9 @@ export class NotificationService {
     constructor(
         @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
         @Inject('WEB-SOCKET') private socketClient: ClientProxy,
-        private readonly redisService: RedisService,
         private readonly customService: CustomService,
         private readonly userService: UserService,
-        private readonly messagerService: MessagerService,
-        private readonly sessionService: SessionService
+        private readonly messagerService: MessagerService
     ) {}
 
     /**通知列表**/
@@ -109,10 +105,7 @@ export class NotificationService {
                             await divineClientSender(this.socketClient, {
                                 eventName: 'web-socket-push-notification',
                                 headers,
-                                state: {
-                                    userId: node.userId,
-                                    data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
-                                }
+                                state: { notifyId: node.uid, userId: node.userId }
                             })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })
@@ -148,10 +141,7 @@ export class NotificationService {
                             await divineClientSender(this.socketClient, {
                                 eventName: 'web-socket-push-notification',
                                 headers,
-                                state: {
-                                    userId: node.userId,
-                                    data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
-                                }
+                                state: { notifyId: node.uid, userId: node.userId }
                             })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })

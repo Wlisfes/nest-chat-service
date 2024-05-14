@@ -169,10 +169,7 @@ export class CommunitService {
                         await divineClientSender(this.socketClient, {
                             eventName: 'web-socket-push-notification',
                             headers,
-                            state: {
-                                userId: communit.ownId,
-                                data: await this.customService.tableNotification.findOne({ where: { uid: node.uid } })
-                            }
+                            state: { userId: communit.ownId, notifyId: node.uid }
                         })
                     } else {
                         /**不存在申请记录**/
@@ -194,10 +191,7 @@ export class CommunitService {
                         await divineClientSender(this.socketClient, {
                             eventName: 'web-socket-push-notification',
                             headers,
-                            state: {
-                                userId: communit.ownId,
-                                data: await this.customService.tableNotification.findOne({ where: { uid: notifyId } })
-                            }
+                            state: { notifyId, userId: communit.ownId }
                         })
                     }
                     return await connect.commitTransaction().then(async () => {
