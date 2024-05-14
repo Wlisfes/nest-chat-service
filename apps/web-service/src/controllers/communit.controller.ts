@@ -74,4 +74,18 @@ export class CommunitController {
     ) {
         return await this.communitService.httpCommunitResolver(headers, request.user.uid, query)
     }
+
+    @Get('/current/resolver')
+    @ApiDecorator({
+        operation: { summary: '查看社群详情' },
+        authorize: { check: true, next: false },
+        response: { status: 200, description: 'OK', type: env.RestUserResolver }
+    })
+    public async httpCommunitCurrentResolver(
+        @Headers() headers: env.Headers,
+        @Request() request: env.Omix<{ user: env.RestUserResolver }>,
+        @Query() query: env.BodyUserCurrentResolver
+    ) {
+        return await this.communitService.httpCommunitCurrentResolver(headers, request.user.uid, query)
+    }
 }

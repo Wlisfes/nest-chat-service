@@ -202,6 +202,8 @@ export class CommunitService extends LoggerService {
     @Logger
     public async httpCommunitSearch(headers: env.Headers, userId: string, scope: env.BodyCommunitSearch) {
         return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+            qb.leftJoinAndMapOne('t.own', entities.UserEntier, 'own', 't.ownId = own.uid')
+            qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
             if (isNotEmpty(scope.keyword)) {
                 qb.where('t.ownId != :userId AND (t.uid LIKE :uid OR t.name LIKE :name)', {
                     userId: userId,
@@ -262,6 +264,30 @@ export class CommunitService extends LoggerService {
                 })
                 await this.customService.divineCatchWherer(!node.member.some(item => item.userId === userId), node, {
                     message: '您不是该社群成员，无法查看详情'
+                })
+                return await divineResolver(node)
+            })
+        })
+    }
+
+    /**查看社群详情**/
+    public async httpCommunitCurrentResolver(headers: env.Headers, userId: string, scope: env.QueryCommunitResolver) {
+        return await this.customService.divineBuilder(this.customService.tableCommunit, async qb => {
+            qb.leftJoinAndMapOne('t.own', entities.UserEntier, 'own', 't.ownId = own.uid')
+            qb.leftJoinAndMapOne('t.poster', entities.MediaEntier, 'poster', 't.poster = poster.fileId')
+            // qb.innerJoinAndMapMany(
+            //     't.member',
+            //     entities.CommunitMemberEntier,
+            //     'member',
+            //     'member.communitId = t.uid AND member.status = :status',
+            //     { status: entities.EnumCommunitMemberStatus.enable }
+            // )
+            // qb.leftJoinAndMapOne('member.user', entities.UserEntier, 'user', 'user.uid = member.userId')
+            qb.where(`t.uid = :uid`, { uid: scope.uid })
+            qb.cache(5000)
+            return qb.getOne().then(async (node: env.Omix) => {
+                await this.customService.divineCatchWherer(!Boolean(node), node, {
+                    message: '社群ID不存在'
                 })
                 return await divineResolver(node)
             })
