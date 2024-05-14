@@ -120,22 +120,10 @@ export class NotificationService {
                                 await divineCatchWherer(Boolean(data) && data.status === entities.EnumCommunitStatus.dissolve, {
                                     message: '社群已解散'
                                 })
-                                return await divineResolver(data)
-                            })
-                        })
-                        /**验证操作者身份**/
-                        await this.customService.divineBuilder(this.customService.tableCommunitMember, async qb => {
-                            qb.where('t.userId = :userId AND t.communitId = :communitId AND t.status = :status AND t.role IN (:...role)', {
-                                userId: userId,
-                                communitId: node.communitId,
-                                status: entities.EnumCommunitMemberStatus.enable,
-                                role: [entities.EnumCommunitMemberRole.master, entities.EnumCommunitMemberRole.manager]
-                            })
-                            return await qb.getOne().then(async member => {
-                                await divineCatchWherer(!Boolean(member), {
+                                await divineCatchWherer(data.ownId !== userId, {
                                     message: '权限不足、无法审核操作'
                                 })
-                                return await divineResolver(member)
+                                return await divineResolver(data)
                             })
                         })
                         return await this.httpNotificationCommunitUpdate(headers, {
@@ -303,15 +291,11 @@ export class NotificationService {
                     const data = await divineParameter(scope).then(async ({ userId, communitId }) => {
                         const { nickname } = await this.userService.httpUserResolver(headers, userId)
                         if (Boolean(node)) {
-                            /**存在社群成员关联记录、成员角色切换成 “群众” 初始状态**/
+                            /**存在社群成员关联记录、成员角色切换成初始状态**/
                             await this.customService.divineUpdate(this.customService.tableCommunitMember, {
                                 headers,
                                 where: { keyId: node.keyId },
-                                state: {
-                                    role: entities.EnumCommunitMemberRole.masses,
-                                    status: entities.EnumContactStatus.enable,
-                                    speak: false
-                                }
+                                state: { status: entities.EnumContactStatus.enable, speak: false }
                             })
                             /**查询会话数据**/
                             return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
@@ -328,7 +312,6 @@ export class NotificationService {
                             await this.customService.divineCreate(this.customService.tableCommunitMember, {
                                 headers,
                                 state: {
-                                    role: entities.EnumCommunitMemberRole.masses,
                                     status: entities.EnumContactStatus.enable,
                                     userId: userId,
                                     communitId: communitId,

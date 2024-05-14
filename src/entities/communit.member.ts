@@ -10,12 +10,6 @@ export enum EnumCommunitMemberStatus {
     quit = 'quit',
     kick = 'kick'
 }
-/**社群成员表: 社群成员角色**/
-export enum EnumCommunitMemberRole {
-    master = 'master',
-    manager = 'manager',
-    masses = 'masses'
-}
 
 @Entity({ name: 'communit_member', comment: '社群成员表' })
 export class CommunitMemberEntier extends CommonEntier {
@@ -30,12 +24,6 @@ export class CommunitMemberEntier extends CommonEntier {
     @Column({ comment: '用户UID', nullable: false })
     @Index()
     userId: string
-
-    @ApiProperty({ description: '社群成员角色: master-群主、manager-管理员、masses-群众', enum: EnumCommunitMemberRole })
-    @IsNotEmpty({ message: '社群成员角色' })
-    @IsEnum(EnumCommunitMemberRole, { message: '社群成员角色参数格式错误' })
-    @Column({ comment: '社群成员角色', nullable: false, default: 'masses' })
-    role: string
 
     @ApiProperty({ description: '社群成员状态: enable-启用、quit-已退出、kick-已踢出', enum: EnumCommunitMemberStatus })
     @IsNotEmpty({ message: '社群成员状态' })

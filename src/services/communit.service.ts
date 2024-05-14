@@ -65,7 +65,6 @@ export class CommunitService {
                 state: {
                     communitId: communit.uid,
                     userId: userId,
-                    role: entities.EnumCommunitMemberRole.master,
                     status: entities.EnumCommunitMemberStatus.enable,
                     speak: false
                 }
