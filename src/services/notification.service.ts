@@ -9,7 +9,7 @@ import { SessionService } from '@/services/session.service'
 import { MessagerService } from '@/services/messager.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineClientSender } from '@/utils/utils-microservices'
-import { divineResolver, divineIntNumber, divineLogger, divineHandler, divineParameter, divineBatchHandler } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineLogger, divineHandler, divineParameter } from '@/utils/utils-common'
 import { divineSelection } from '@/utils/utils-typeorm'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
@@ -75,11 +75,6 @@ export class NotificationService {
         const connect = await this.customService.divineConnectTransaction()
         try {
             return await this.customService.divineBuilder(this.customService.tableNotification, async qb => {
-                // return divineClientSender(this.socketClient, {
-                //     eventName: 'web-socket-refresh-session',
-                //     headers,
-                //     state: { userId: userId, sid: scope.uid }
-                // })
                 qb.where('t.uid = :uid', { uid: scope.uid })
                 return qb.getOne().then(async node => {
                     this.logger.info(
@@ -101,7 +96,7 @@ export class NotificationService {
                             message: '申请者不可操作'
                         })
                         return await this.httpNotificationContactUpdate(headers, {
-                            userId: userId,
+                            userId: node.userId,
                             niveId: node.niveId,
                             status: scope.status
                         }).then(async ({ message }) => {
@@ -130,7 +125,7 @@ export class NotificationService {
                         })
                         /**验证操作者身份**/
                         await this.customService.divineBuilder(this.customService.tableCommunitMember, async qb => {
-                            qb.where('t.userId = :userId AND t.communitId = :communitId AND t.status = :status ADN t.role IN (:...role)', {
+                            qb.where('t.userId = :userId AND t.communitId = :communitId AND t.status = :status AND t.role IN (:...role)', {
                                 userId: userId,
                                 communitId: node.communitId,
                                 status: entities.EnumCommunitMemberStatus.enable,
