@@ -49,7 +49,7 @@ export class SessionService {
                 )
                 qb.select([
                     /**会话基础字段**/
-                    ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId']),
+                    ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId', 'mounted']),
                     /**消息记录联查字段**/
                     ...divineSelection('message', ['keyId', 'createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
                     /**联系人联查字段**/
@@ -134,7 +134,7 @@ export class SessionService {
                 )
                 qb.select([
                     /**会话基础字段**/
-                    ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId']),
+                    ...divineSelection('t', ['sid', 'source', 'contactId', 'communitId', 'mounted']),
                     /**消息记录联查字段**/
                     ...divineSelection('message', ['keyId', 'createTime', 'sid', 'sessionId', 'userId', 'text', 'source', 'status']),
                     /**联系人联查字段**/

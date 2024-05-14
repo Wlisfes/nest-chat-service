@@ -34,6 +34,10 @@ export class SessionEntier extends CommonEntier {
     @Column({ comment: '社群ID', nullable: true })
     @Index()
     communitId: string
+
+    @ApiProperty({ description: '事件监听' })
+    @Column({ comment: '事件监听: true-开启、false-关闭', nullable: false, default: false })
+    mounted: boolean
 }
 
 export class SchemaSession extends SessionEntier {}
