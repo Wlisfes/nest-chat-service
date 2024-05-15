@@ -33,7 +33,7 @@ export class CommonService extends LoggerService {
     @Logger
     public async httpCommonWallpaper(headers: env.Headers) {
         return await this.customService.divineBuilder(this.customService.tableWallpaper, async qb => {
-            qb.select(divineSelection('t', ['keyId', 'light', 'dark']))
+            qb.select(divineSelection('t', ['waid', 'light', 'dark']))
             qb.cache(60000)
             return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                 return await divineResolver({ total, list })

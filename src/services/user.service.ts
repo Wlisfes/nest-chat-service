@@ -301,7 +301,7 @@ export class UserService extends LoggerService {
                 qb.select([
                     ...divineSelection('t', ['keyId', 'createTime', 'updateTime', 'uid', 'status', 'nickname', 'avatar']),
                     ...divineSelection('t', ['email', 'comment', 'theme', 'paint', 'sound', 'notify', 'factor', 'limit']),
-                    ...divineSelection('color', ['keyId', 'waid', 'light', 'dark'])
+                    ...divineSelection('color', ['waid', 'light', 'dark'])
                 ])
                 qb.where('t.uid = :uid', { uid: userId })
                 return qb.getOne().then(async data => {
