@@ -1,8 +1,8 @@
 import { Injectable, HttpStatus } from '@nestjs/common'
 import { LoggerService, Logger } from '@/services/logger.service'
-import { MessagerService } from '@/services/messager.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
+import { WebSocketMessageService } from '@web-socket/services/web-socket.message.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { divineResolver, divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
@@ -13,7 +13,7 @@ export class WebSocketService extends LoggerService {
     constructor(
         private readonly webSocketClientService: WebSocketClientService,
         private dataBaseService: WebSocketDataBaseService,
-        private readonly messagerService: MessagerService,
+        private readonly messageService: WebSocketMessageService,
         private readonly rabbitmqService: RabbitmqService
     ) {
         super()
@@ -38,7 +38,7 @@ export class WebSocketService extends LoggerService {
     @Logger
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
         try {
-            const node = await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
+            const node = await this.messageService.httpCommonCustomizeMessager(headers, userId, {
                 ...scope,
                 referrer: entities.EnumMessagerReferrer.socket
             })

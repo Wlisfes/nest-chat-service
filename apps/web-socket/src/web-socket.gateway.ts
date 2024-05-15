@@ -35,10 +35,14 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     /**开启长连接**/
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
-        console.log(this.server.sockets.adapter.rooms)
         this.logger.info(
             [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),
-            divineLogger(socket.handshake.headers, { message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user })
+            divineLogger(socket.handshake.headers, {
+                message: '开启长连接-初始化完毕',
+                socketId: socket.id,
+                rooms: this.server.sockets.adapter.rooms,
+                user: socket.user
+            })
         )
     }
 
@@ -46,7 +50,12 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {
         this.logger.info(
             [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),
-            divineLogger(socket.handshake.headers, { message: '中断长连接', socketId: socket.id, user: socket.user })
+            divineLogger(socket.handshake.headers, {
+                message: '中断长连接',
+                socketId: socket.id,
+                rooms: this.server.sockets.adapter.rooms,
+                user: socket.user
+            })
         )
         await this.webSocketClientService.disconnect(socket.user.uid)
     }
