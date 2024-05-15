@@ -4,7 +4,7 @@ import { MessagerService } from '@/services/messager.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
-import { divineLogger, divineResolver, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -24,7 +24,7 @@ export class WebSocketService extends LoggerService {
     public async httpSocketConnection(headers: env.Headers, socket: env.AuthSocket, userId: string) {
         try {
             this.logger.info({ message: '开启长连接-初始化开始', socketId: socket.id, user: socket.user })
-            await this.dataBaseService.fetchSocketColumnSession(userId).then(async sessions => {
+            await this.dataBaseService.fetchSocketColumnSession(headers, userId).then(async sessions => {
                 socket.join(sessions)
                 this.logger.info({ message: '初始化用户会话房间', socketId: socket.id, user: socket.user, sessions })
                 return await divineResolver(sessions)
@@ -92,7 +92,7 @@ export class WebSocketService extends LoggerService {
         try {
             this.logger.info({ message: 'Socket推送消息至客户端-开始推送', data: scope })
             /**获取消息详情、执行socket推送**/
-            const message = await this.messagerService.httpSessionOneMessager(headers, { sid: scope.sid })
+            const message = await this.dataBaseService.fetchMessagerResolver(headers, { sid: scope.sid })
             if (!Boolean(message)) {
                 this.logger.error({ message: 'Socket推送消息至客户端-推送失败', data: scope, result: message })
                 return await divineResolver({ message: '推送失败', ...scope })
@@ -173,7 +173,7 @@ export class WebSocketService extends LoggerService {
                     return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
                 handler: async () => {
-                    return await this.dataBaseService.fetchNotificationResolver(scope.notifyId).then(async node => {
+                    return await this.dataBaseService.fetchNotificationResolver(headers, scope.notifyId).then(async node => {
                         if (Boolean(node)) {
                             socket.emit(typeName, node)
                             this.logger.info({ message: 'Socket推送操作通知消息至客户端成功', node })
