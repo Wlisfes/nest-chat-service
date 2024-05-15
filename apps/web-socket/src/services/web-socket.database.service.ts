@@ -37,6 +37,7 @@ export class WebSocketDataBaseService {
             qb.leftJoinAndMapOne('t.nive', entities.UserEntier, 'nive', 'nive.uid = t.niveId')
             /**社群申请记录联查**/
             qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
+            qb.leftJoinAndMapOne('communit.own', entities.UserEntier, 'own', 'communit.ownId = own.uid')
             qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
             qb.select([
                 ...divineSelection('t', ['keyId', 'uid', 'createTime', 'updateTime', 'source']),
@@ -44,6 +45,7 @@ export class WebSocketDataBaseService {
                 ...divineSelection('user', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                 ...divineSelection('nive', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                 ...divineSelection('communit', ['keyId', 'uid', 'name', 'poster', 'ownId', 'status', 'comment']),
+                ...divineSelection('own', ['uid', 'nickname', 'avatar', 'status', 'comment']),
                 ...divineSelection('poster', ['width', 'height', 'fileId', 'fileURL'])
             ])
             qb.where(`t.uid = :uid`, { uid: notifyId })

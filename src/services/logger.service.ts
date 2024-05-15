@@ -60,5 +60,5 @@ export function Logger(target: any, propertyName: string, descriptor: PropertyDe
 @Injectable()
 export class LoggerService {
     protected readonly logger: NestLogger
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly loggerService: Logger
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly loggerService: WinstonLogger
 }
