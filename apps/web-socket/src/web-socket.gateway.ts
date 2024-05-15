@@ -34,7 +34,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
 
     /**开启长连接**/
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
-        await this.webSocketService.httpSocketConnection(socket, socket.user.uid)
+        await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
         console.log(this.server.sockets.adapter.rooms)
         this.logger.info(
             [WebSocketEventGateway.name, this.handleDisconnect.name].join(':'),

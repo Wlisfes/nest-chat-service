@@ -186,7 +186,7 @@ export class MessagerService extends LoggerService {
             return qb.getOne().then(async (node: env.Omix) => {
                 return await divineResolver({
                     ...node,
-                    medias: (node.medias ?? []).map((media: env.Omix) => {
+                    medias: (node?.medias ?? []).map((media: env.Omix) => {
                         return { sid: media.sid, fileId: media.fileId, ...media.media }
                     })
                 })

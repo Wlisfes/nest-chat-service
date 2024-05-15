@@ -4,7 +4,7 @@ import { Logger as WinstonLogger } from 'winston'
 import { divineLogger } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
-class NestLogger {
+export class NestLogger {
     constructor(
         protected readonly logger: WinstonLogger,
         protected readonly loggerOption: {

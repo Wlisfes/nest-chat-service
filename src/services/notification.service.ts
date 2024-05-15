@@ -87,19 +87,9 @@ export class NotificationService extends LoggerService {
                         return await this.httpNotificationContactUpdate(headers, {
                             userId: node.userId,
                             niveId: node.niveId,
-                            status: scope.status
+                            status: scope.status,
+                            notifyId: node.uid
                         }).then(async ({ message }) => {
-                            /**更新通知状态**/
-                            await this.customService.divineUpdate(this.customService.tableNotification, {
-                                headers,
-                                where: { uid: node.uid },
-                                state: { status: scope.status }
-                            })
-                            await divineClientSender(this.socketClient, {
-                                eventName: 'web-socket-push-notification',
-                                headers,
-                                state: { notifyId: node.uid, userId: node.userId }
-                            })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })
                         })
@@ -123,19 +113,9 @@ export class NotificationService extends LoggerService {
                         return await this.httpNotificationCommunitUpdate(headers, {
                             status: scope.status,
                             userId: node.userId,
-                            communitId: node.communitId
+                            communitId: node.communitId,
+                            notifyId: node.uid
                         }).then(async ({ message }) => {
-                            /**更新通知状态**/
-                            await this.customService.divineUpdate(this.customService.tableNotification, {
-                                headers,
-                                where: { uid: node.uid },
-                                state: { status: scope.status }
-                            })
-                            await divineClientSender(this.socketClient, {
-                                eventName: 'web-socket-push-notification',
-                                headers,
-                                state: { notifyId: node.uid, userId: node.userId }
-                            })
                             await connect.commitTransaction()
                             return await divineResolver({ message: message })
                         })
@@ -209,12 +189,25 @@ export class NotificationService extends LoggerService {
                         return { userId, niveId, nickname, contactId: cid, sessionId: sid }
                     }
                 })
+                /**更新通知状态**/
+                await this.customService.divineUpdate(this.customService.tableNotification, {
+                    headers,
+                    where: { uid: scope.notifyId },
+                    state: { status: scope.status }
+                })
+                /**Socket推送通知消息**/
+                await divineClientSender(this.socketClient, {
+                    eventName: 'web-socket-push-notification',
+                    headers,
+                    state: { notifyId: scope.notifyId, userId: scope.userId }
+                })
                 /**新增用户Socket会话房间**/
                 await divineClientSender(this.socketClient, {
                     eventName: 'web-socket-refresh-session',
                     headers,
                     state: { userId: data.userId, sid: data.sessionId }
                 })
+                /**新增用户Socket会话房间**/
                 await divineClientSender(this.socketClient, {
                     eventName: 'web-socket-refresh-session',
                     headers,
@@ -301,6 +294,18 @@ export class NotificationService extends LoggerService {
                             })
                         })
                     }
+                })
+                /**更新通知状态**/
+                await this.customService.divineUpdate(this.customService.tableNotification, {
+                    headers,
+                    where: { uid: scope.notifyId },
+                    state: { status: scope.status }
+                })
+                /**Socket推送通知消息**/
+                await divineClientSender(this.socketClient, {
+                    eventName: 'web-socket-push-notification',
+                    headers,
+                    state: { notifyId: scope.notifyId, userId: scope.userId }
                 })
                 /**新增用户Socket会话房间**/
                 await divineClientSender(this.socketClient, {
