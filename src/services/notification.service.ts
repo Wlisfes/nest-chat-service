@@ -122,7 +122,7 @@ export class NotificationService extends LoggerService {
                         })
                         return await this.httpNotificationCommunitUpdate(headers, {
                             status: scope.status,
-                            userId: userId,
+                            userId: node.userId,
                             communitId: node.communitId
                         }).then(async ({ message }) => {
                             /**更新通知状态**/
