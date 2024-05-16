@@ -93,8 +93,12 @@ export class WebSocketService extends LoggerService {
             this.logger.info({ message: 'Socket推送消息至客户端-开始推送', data: scope })
             /**获取消息详情、执行socket推送**/
             const message = await this.dataBaseService.fetchMessagerResolver(headers, { sid: scope.sid })
+            const rooms = this.webSocketClientService.server.sockets.adapter.rooms
             if (!Boolean(message)) {
-                this.logger.error({ message: 'Socket推送消息至客户端-推送失败', data: scope, result: message })
+                this.logger.info({ message: 'Socket推送消息至客户端-推送失败：消息不存在', data: scope })
+                return await divineResolver({ message: '推送失败', ...scope })
+            } else if (!rooms.get(scope.sessionId)) {
+                this.logger.info({ message: 'Socket推送消息至客户端-推送失败：会话SID用户未在线', data: scope })
                 return await divineResolver({ message: '推送失败', ...scope })
             } else {
                 const sockets = this.webSocketClientService.server.sockets
