@@ -9,7 +9,7 @@ import { WebSocketService } from '@web-socket/services/web-socket.service'
 import { divineResolver } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
-@WebSocketGateway(Number(process.env.SOCKET_PORT), {
+@WebSocketGateway(34571, {
     path: '/web-socket',
     cors: true,
     transport: ['websocket'],
@@ -25,7 +25,7 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
 
     /**服务启动**/
     public async afterInit(server: Server) {
-        console.log('[web-socket]服务启动:', `ws://localhost:34571`, process.env.SOCKET_PORT)
+        console.log('[web-socket]服务启动:', `ws://localhost:34571`)
         await this.webSocketClientService.setServer(server)
     }
 
@@ -33,7 +33,6 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @CustomHeaderLogger(socket => socket.handshake.headers)
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
-        // this.server.serverSideEmit('socket-connection', socket.user.uid)
         this.logger.info({ message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user })
     }
 
@@ -43,11 +42,6 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
         await this.webSocketClientService.disconnect(socket.user.uid)
         this.logger.info({ message: '中断长连接', socketId: socket.id, user: socket.user })
     }
-
-    // @SubscribeMessage('socket-connection')
-    // public async SubscribeSocketConnection(@ConnectedSocket() socket: env.AuthSocket, @MessageBody() scope) {
-    //     console.log(scope, socket)
-    // }
 
     /**发送消息已读操作**/
     @UseGuards(WebSocketGuard)
