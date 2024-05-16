@@ -30,6 +30,36 @@ export class NestLogger {
     }
 }
 
+export function CustomHeaderLogger(header: (...args: any[]) => env.Headers) {
+    return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+        const originalMethod = descriptor.value
+        descriptor.value = function (...args: any[]) {
+            this.logger = new NestLogger(this.loggerService, {
+                headers: header(...args),
+                className: this.constructor.name,
+                propertyName: propertyName
+            })
+            try {
+                const result = originalMethod.apply(this, args)
+                if (result && typeof result.then === 'function' && typeof result.catch === 'function') {
+                    result.catch(err => {
+                        this.logger.error({
+                            message: err.message,
+                            status: err.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+                        })
+                    })
+                }
+                return result
+            } catch (err) {
+                this.logger.error({
+                    message: err.message,
+                    status: err.status ?? HttpStatus.INTERNAL_SERVER_ERROR
+                })
+            }
+        }
+    }
+}
+
 export function Logger(target: any, propertyName: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
     descriptor.value = function (...args: any[]) {
