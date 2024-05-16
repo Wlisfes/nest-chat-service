@@ -60,6 +60,7 @@ export class WebSocketMessageService extends LoggerService {
                 } else {
                     /**群聊会话**/
                     const communit = (node as any).communit as entities.CommunitEntier
+
                     await this.customService.divineCatchWherer(communit.status === entities.EnumCommunitStatus.dissolve, null, {
                         message: '社群已解散'
                     })
@@ -72,17 +73,13 @@ export class WebSocketMessageService extends LoggerService {
     /**验证消息文件ID数据**/
     @Logger
     public async httpCheckMediaMessager(headers: env.Headers, userId: string, scope: env.BodyCheckMediaMessager) {
-        const node = await this.customService.divineHaver(this.customService.tableMedia, {
+        return await this.customService.divineHaver(this.customService.tableMedia, {
             headers,
-            message: '媒体ID不存在',
+            message: '媒体ID不存在或类型错误',
             dispatch: {
-                where: { fileId: scope.fileId, userId }
+                where: { fileId: scope.fileId, source: scope.source, userId }
             }
         })
-        await this.customService.divineCatchWherer(node.source !== scope.source, null, {
-            message: '媒体类型错误'
-        })
-        return await divineResolver(node)
     }
 
     /**写入自定义消息记录**/
