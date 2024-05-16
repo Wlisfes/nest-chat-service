@@ -33,14 +33,24 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @CustomHeaderLogger(socket => socket.handshake.headers)
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
-        this.logger.info({ message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user })
+        this.logger.info({
+            message: '开启长连接-初始化完毕',
+            socketId: socket.id,
+            user: socket.user,
+            rooms: this.server.sockets.adapter.rooms
+        })
     }
 
     /**中断长连接**/
     @CustomHeaderLogger(socket => socket.handshake.headers)
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketClientService.disconnect(socket.user.uid)
-        this.logger.info({ message: '中断长连接', socketId: socket.id, user: socket.user })
+        this.logger.info({
+            message: '中断长连接',
+            socketId: socket.id,
+            user: socket.user,
+            rooms: this.server.sockets.adapter.rooms
+        })
     }
 
     /**发送消息已读操作**/

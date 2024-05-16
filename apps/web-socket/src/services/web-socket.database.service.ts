@@ -29,7 +29,7 @@ export class WebSocketDataBaseService extends LoggerService {
                 userId: userId
             })
             return qb.getMany().then(async list => {
-                return await divineResolver(list.map(node => node.sid))
+                return await divineResolver(list.map(node => `${process.pid}-${node.sid}`))
             })
         })
     }

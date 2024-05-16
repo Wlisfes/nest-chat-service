@@ -94,10 +94,11 @@ export class WebSocketService extends LoggerService {
             /**获取消息详情、执行socket推送**/
             const message = await this.dataBaseService.fetchMessagerResolver(headers, { sid: scope.sid })
             const rooms = this.webSocketClientService.server.sockets.adapter.rooms
+            const pidSessionId = `${process.pid}-${scope.sessionId}`
             if (!Boolean(message)) {
                 this.logger.info({ message: 'Socket推送消息至客户端-推送失败：消息不存在', data: scope })
                 return await divineResolver({ message: '推送失败', ...scope })
-            } else if (!rooms.get(scope.sessionId)) {
+            } else if (!rooms.get(pidSessionId)) {
                 this.logger.info({ message: 'Socket推送消息至客户端-推送失败：会话SID用户未在线', data: scope })
                 return await divineResolver({ message: '推送失败', ...scope })
             } else {
@@ -109,7 +110,7 @@ export class WebSocketService extends LoggerService {
                     const socket = await this.webSocketClientService.getClient(scope.userId)
                     if (Boolean(socket) && socket.connected) {
                         /**如果发送者在线、除了发送者其他房间用户都推送过去**/
-                        sockets.to(scope.sessionId).except(socket.id).emit(eventName, message)
+                        sockets.to(pidSessionId).except(socket.id).emit(eventName, message)
                         socket.emit(scope.sid, {
                             type: typeName,
                             state: {
@@ -120,12 +121,12 @@ export class WebSocketService extends LoggerService {
                         })
                     } else {
                         /**如果发送者不在线、全量推送**/
-                        sockets.to(scope.sessionId).emit(eventName, message)
+                        sockets.to(pidSessionId).emit(eventName, message)
                     }
                     this.logger.info({ message: 'Socket推送消息至客户端-推送成功', data: scope })
                 } else {
                     /**其他来源**/
-                    sockets.to(scope.sessionId).emit(eventName, message)
+                    sockets.to(pidSessionId).emit(eventName, message)
                     this.logger.info({ message: 'Socket推送消息至客户端-全量推送成功', data: scope })
                 }
                 return await divineResolver({ message: '推送成功', ...scope })
@@ -143,14 +144,15 @@ export class WebSocketService extends LoggerService {
             const sockets = this.webSocketClientService.server.sockets
             const socket = await this.webSocketClientService.getClient(scope.userId)
             const typeName = `server-read-messager`
+            const pidSessionId = `${process.pid}-${scope.sessionId}`
             await divineHandler(Boolean(socket) && socket.connected, {
                 handler: () => {
                     /**排除读取用户推送**/
-                    sockets.to(scope.sessionId).except(socket.id).emit(scope.sid, { type: typeName, state: scope })
+                    sockets.to(pidSessionId).except(socket.id).emit(scope.sid, { type: typeName, state: scope })
                 },
                 failure: () => {
                     /**根据会话SID全量推送**/
-                    sockets.to(scope.sessionId).emit(scope.sid, { type: typeName, state: scope })
+                    sockets.to(pidSessionId).emit(scope.sid, { type: typeName, state: scope })
                 }
             })
             this.logger.info({ message: 'Socket推送消息状态变更至客户端-推送成功', data: scope })
