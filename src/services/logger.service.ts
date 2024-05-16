@@ -3,6 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
 import { Logger as WinstonLogger } from 'winston'
 import { divineLogger } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
+export { WinstonLogger, WINSTON_MODULE_PROVIDER }
 
 export class NestLogger {
     constructor(
