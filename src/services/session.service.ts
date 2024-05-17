@@ -26,9 +26,9 @@ export class SessionService extends LoggerService {
                 't.message',
                 entities.MessagerEntier,
                 'message',
-                'message.sessionId = t.sid AND (message.status = :delivered OR message.userId = :userId)',
-                { userId: userId, delivered: entities.EnumMessagerStatus.delivered }
-            )
+                'message.sessionId = t.sid AND (message.status = :status OR message.userId = :userId)',
+                { userId: userId, status: entities.EnumMessagerStatus.delivered }
+            ).orderBy('message.createTime', 'DESC')
             /**群聊会话联查**/
             qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
             qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')
@@ -61,7 +61,6 @@ export class SessionService extends LoggerService {
                     fallback: [entities.EnumSessionSource.contact, entities.EnumSessionSource.communit]
                 })
             })
-            qb.orderBy('message.createTime', 'DESC')
             return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
                 return await divineResolver({
                     total,
@@ -101,9 +100,9 @@ export class SessionService extends LoggerService {
                 't.message',
                 entities.MessagerEntier,
                 'message',
-                'message.sessionId = t.sid AND (message.status = :delivered OR message.userId = :userId)',
-                { userId: userId, delivered: entities.EnumMessagerStatus.delivered }
-            )
+                'message.sessionId = t.sid AND (message.status = :status OR message.userId = :userId)',
+                { userId: userId, status: entities.EnumMessagerStatus.delivered }
+            ).orderBy('message.createTime', 'DESC')
             /**群聊会话联查**/
             qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
             qb.leftJoinAndMapOne('communit.poster', entities.MediaEntier, 'poster', 'communit.poster = poster.fileId')

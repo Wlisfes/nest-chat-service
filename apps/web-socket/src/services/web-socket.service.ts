@@ -70,13 +70,14 @@ export class WebSocketService extends LoggerService {
     public async httpSocketJoinSession(headers: env.Headers, scope: { userId: string; sid: string }) {
         try {
             const socket = await this.webSocketClientService.getClient(scope.userId)
+            const pidSessionId = `${process.pid}-${scope.sid}`
             return await divineHandler(Boolean(socket) && socket.connected, {
                 failure: async () => {
                     this.logger.info({ message: '用户不在线', node: scope })
                     return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
                 handler: async () => {
-                    socket.join(scope.sid)
+                    socket.join(pidSessionId)
                     this.logger.info({ message: '会话房间加入成功', socketId: socket.id, user: socket.user, sid: scope.sid })
                     return await divineResolver({ message: '会话房间加入成功', status: HttpStatus.OK })
                 }

@@ -216,7 +216,11 @@ export class MessagerService extends LoggerService {
                 /**已读用户字段**/
                 ...divineSelection('reads', ['keyId', 'sid', 'userId'])
             ])
-            qb.where(`t.sessionId = :sessionId`, { sessionId: scope.sessionId })
+            qb.where(`t.sessionId = :sessionId AND (t.status = :status OR t.userId = :userId)`, {
+                userId: userId,
+                sessionId: scope.sessionId,
+                status: entities.EnumMessagerStatus.delivered
+            })
             qb.orderBy('t.createTime', 'DESC')
             qb.skip(scope.offset)
             qb.take(scope.limit)
