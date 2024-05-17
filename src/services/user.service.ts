@@ -201,7 +201,7 @@ export class UserService extends LoggerService {
     public async httpUserfactorSender(headers: env.Headers, scope: env.BodyUserfactorSender) {
         const node = await this.httpUserResolver(headers, scope.uid)
         const code = await divineIntNumber({ random: true, bit: 6 })
-        const keyName = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, node.email)
+        const keyName = await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, node.email)
         return await this.nodemailer.httpReadCustomize('', { code, ttl: '5', title: '双因子认证' }).then(async html => {
             await this.nodemailer.httpCustomizeNodemailer(headers, {
                 from: this.nodemailer.fromName,
