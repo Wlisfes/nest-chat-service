@@ -7,25 +7,30 @@ export class WebPeerService {
     private server: ReturnType<typeof ExpressPeerServer>
     /**启动peer服务**/
     public async divineConnectServer(app: NestExpressApplication) {
-        this.server = ExpressPeerServer(app.getHttpServer(), { path: '/peer-server' })
+        this.server = ExpressPeerServer(app.getHttpServer(), {
+            port: 34550,
+            alive_timeout: 60000,
+            path: '/peer-server'
+        })
 
         this.server.on('connection', client => {
-            console.log(`Peer connected: ${client.getId()}`)
+            console.log(`Peer connected:`, { token: client.getToken(), id: client.getId() })
         })
 
         this.server.on('disconnect', client => {
-            console.log(`Peer disconnected: ${client.getId()}`)
+            console.log(`Peer disconnected:`, { token: client.getToken(), id: client.getId() })
         })
 
         this.server.on('message', (client, message) => {
             console.log(`Peer message:`, {
-                client,
+                token: client.getToken(),
+                id: client.getId(),
                 message
             })
         })
 
         this.server.on('error', error => {
-            console.error(`Peer server error: ${error.message}`)
+            console.error(`Peer server error: ${error.message}`, { error })
         })
 
         return app.use(this.server)

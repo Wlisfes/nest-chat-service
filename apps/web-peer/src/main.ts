@@ -1,10 +1,10 @@
 import { NestFactory } from '@nestjs/core'
 import { NestExpressApplication } from '@nestjs/platform-express'
-import { WebAlterModule } from '@web-alter/web-alter.module'
+import { WebPeerModule } from '@web-peer/web-peer.module'
 import { WebPeerService } from '@web-peer/web-peer.service'
 
 async function bootstrap() {
-    const app = await NestFactory.create<NestExpressApplication>(WebAlterModule)
+    const app = await NestFactory.create<NestExpressApplication>(WebPeerModule)
     //启动peer服务
     await app.get(WebPeerService).divineConnectServer(app)
     //监听端口服务
