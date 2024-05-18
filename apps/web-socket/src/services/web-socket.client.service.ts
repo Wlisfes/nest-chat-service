@@ -27,7 +27,10 @@ export class WebSocketClientService extends RedisSubscribeService {
         const socket = await this.getClient(userId)
         return await divineHandler(socket && socket.connected, {
             handler: async () => {
-                return await socket.emit('closure', { message: '挤出', status: HttpStatus.FORBIDDEN })
+                return await socket.emit('server-socket-closure', {
+                    message: '当前账户已从其他设备登录，请重新登录',
+                    status: HttpStatus.FORBIDDEN
+                })
             }
         })
     }
