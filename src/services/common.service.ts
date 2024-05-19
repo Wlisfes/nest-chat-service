@@ -21,7 +21,7 @@ export class CommonService extends LoggerService {
         const { text, data } = await divineGrapher({ width: 120, height: 40 })
         const sid = await divineIntNumber()
         const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
-        return await this.redisService.setStore(key, text, 3 * 60, headers).then(async () => {
+        return await this.redisService.setStore(headers, { key, data: text, seconds: 3 * 60 }).then(async () => {
             this.logger.info({ message: '图形验证码发送成功', seconds: 5 * 60, key, text })
             await response.cookie(web.WEB_COMMON_HEADER_CAPHCHA, sid, { httpOnly: true })
             await response.type('svg')

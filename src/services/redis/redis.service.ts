@@ -1,17 +1,15 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { Cron } from '@nestjs/schedule'
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston'
-import { Logger } from 'winston'
+import { LoggerService, Logger } from '@/services/logger.service'
 import { CLIENT_REDIS, ClientRedis } from '@/services/redis/redis.provider'
-import { divineLogger } from '@/utils/utils-common'
+import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
-export class RedisService {
-    constructor(
-        @Inject(CLIENT_REDIS) public readonly client: ClientRedis,
-        @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger
-    ) {}
+export class RedisService extends LoggerService {
+    constructor(@Inject(CLIENT_REDIS) public readonly client: ClientRedis) {
+        super()
+    }
 
     @Cron('45 * * * * *')
     public async divineCronHandler() {
@@ -19,39 +17,44 @@ export class RedisService {
     }
 
     /**redis存储**/
-    public async setStore(key: string, data: any, seconds?: number, headers?: env.Headers) {
-        if (seconds > 0) {
-            return await this.client.set(key, JSON.stringify(data), 'EX', seconds).then(value => {
-                this.logger.info(
-                    [RedisService.name, this.setStore.name].join(':'),
-                    divineLogger(headers, { message: 'Redis存储', key, seconds, value: data })
-                )
+    @Logger
+    public async setStore(headers: env.Headers, scope: { key: string; data: any; seconds?: number; logger?: boolean }) {
+        if (scope.seconds > 0) {
+            return await this.client.set(scope.key, JSON.stringify(scope.data), 'EX', scope.seconds).then(async value => {
+                await divineHandler(scope.logger ?? true, {
+                    handler: () => this.logger.info({ message: 'Redis存储', ...scope })
+                })
                 return value
             })
         } else {
-            return await this.client.set(key, JSON.stringify(data)).then(value => {
-                this.logger.info(
-                    [RedisService.name, this.setStore.name].join(':'),
-                    divineLogger(headers, { message: 'Redis存储', key, value: data })
-                )
+            return await this.client.set(scope.key, JSON.stringify(scope.data)).then(async value => {
+                await divineHandler(scope.logger ?? true, {
+                    handler: () => this.logger.info({ message: 'Redis存储', ...scope })
+                })
                 return value
             })
         }
     }
 
     /**redis读取**/
-    public async getStore<T>(key: string, defaultValue?: T, headers?: env.Headers): Promise<T> {
-        return await this.client.get(key).then(data => {
-            const value = data ? JSON.parse(data) : defaultValue
-            this.logger.info([RedisService.name, this.getStore.name].join(':'), divineLogger(headers, { message: 'Redis读取', key, value }))
+    @Logger
+    public async getStore<T>(headers: env.Headers, scope: { key: string; defaultValue?: T; logger?: boolean }): Promise<T> {
+        return await this.client.get(scope.key).then(async data => {
+            const value = data ? JSON.parse(data) : scope.defaultValue
+            await divineHandler(scope.logger ?? true, {
+                handler: () => this.logger.info({ message: 'Redis读取', ...scope, data })
+            })
             return value
         })
     }
 
     /**redis删除**/
-    public async delStore(key: string, headers?: env.Headers) {
-        return await this.client.del(key).then(value => {
-            this.logger.info([RedisService.name, this.delStore.name].join(':'), divineLogger(headers, { message: 'Redis删除', key, value }))
+    @Logger
+    public async delStore(headers: env.Headers, scope: { key: string; logger?: boolean }) {
+        return await this.client.del(scope.key).then(async value => {
+            await divineHandler(scope.logger ?? true, {
+                handler: () => this.logger.info({ message: 'Redis删除', ...scope })
+            })
             return value
         })
     }

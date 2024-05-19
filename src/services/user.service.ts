@@ -28,14 +28,14 @@ export class UserService extends LoggerService {
     private async fetchCommonUserRedis(headers: env.Headers, userId: string) {
         /**最后登录时间**/
         const lasttimeKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LASTTIME, userId)
-        const lastTime = await this.redisService.getStore<number>(lasttimeKey, 0, headers)
+        const lastTime = await this.redisService.getStore<number>(headers, { key: lasttimeKey, defaultValue: 0 })
         /**登录设备编码**/
         const device = await divineMD5Generate(headers['user-agent'])
         const deviceKey = await divineKeyCompose(web.CHAT_CHAHE_USER_DEVICE, userId, device)
-        const deviceStore = await this.redisService.getStore<string>(deviceKey, null, headers)
+        const deviceStore = await this.redisService.getStore<string>(headers, { key: deviceKey, defaultValue: null })
         /**双因子登录间隔时间**/
         const limitKey = await divineKeyCompose(web.CHAT_CHAHE_USER_LIMIT, userId)
-        const limit = await this.redisService.getStore<number>(limitKey, 7, headers)
+        const limit = await this.redisService.getStore<number>(headers, { key: limitKey, defaultValue: 7 })
         const effect = limit * (24 * 60 * 60 * 1000)
         return { lasttimeKey, lastTime, device, deviceKey, deviceStore, limitKey, limit, effect }
     }
@@ -57,9 +57,12 @@ export class UserService extends LoggerService {
             state: { source: entities.EnumLoggerSource.login, userId: data.uid, logId, ua, ip, browser, platform }
         })
         /**存储登录设备**/
-        await this.redisService.setStore(scope.deviceKey, { logId, ua, ip, browser, platform }, 0, headers)
+        await this.redisService.setStore(headers, {
+            key: scope.deviceKey,
+            data: { logId, ua, ip, browser, platform }
+        })
         /**存储登录时间**/
-        return await this.redisService.setStore(scope.lasttimeKey, Date.now(), 0, headers).then(async () => {
+        return await this.redisService.setStore(headers, { key: scope.lasttimeKey, data: Date.now() }).then(async () => {
             this.logger.info({ message: '登录成功', user: Object.assign(data, { token, expire }) })
             return await divineResolver({ message: '登录成功', factor: false, token, expire })
         })
@@ -69,7 +72,7 @@ export class UserService extends LoggerService {
     @Logger
     public async httpUserRegister(headers: env.Headers, scope: env.BodyUserRegister) {
         const { keyName } = await divineKeyCompose(web.CHAT_CHAHE_MAIL_REGISTER, scope.email).then(async keyName => {
-            const code = await this.redisService.getStore(keyName, null, headers)
+            const code = await this.redisService.getStore(headers, { key: keyName, defaultValue: null })
             await this.customService.divineCatchWherer(scope.code !== code, null, {
                 message: '验证码不存在'
             })
@@ -96,7 +99,7 @@ export class UserService extends LoggerService {
                 }
             })
             await manager.save(user)
-            return await this.redisService.delStore(keyName, headers).then(async () => {
+            return await this.redisService.delStore(headers, { key: keyName }).then(async () => {
                 this.logger.info({ message: '注册成功', user })
                 return await divineResolver({ message: '注册成功' })
             })
@@ -120,7 +123,7 @@ export class UserService extends LoggerService {
                 to: scope.email,
                 html
             })
-            await this.redisService.setStore(keyName, code, 5 * 60, headers)
+            await this.redisService.setStore(headers, { key: keyName, data: code, seconds: 5 * 60 })
             return await divineResolver({ message: '发送成功' }, () => {
                 this.logger.info({ message: '验证码发送成功', seconds: 5 * 60, keyName, code })
             })
@@ -136,9 +139,9 @@ export class UserService extends LoggerService {
             failure: () => this.customService.divineCatchWherer(true, null, { message: '验证码不存在' }),
             handler: async () => {
                 const key = await divineKeyCompose(web.CHAT_CHAHE_GRAPH_COMMON, sid)
-                return await this.redisService.getStore<string>(key, null, headers).then(async code => {
+                return await this.redisService.getStore<string>(headers, { key, defaultValue: null }).then(async code => {
                     const compared = isEmpty(code) || scope.code.toUpperCase() !== code.toUpperCase()
-                    await this.redisService.delStore(key, headers)
+                    await this.redisService.delStore(headers, { key })
                     return await this.customService.divineCatchWherer(compared, null, {
                         message: '验证码不存在'
                     })
@@ -209,7 +212,7 @@ export class UserService extends LoggerService {
                 to: node.email,
                 html
             })
-            await this.redisService.setStore(keyName, code, 5 * 60, headers)
+            await this.redisService.setStore(headers, { key: keyName, data: code, seconds: 5 * 60 })
             return await divineResolver({ message: '发送成功' }, () => {
                 this.logger.info({ message: '验证码发送成功', seconds: 5 * 60, keyName, code })
             })
@@ -221,13 +224,13 @@ export class UserService extends LoggerService {
     public async httpUserfactor(headers: env.Headers, scope: env.BodyUserfactor) {
         const data = await this.httpUserResolver(headers, scope.uid)
         const keyCode = await divineKeyCompose(web.CHAT_CHAHE_MAIL_FACTOR, data.email)
-        return await this.redisService.getStore(keyCode, null, headers).then(async code => {
+        return await this.redisService.getStore(headers, { key: keyCode, defaultValue: null }).then(async code => {
             await this.customService.divineCatchWherer(scope.code !== code, null, {
                 message: '验证码不存在'
             })
             const store = await this.fetchCommonUserRedis(headers, data.uid)
             return await this.fetchJwtTokenSecret(headers, data, store).then(async node => {
-                await this.redisService.delStore(keyCode)
+                await this.redisService.delStore(headers, { key: keyCode })
                 return await divineResolver(node)
             })
         })
@@ -248,7 +251,7 @@ export class UserService extends LoggerService {
             }
         })
         const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-        return await this.redisService.getStore(keyName, null, headers).then(async data => {
+        return await this.redisService.getStore(headers, { key: keyName, defaultValue: null }).then(async data => {
             await this.customService.divineCatchWherer(!Boolean(data), data, {
                 message: '身份验证失败'
             })
@@ -292,7 +295,7 @@ export class UserService extends LoggerService {
     @Logger
     public async httpUserResolver(headers: env.Headers, userId: string, refresh?: boolean) {
         const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_RESOLVER, userId)
-        return await this.redisService.getStore(keyName, null, headers).then(async node => {
+        return await this.redisService.getStore(headers, { key: keyName, defaultValue: null }).then(async node => {
             if (node && !refresh) {
                 return await divineResolver(node)
             }
@@ -313,7 +316,7 @@ export class UserService extends LoggerService {
                         headers,
                         message: '身份验证失败'
                     })
-                    return await this.redisService.setStore(keyName, data, 0, headers).then(async () => {
+                    return await this.redisService.setStore(headers, { key: keyName, data, seconds: 0 }).then(async () => {
                         return await divineResolver(data)
                     })
                 })

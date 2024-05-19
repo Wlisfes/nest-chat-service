@@ -15,6 +15,6 @@ export class WebSocketCommonService extends LoggerService {
     @Logger
     public async fetchSocketUserOnline(headers: env.Headers, userId: string, online: boolean) {
         const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, userId)
-        return await this.redisService.setStore(keyName, online, 0, headers)
+        return await this.redisService.setStore(headers, { key: keyName, data: online })
     }
 }
