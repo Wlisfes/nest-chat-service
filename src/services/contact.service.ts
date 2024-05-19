@@ -3,16 +3,23 @@ import { LoggerService, Logger } from '@/services/logger.service'
 import { ClientProxy } from '@nestjs/microservices'
 import { isNotEmpty } from 'class-validator'
 import { CustomService } from '@/services/custom.service'
+import { RedisService } from '@/services/redis/redis.service'
 import { divineCatchWherer } from '@/utils/utils-plugin'
 import { divineSelection } from '@/utils/utils-typeorm'
 import { divineClientSender } from '@/utils/utils-microservices'
-import { divineResolver, divineIntNumber, divineHandler, divineMaskCharacter, divineParameter } from '@/utils/utils-common'
+import { divineResolver, divineIntNumber, divineHandler, divineMaskCharacter } from '@/utils/utils-common'
+import { divineKeyCompose, divineParameter } from '@/utils/utils-common'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
 @Injectable()
 export class ContactService extends LoggerService {
-    constructor(@Inject('WEB-SOCKET') private socketClient: ClientProxy, private readonly customService: CustomService) {
+    constructor(
+        @Inject('WEB-SOCKET') private socketClient: ClientProxy,
+        private readonly redisService: RedisService,
+        private readonly customService: CustomService
+    ) {
         super()
     }
 
@@ -170,7 +177,14 @@ export class ContactService extends LoggerService {
             ])
             qb.where('t.userId = :userId OR t.niveId = :userId', { userId })
             return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
-                return await divineResolver({ total, list })
+                const keys = list.map(item => {
+                    return divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, item.userId === userId ? item.niveId : item.userId)
+                })
+                const map = await this.redisService.mgetStore(headers, { keys: await Promise.all(keys) })
+                return await divineResolver({
+                    total,
+                    list: list.map((item, index) => ({ ...item, online: map[index].value }))
+                })
             })
         })
     }
@@ -195,7 +209,14 @@ export class ContactService extends LoggerService {
                 await this.customService.divineCatchWherer(!Boolean(node), node, {
                     message: '该用户不是您的好友，无法查看详情'
                 })
-                return await divineResolver(node)
+                return await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, node.userId === userId ? node.niveId : node.userId).then(
+                    async key => {
+                        return await divineResolver({
+                            ...node,
+                            online: await this.redisService.getStore(headers, { key, defaultValue: false })
+                        })
+                    }
+                )
             })
         })
     }

@@ -48,6 +48,18 @@ export class RedisService extends LoggerService {
         })
     }
 
+    /**redis批量读取**/
+    @Logger
+    public async mgetStore(headers: env.Headers, scope: { keys: Array<string>; logger?: boolean }) {
+        return await this.client.mget(scope.keys).then(async data => {
+            const values = scope.keys.map((key, index) => ({ key, value: data[index] ?? false }))
+            await divineHandler(scope.logger ?? true, {
+                handler: () => this.logger.info({ message: 'Redis批量读取', values })
+            })
+            return values
+        })
+    }
+
     /**redis删除**/
     @Logger
     public async delStore(headers: env.Headers, scope: { key: string; logger?: boolean }) {
