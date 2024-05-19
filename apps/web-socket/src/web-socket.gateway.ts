@@ -5,6 +5,7 @@ import { WINSTON_MODULE_PROVIDER, WinstonLogger, NestLogger, CustomHeaderLogger 
 import { Server } from 'socket.io'
 import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
+import { WebSocketCommonService } from '@web-socket/services/web-socket.common.service'
 import { WebSocketService } from '@web-socket/services/web-socket.service'
 import { divineResolver } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
@@ -21,7 +22,11 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly loggerService: WinstonLogger
     @WebSocketServer() private readonly server: Server
 
-    constructor(private readonly webSocketClientService: WebSocketClientService, private readonly webSocketService: WebSocketService) {}
+    constructor(
+        private readonly webSocketClientService: WebSocketClientService,
+        private readonly webSocketCommonService: WebSocketCommonService,
+        private readonly webSocketService: WebSocketService
+    ) {}
 
     /**服务启动**/
     public async afterInit(server: Server) {
@@ -33,11 +38,8 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @CustomHeaderLogger(socket => socket.handshake.headers)
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
-        this.logger.info({
-            message: '开启长连接-初始化完毕',
-            socketId: socket.id,
-            user: socket.user,
-            rooms: this.server.sockets.adapter.rooms
+        return await this.webSocketCommonService.fetchSocketUserOnline(socket.handshake.headers, socket.user.uid, true).then(() => {
+            this.logger.info({ message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user, rooms: socket.rooms })
         })
     }
 
@@ -45,11 +47,8 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @CustomHeaderLogger(socket => socket.handshake.headers)
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketClientService.disconnect(socket.user.uid)
-        this.logger.info({
-            message: '中断长连接',
-            socketId: socket.id,
-            user: socket.user,
-            rooms: this.server.sockets.adapter.rooms
+        return await this.webSocketCommonService.fetchSocketUserOnline(socket.handshake.headers, socket.user.uid, false).then(() => {
+            this.logger.info({ message: '中断长连接', socketId: socket.id, user: socket.user, rooms: socket.rooms })
         })
     }
 

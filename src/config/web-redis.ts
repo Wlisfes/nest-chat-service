@@ -18,3 +18,5 @@ export const CHAT_CHAHE_USER_LASTTIME = 'chat:chahe:user:lasttime'
 export const CHAT_CHAHE_USER_LIMIT = 'chat:chahe:user:limit'
 /**用户登录设备来源redis存储键**/
 export const CHAT_CHAHE_USER_DEVICE = 'chat:chahe:user:device'
+/**用户登录在线redis存储键**/
+export const CHAT_CHAHE_USER_ONLINE = 'chat:chahe:user:online'
