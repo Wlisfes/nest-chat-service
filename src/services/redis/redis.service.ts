@@ -11,9 +11,9 @@ export class RedisService extends LoggerService {
         super()
     }
 
-    @Cron('45 * * * * *')
+    @Cron('*/30 * * * * *')
     public async divineCronHandler() {
-        return await this.client.ping()
+        this.client.ping(String(process.pid))
     }
 
     /**redis存储**/
