@@ -158,7 +158,13 @@ export class ContactService extends LoggerService {
             qb.cache(5000)
             qb.orderBy('t.keyId', 'DESC')
             return qb.getManyAndCount().then(async ([list = [], total = 0]) => {
-                const mask = list.map(async item => ({ ...item, email: await divineMaskCharacter('email', item.email) }))
+                const keys = list.map(item => divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, item.uid))
+                const map = await this.redisService.mgetStore(headers, { keys: await Promise.all(keys), logger: false })
+                const mask = list.map(async (item, index) => ({
+                    ...item,
+                    online: map[index].value,
+                    email: await divineMaskCharacter('email', item.email)
+                }))
                 return await divineResolver({ total, list: await Promise.all(mask) })
             })
         })
@@ -180,7 +186,7 @@ export class ContactService extends LoggerService {
                 const keys = list.map(item => {
                     return divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, item.userId === userId ? item.niveId : item.userId)
                 })
-                const map = await this.redisService.mgetStore(headers, { keys: await Promise.all(keys) })
+                const map = await this.redisService.mgetStore(headers, { keys: await Promise.all(keys), logger: false })
                 return await divineResolver({
                     total,
                     list: list.map((item, index) => ({ ...item, online: map[index].value }))
