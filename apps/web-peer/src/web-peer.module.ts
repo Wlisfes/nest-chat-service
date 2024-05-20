@@ -6,6 +6,7 @@ import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { RabbitmqModule } from '@/modules/rabbitmq.module'
 import { WebPeerService } from '@web-peer/web-peer.service'
+import { WebPeerClientService } from '@web-peer/web-peer.client.service'
 
 @Module({
     imports: [
@@ -27,6 +28,6 @@ import { WebPeerService } from '@web-peer/web-peer.service'
         RabbitmqModule
     ],
     controllers: [],
-    providers: [WebPeerService]
+    providers: [WebPeerService, WebPeerClientService]
 })
 export class WebPeerModule {}
