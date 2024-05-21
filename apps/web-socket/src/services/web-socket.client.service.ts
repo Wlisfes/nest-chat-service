@@ -1,13 +1,19 @@
 import { Injectable, HttpStatus } from '@nestjs/common'
 import { Server } from 'socket.io'
+import { RedisService } from '@/services/redis/redis.service'
 import { RedisSubscribeService, Subscribe } from '@/services/redis/redis.subscribe.service'
-import { divineDelay, divineHandler } from '@/utils/utils-common'
+import { divineDelay, divineHandler, divineKeyCompose } from '@/utils/utils-common'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebSocketClientService extends RedisSubscribeService {
     public readonly client: Map<string, env.AuthSocket> = new Map()
     public server: Server
+
+    constructor(private readonly redisService: RedisService) {
+        super()
+    }
 
     /**存储Socket运行实例**/
     public async setServer(server: Server) {
@@ -47,11 +53,18 @@ export class WebSocketClientService extends RedisSubscribeService {
         return await this.delClient(userId)
     }
 
-    /**存储实例**/
+    /**存储实例**/ //prettier-ignore
     public async setClient(userId: string, socket: env.AuthSocket) {
         await this.fetchSocketHandler('connection', socket)
         await this.disconnect(userId)
-        return this.client.set(userId, socket)
+        const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_SOCKET, userId)
+        return await this.redisService.setStore(socket.handshake.headers, {
+            key: keyName,
+            data: socket.id,
+            logger: false
+        }).then(() => {
+            return this.client.set(userId, socket)
+        })
     }
 
     /**socket连接事件广播**/
