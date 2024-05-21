@@ -1,10 +1,9 @@
-import { Injectable, HttpStatus } from '@nestjs/common'
-import { RedisSubscribeService, Subscribe } from '@/services/redis/redis.subscribe.service'
-import { divineDelay, divineHandler } from '@/utils/utils-common'
+import { Injectable } from '@nestjs/common'
+import { divineHandler } from '@/utils/utils-common'
 import * as env from '@/interface/instance.resolver'
 
 @Injectable()
-export class WebPeerClientService extends RedisSubscribeService {
+export class WebPeerClientService {
     public readonly client: Map<string, env.AuthClient> = new Map()
 
     public async getClient(userId: string) {
@@ -16,26 +15,18 @@ export class WebPeerClientService extends RedisSubscribeService {
     }
 
     public async setClient(userId: string, client: env.AuthClient) {
-        await this.disconnect(userId)
-        return this.client.set(userId, client)
-    }
-
-    /**关闭实例**/
-    public async disconnect(userId: string) {
-        const client = await this.getClient(userId)
-        return await divineHandler(Boolean(client), {
-            handler: async () => {
-                await client.getSocket().close()
-                return await this.delClient(userId)
-            }
+        return await this.disconnect(userId, true).then(() => {
+            return this.client.set(userId, client)
         })
     }
 
-    @Subscribe('web-socket.server')
-    private async fetchSocketSubscribe(channel: string, message: env.Omix<{ type: string; pid: number; uid: string }>) {
-        return await divineHandler(channel === 'web-socket.server' && message.pid !== process.pid, {
+    /**关闭实例**/
+    public async disconnect(userId: string, where: boolean) {
+        const client = await this.getClient(userId)
+        return await divineHandler(Boolean(client) && where, {
             handler: async () => {
-                return await this.disconnect(message.uid)
+                await client.getSocket().close()
+                return await this.delClient(userId)
             }
         })
     }

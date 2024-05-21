@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { ExpressPeerServer, IClient } from 'peer'
 import { LoggerService, Logger } from '@/services/logger.service'
@@ -40,9 +40,30 @@ export class WebPeerService extends LoggerService {
 
     /**连接成功事件**/
     @Logger
-    public async fetchServerConnection(event: env.Omix<IClient>) {
-        return await this.fetchClientJwtAuthorize(event).then(client => {
-            this.logger.log(client.headers, { message: '建立长连接', connectId: client.getId(), user: client.user })
+    public async fetchServerConnection(event: IClient) {
+        return await this.fetchClientJwtAuthorize(event).then(async client => {
+            await this.webPeerClientService.setClient(client.user.uid, client)
+            return this.logger.log(client.headers, {
+                message: '建立长连接',
+                connectId: client.getId(),
+                user: client.user
+            })
+        })
+    }
+
+    /**中断连接事件**/
+    @Logger
+    public async fetchServerDisconnect(event: IClient) {
+        return await this.fetchClientJwtAuthorize(event).then(async client => {
+            const socket = await this.webPeerClientService.getClient(client.user.uid)
+            if (socket && socket.getId() === client.getId()) {
+                await this.webPeerClientService.disconnect(client.user.uid, true)
+            }
+            return this.logger.log(client.headers, {
+                message: '中断长连接',
+                connectId: client.getId(),
+                user: client.user
+            })
         })
     }
 
@@ -54,17 +75,10 @@ export class WebPeerService extends LoggerService {
             path: '/peer-server'
         })
 
+        /**绑定连接成功事件**/
         this.server.on('connection', this.fetchServerConnection.bind(this))
-        // this.server.on('connection', async event => {
-        // const client = await this.fetchClientJwtAuthorize(event)
-        // return await this.webPeerClientService.setClient(client.user.uid, client).then(() => {})
-        // console.log(client)
-        // console.log(`Peer连接成功:`, { user: peer.user, token: client.getToken(), id: client.getId() })
-        // })
-
-        // this.server.on('disconnect', client => {
-        //     console.log(`Peer中断连接:`, { client, token: client.getToken(), id: client.getId() })
-        // })
+        /**绑定中断连接事件**/
+        this.server.on('disconnect', this.fetchServerDisconnect.bind(this))
 
         // this.server.on('message', (client, message) => {
         //     console.log(`Peer message:`, {
