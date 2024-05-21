@@ -45,7 +45,7 @@ export class WebPeerService extends LoggerService {
             await this.webPeerClientService.setClient(client.user.uid, client)
             return this.logger.log(client.headers, {
                 message: '建立长连接',
-                connectId: client.getId(),
+                socketId: client.getId(),
                 user: client.user
             })
         })
@@ -61,7 +61,7 @@ export class WebPeerService extends LoggerService {
             }
             return this.logger.log(client.headers, {
                 message: '中断长连接',
-                connectId: client.getId(),
+                socketId: client.getId(),
                 user: client.user
             })
         })
@@ -71,7 +71,7 @@ export class WebPeerService extends LoggerService {
     public async fetchConnectServer(app: NestExpressApplication) {
         this.server = ExpressPeerServer(app.getHttpServer(), {
             port: 34550,
-            alive_timeout: 60000,
+            alive_timeout: 30000, //30秒未接收到心跳会关闭连接
             path: '/peer-server'
         })
 
@@ -79,19 +79,6 @@ export class WebPeerService extends LoggerService {
         this.server.on('connection', this.fetchServerConnection.bind(this))
         /**绑定中断连接事件**/
         this.server.on('disconnect', this.fetchServerDisconnect.bind(this))
-
-        // this.server.on('message', (client, message) => {
-        //     console.log(`Peer message:`, {
-        //         client,
-        //         token: client.getToken(),
-        //         id: client.getId(),
-        //         message
-        //     })
-        // })
-
-        // this.server.on('error', error => {
-        //     console.error(`Peer server error: ${error.message}`, { error })
-        // })
 
         return app.use(this.server)
     }

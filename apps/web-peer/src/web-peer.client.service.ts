@@ -4,7 +4,7 @@ import * as env from '@/interface/instance.resolver'
 
 @Injectable()
 export class WebPeerClientService {
-    public readonly client: Map<string, env.AuthClient> = new Map()
+    public readonly client: Map<string, env.Omix<env.AuthClient>> = new Map()
 
     public async getClient(userId: string) {
         return this.client.get(userId)
@@ -25,7 +25,10 @@ export class WebPeerClientService {
         const client = await this.getClient(userId)
         return await divineHandler(Boolean(client) && where, {
             handler: async () => {
-                await client.getSocket().close()
+                const socket = client.getSocket()
+                if (socket) {
+                    socket.close()
+                }
                 return await this.delClient(userId)
             }
         })
