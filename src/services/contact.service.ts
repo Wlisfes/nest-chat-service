@@ -211,18 +211,27 @@ export class ContactService extends LoggerService {
                 uid: scope.uid
             })
             qb.cache(5000)
-            return qb.getOne().then(async node => {
+            return qb.getOne().then(async (node: env.Omix<entities.SchemaContact>) => {
                 await this.customService.divineCatchWherer(!Boolean(node), node, {
                     message: '该用户不是您的好友，无法查看详情'
                 })
-                return await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, node.userId === userId ? node.niveId : node.userId).then(
-                    async key => {
-                        return await divineResolver({
-                            ...node,
-                            online: await this.redisService.getStore(headers, { key, defaultValue: false })
-                        })
-                    }
-                )
+                const user = await divineParameter(node.user).then(async data => {
+                    const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, data.uid)
+                    const socketName = await divineKeyCompose(web.CHAT_CHAHE_USER_SOCKET, data.uid)
+                    return Object.assign(data, {
+                        online: await this.redisService.getStore(headers, { key: keyName, defaultValue: false, logger: false }),
+                        socketId: await this.redisService.getStore(headers, { key: socketName, defaultValue: null, logger: false })
+                    })
+                })
+                const nive = await divineParameter(node.nive).then(async data => {
+                    const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, data.uid)
+                    const socketName = await divineKeyCompose(web.CHAT_CHAHE_USER_SOCKET, data.uid)
+                    return Object.assign(data, {
+                        online: await this.redisService.getStore(headers, { key: keyName, defaultValue: false, logger: false }),
+                        socketId: await this.redisService.getStore(headers, { key: socketName, defaultValue: null, logger: false })
+                    })
+                })
+                return await divineResolver({ ...node, user: { ...user, ...node.user }, nive: { ...nive, ...node.nive } })
             })
         })
     }

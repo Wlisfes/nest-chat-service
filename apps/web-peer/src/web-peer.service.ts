@@ -72,7 +72,7 @@ export class WebPeerService extends LoggerService {
         this.server = ExpressPeerServer(app.getHttpServer(), {
             port: 34550,
             alive_timeout: 30000, //30秒未接收到心跳会关闭连接
-            path: '/peer-server'
+            path: '/web-peer-server'
         })
 
         /**绑定连接成功事件**/
