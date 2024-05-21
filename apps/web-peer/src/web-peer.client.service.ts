@@ -30,4 +30,13 @@ export class WebPeerClientService extends RedisSubscribeService {
             }
         })
     }
+
+    @Subscribe('web-socket.server')
+    private async fetchSocketSubscribe(channel: string, message: env.Omix<{ type: string; pid: number; uid: string }>) {
+        return await divineHandler(channel === 'web-socket.server' && message.pid !== process.pid, {
+            handler: async () => {
+                return await this.disconnect(message.uid)
+            }
+        })
+    }
 }

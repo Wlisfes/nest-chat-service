@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { ExpressPeerServer, IClient } from 'peer'
-import { LoggerService } from '@/services/logger.service'
+import { LoggerService, Logger } from '@/services/logger.service'
 import { CustomService } from '@/services/custom.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { WebPeerClientService } from '@web-peer/web-peer.client.service'
@@ -39,9 +39,11 @@ export class WebPeerService extends LoggerService {
     }
 
     /**连接成功事件**/
+    @Logger
     public async fetchServerConnection(event: env.Omix<IClient>) {
-        // console.log(event)
-        // this.logger.info([], { event })
+        return await this.fetchClientJwtAuthorize(event).then(client => {
+            this.logger.log(client.headers, { message: '建立长连接', connectId: client.getId(), user: client.user })
+        })
     }
 
     /**启动peer服务**/
@@ -52,7 +54,7 @@ export class WebPeerService extends LoggerService {
             path: '/peer-server'
         })
 
-        this.server.on('connection', this.fetchServerConnection)
+        this.server.on('connection', this.fetchServerConnection.bind(this))
         // this.server.on('connection', async event => {
         // const client = await this.fetchClientJwtAuthorize(event)
         // return await this.webPeerClientService.setClient(client.user.uid, client).then(() => {})
@@ -60,22 +62,22 @@ export class WebPeerService extends LoggerService {
         // console.log(`Peer连接成功:`, { user: peer.user, token: client.getToken(), id: client.getId() })
         // })
 
-        this.server.on('disconnect', client => {
-            console.log(`Peer中断连接:`, { client, token: client.getToken(), id: client.getId() })
-        })
+        // this.server.on('disconnect', client => {
+        //     console.log(`Peer中断连接:`, { client, token: client.getToken(), id: client.getId() })
+        // })
 
-        this.server.on('message', (client, message) => {
-            console.log(`Peer message:`, {
-                client,
-                token: client.getToken(),
-                id: client.getId(),
-                message
-            })
-        })
+        // this.server.on('message', (client, message) => {
+        //     console.log(`Peer message:`, {
+        //         client,
+        //         token: client.getToken(),
+        //         id: client.getId(),
+        //         message
+        //     })
+        // })
 
-        this.server.on('error', error => {
-            console.error(`Peer server error: ${error.message}`, { error })
-        })
+        // this.server.on('error', error => {
+        //     console.error(`Peer server error: ${error.message}`, { error })
+        // })
 
         return app.use(this.server)
     }

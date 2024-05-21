@@ -1,7 +1,7 @@
 import { Inject, UseGuards } from '@nestjs/common'
 import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets'
 import { SubscribeMessage, ConnectedSocket, MessageBody } from '@nestjs/websockets'
-import { WINSTON_MODULE_PROVIDER, WinstonLogger, NestLogger, CustomHeaderLogger } from '@/services/logger.service'
+import { WINSTON_MODULE_PROVIDER, WinstonLogger, NestLogger, Logger } from '@/services/logger.service'
 import { Server } from 'socket.io'
 import { WebSocketGuard } from '@/guards/web-socket.guard'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
@@ -35,52 +35,78 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     }
 
     /**开启长连接**/
-    @CustomHeaderLogger(socket => socket.handshake.headers)
+    @Logger
     public async handleConnection(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketService.httpSocketConnection(socket.handshake.headers, socket, socket.user.uid)
         return await this.webSocketCommonService.fetchSocketUserOnline(socket.handshake.headers, socket.user.uid, true).then(() => {
-            this.logger.info({ message: '开启长连接-初始化完毕', socketId: socket.id, user: socket.user, rooms: socket.rooms })
+            this.logger.log(socket.handshake.headers, {
+                message: '开启长连接-初始化完毕',
+                socketId: socket.id,
+                user: socket.user,
+                rooms: socket.rooms
+            })
         })
     }
 
     /**中断长连接**/
-    @CustomHeaderLogger(socket => socket.handshake.headers)
+    @Logger
     public async handleDisconnect(@ConnectedSocket() socket: env.AuthSocket) {
         await this.webSocketClientService.disconnect(socket.user.uid)
         return await this.webSocketCommonService.fetchSocketUserOnline(socket.handshake.headers, socket.user.uid, false).then(() => {
-            this.logger.info({ message: '中断长连接', socketId: socket.id, user: socket.user, rooms: socket.rooms })
+            this.logger.log(socket.handshake.headers, {
+                message: '中断长连接',
+                socketId: socket.id,
+                user: socket.user,
+                rooms: socket.rooms
+            })
         })
     }
 
     /**发送消息已读操作**/
+    @Logger
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-change-messager')
-    @CustomHeaderLogger(socket => socket.handshake.headers)
     public async SubscribeSocketChangeMessager(
         @ConnectedSocket() socket: env.AuthSocket,
         @MessageBody() scope: env.BodySocketChangeMessager
     ) {
-        this.logger.info({ message: '发送消息已读操作-开始', socketId: socket.id, data: scope })
+        this.logger.log(socket.handshake.headers, {
+            message: '发送消息已读操作-开始',
+            socketId: socket.id,
+            data: scope
+        })
         /**Socket已读消息操作、消息推入MQ队列**/
         const node = await this.webSocketService.httpSocketChangeMessager(socket.handshake.headers, scope)
         return await divineResolver(node, () => {
-            this.logger.info({ message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
+            this.logger.log(socket.handshake.headers, {
+                message: '发送消息已读操作-结束',
+                socketId: socket.id,
+                data: scope
+            })
         })
     }
 
     /**发送自定义消息**/
+    @Logger
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-customize-messager')
-    @CustomHeaderLogger(socket => socket.handshake.headers)
     public async SubscribeSocketCustomizeMessager(
         @ConnectedSocket() socket: env.AuthSocket,
         @MessageBody() scope: env.BodyCheckCustomizeMessager
     ) {
-        this.logger.info({ message: '发送自定义消息-开始', socketId: socket.id, data: scope })
+        this.logger.log(socket.handshake.headers, {
+            message: '发送自定义消息-开始',
+            socketId: socket.id,
+            data: scope
+        })
         /**Socket发送自定义消息、消息推入MQ队列**/
         const node = await this.webSocketService.httpSocketCustomizeMessager(socket.handshake.headers, socket.user.uid, scope)
         return await divineResolver(node, () => {
-            this.logger.info({ message: '发送自定义消息-结束', socketId: socket.id, node })
+            this.logger.log(socket.handshake.headers, {
+                message: '发送自定义消息-结束',
+                socketId: socket.id,
+                node
+            })
         })
     }
 }
