@@ -1,10 +1,13 @@
 import { Injectable, HttpStatus } from '@nestjs/common'
 import { LoggerService, Logger } from '@/services/logger.service'
+import { RedisService } from '@/services/redis/redis.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
 import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
 import { WebSocketMessageService } from '@web-socket/services/web-socket.message.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
-import { divineResolver, divineHandler } from '@/utils/utils-common'
+import { divineResolver, divineHandler, divineKeyCompose, divineParameter } from '@/utils/utils-common'
+import { divineCatchWherer } from '@/utils/utils-plugin'
+import * as web from '@/config/web-instance'
 import * as env from '@/interface/instance.resolver'
 import * as entities from '@/entities/instance'
 
@@ -12,9 +15,10 @@ import * as entities from '@/entities/instance'
 export class WebSocketService extends LoggerService {
     constructor(
         private readonly webSocketClientService: WebSocketClientService,
-        private dataBaseService: WebSocketDataBaseService,
-        private readonly messageService: WebSocketMessageService,
-        private readonly rabbitmqService: RabbitmqService
+        private webSocketDataBaseService: WebSocketDataBaseService,
+        private readonly webSocketMessageService: WebSocketMessageService,
+        private readonly rabbitmqService: RabbitmqService,
+        private readonly redisService: RedisService
     ) {
         super()
     }
@@ -24,7 +28,7 @@ export class WebSocketService extends LoggerService {
     public async httpSocketConnection(headers: env.Headers, socket: env.AuthSocket, userId: string) {
         try {
             this.logger.info({ message: '开启长连接-初始化开始', socketId: socket.id, user: socket.user })
-            await this.dataBaseService.fetchSocketColumnSession(headers, userId).then(async sessions => {
+            await this.webSocketDataBaseService.fetchSocketColumnSession(headers, userId).then(async sessions => {
                 socket.join(sessions)
                 this.logger.info({ message: '初始化用户会话房间', socketId: socket.id, user: socket.user, sessions })
                 return await divineResolver(sessions)
@@ -38,7 +42,7 @@ export class WebSocketService extends LoggerService {
     @Logger
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
         try {
-            const node = await this.messageService.httpCommonCustomizeMessager(headers, userId, {
+            const node = await this.webSocketMessageService.httpCommonCustomizeMessager(headers, userId, {
                 ...scope,
                 referrer: entities.EnumMessagerReferrer.socket
             })
@@ -93,7 +97,7 @@ export class WebSocketService extends LoggerService {
         try {
             this.logger.info({ message: 'Socket推送消息至客户端-开始推送', data: scope })
             /**获取消息详情、执行socket推送**/
-            const message = await this.dataBaseService.fetchMessagerResolver(headers, { sid: scope.sid })
+            const message = await this.webSocketDataBaseService.fetchMessagerResolver(headers, { sid: scope.sid })
             const rooms = this.webSocketClientService.server.sockets.adapter.rooms
             const pidSessionId = `${process.pid}-${scope.sessionId}`
             if (!Boolean(message)) {
@@ -180,7 +184,7 @@ export class WebSocketService extends LoggerService {
                     return await divineResolver({ message: '用户不在线', status: HttpStatus.OK })
                 },
                 handler: async () => {
-                    return await this.dataBaseService.fetchNotificationResolver(headers, scope.notifyId).then(async node => {
+                    return await this.webSocketDataBaseService.fetchNotificationResolver(headers, scope.notifyId).then(async node => {
                         if (Boolean(node)) {
                             socket.emit(typeName, node)
                             this.logger.info({ message: 'Socket推送操作通知消息至客户端成功', node })
@@ -197,5 +201,43 @@ export class WebSocketService extends LoggerService {
             })
             return await divineResolver({ message: e.message, status: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR })
         }
+    }
+
+    /**远程呼叫查询**/ //prettier-ignore
+    @Logger
+    public async httpSocketCallRemoteResolver(headers: env.Headers, userId: string, scope: env.BodySocketCallRemoteResolver) {
+        const IS_Contact = scope.source === entities.EnumSessionSource.contact
+        const IS_Communit = scope.source === entities.EnumSessionSource.communit
+        await divineCatchWherer(IS_Contact && !scope.contactId, { message: '好友绑定关系ID必填' })
+        await divineCatchWherer(IS_Communit && !scope.contactId, { message: '社群ID必填' })
+        return await this.webSocketMessageService.httpCheckSessionBinder(headers, userId, scope.sid).then(async (data: env.Omix<entities.SessionEntier>) => {
+            const contact = data.contact as env.Omix<entities.ContactEntier>
+            const communit = data.communit as env.Omix<entities.CommunitEntier>
+            if (IS_Contact) {
+                const user = await divineParameter<entities.UserEntier>(contact.user).then(async ({ uid, nickname, status, avatar }) => {
+                    const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, uid)
+                    const socketName = await divineKeyCompose(web.CHAT_CHAHE_USER_SOCKET, uid)
+                    const online = await this.redisService.getStore(headers, { key: keyName, defaultValue: false, logger: false })
+                    const socketId = await this.redisService.getStore(headers, { key: socketName, defaultValue: null, logger: false })
+                    return { uid, nickname, status, avatar, online, socketId }
+                })
+                const nive = await divineParameter<entities.UserEntier>(contact.nive).then(async ({ uid, nickname, status, avatar }) => {
+                    const keyName = await divineKeyCompose(web.CHAT_CHAHE_USER_ONLINE, uid)
+                    const socketName = await divineKeyCompose(web.CHAT_CHAHE_USER_SOCKET, uid)
+                    const online = await this.redisService.getStore(headers, { key: keyName, defaultValue: false, logger: false })
+                    const socketId = await this.redisService.getStore(headers, { key: socketName, defaultValue: null, logger: false })
+                    return { uid, nickname, status, avatar, online, socketId }
+                })
+                return await divineResolver({ code: HttpStatus.OK, data: { user, nive } })
+            } else if (IS_Communit) {
+                const keyName = await divineKeyCompose(web.CHAT_CHAHE_COMMUNIT_CALL, communit.uid)
+                return await divineResolver({
+                    code: HttpStatus.OK,
+                    data: {
+                        communit: await this.redisService.getStore(headers, { key: keyName, defaultValue: [], logger: false })
+                    }
+                }) 
+            }
+        })
     }
 }

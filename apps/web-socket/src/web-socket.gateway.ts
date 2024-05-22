@@ -63,50 +63,44 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     }
 
     /**发送消息已读操作**/
-    @Logger
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-change-messager')
+    @Logger
     public async SubscribeSocketChangeMessager(
         @ConnectedSocket() socket: env.AuthSocket,
         @MessageBody() scope: env.BodySocketChangeMessager
     ) {
-        this.logger.log(socket.handshake.headers, {
-            message: '发送消息已读操作-开始',
-            socketId: socket.id,
-            data: scope
-        })
+        this.logger.log(socket.handshake.headers, { message: '发送消息已读操作-开始', socketId: socket.id, data: scope })
         /**Socket已读消息操作、消息推入MQ队列**/
         const node = await this.webSocketService.httpSocketChangeMessager(socket.handshake.headers, scope)
         return await divineResolver(node, () => {
-            this.logger.log(socket.handshake.headers, {
-                message: '发送消息已读操作-结束',
-                socketId: socket.id,
-                data: scope
-            })
+            this.logger.log(socket.handshake.headers, { message: '发送消息已读操作-结束', socketId: socket.id, data: scope })
         })
     }
 
     /**发送自定义消息**/
-    @Logger
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-customize-messager')
+    @Logger
     public async SubscribeSocketCustomizeMessager(
         @ConnectedSocket() socket: env.AuthSocket,
         @MessageBody() scope: env.BodyCheckCustomizeMessager
     ) {
-        this.logger.log(socket.handshake.headers, {
-            message: '发送自定义消息-开始',
-            socketId: socket.id,
-            data: scope
-        })
+        this.logger.log(socket.handshake.headers, { message: '发送自定义消息-开始', socketId: socket.id, data: scope })
         /**Socket发送自定义消息、消息推入MQ队列**/
         const node = await this.webSocketService.httpSocketCustomizeMessager(socket.handshake.headers, socket.user.uid, scope)
         return await divineResolver(node, () => {
-            this.logger.log(socket.handshake.headers, {
-                message: '发送自定义消息-结束',
-                socketId: socket.id,
-                node
-            })
+            this.logger.log(socket.handshake.headers, { message: '发送自定义消息-结束', socketId: socket.id, node })
         })
+    }
+
+    /**远程呼叫查询**/
+    @UseGuards(WebSocketGuard)
+    @SubscribeMessage('socket-call-resolver')
+    public async SubscribeSocketCallRemoteResolver(
+        @ConnectedSocket() socket: env.AuthSocket,
+        @MessageBody() scope: env.BodySocketCallRemoteResolver
+    ) {
+        return await this.webSocketService.httpSocketCallRemoteResolver(socket.handshake.headers, socket.user.uid, scope)
     }
 }

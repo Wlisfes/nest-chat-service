@@ -22,3 +22,6 @@ export const CHAT_CHAHE_USER_DEVICE = 'chat:chahe:user:device'
 export const CHAT_CHAHE_USER_ONLINE = 'chat:chahe:user:online'
 /**用户登录在线socketId存储键**/
 export const CHAT_CHAHE_USER_SOCKET = 'chat:chahe:user:socket'
+
+/**群聊在线通话用户redis存储键**/
+export const CHAT_CHAHE_COMMUNIT_CALL = 'chat:chahe:communit:call'
