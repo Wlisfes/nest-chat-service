@@ -203,14 +203,23 @@ export class WebSocketService extends LoggerService {
         }
     }
 
-    /**远程呼叫查询**/ //prettier-ignore
+    /**远程呼叫查询**/
     @Logger
     public async httpSocketCallRemoteResolver(headers: env.Headers, userId: string, scope: env.BodySocketCallRemoteResolver) {
-        const IS_Contact = scope.source === entities.EnumSessionSource.contact
-        const IS_Communit = scope.source === entities.EnumSessionSource.communit
-        await divineCatchWherer(IS_Contact && !scope.contactId, { message: '好友绑定关系ID必填' })
-        await divineCatchWherer(IS_Communit && !scope.contactId, { message: '社群ID必填' })
-        return await this.webSocketMessageService.httpCheckSessionBinder(headers, userId, scope.sid).then(async (data: env.Omix<entities.SessionEntier>) => {
+        try {
+            const IS_Contact = scope.source === entities.EnumSessionSource.contact
+            const IS_Communit = scope.source === entities.EnumSessionSource.communit
+            await divineCatchWherer(IS_Contact && !scope.contactId, {
+                message: '好友绑定关系ID必填'
+            })
+            await divineCatchWherer(IS_Communit && !scope.contactId, {
+                message: '社群ID必填'
+            })
+            const data = (await this.webSocketMessageService.httpCheckSessionBinder(
+                headers,
+                userId,
+                scope.sid
+            )) as env.Omix<entities.SessionEntier>
             const contact = data.contact as env.Omix<entities.ContactEntier>
             const communit = data.communit as env.Omix<entities.CommunitEntier>
             if (IS_Contact) {
@@ -228,16 +237,27 @@ export class WebSocketService extends LoggerService {
                     const socketId = await this.redisService.getStore(headers, { key: socketName, defaultValue: null, logger: false })
                     return { uid, nickname, status, avatar, online, socketId }
                 })
-                return await divineResolver({ code: HttpStatus.OK, data: { user, nive } })
+                return await divineResolver({
+                    message: '查询成功',
+                    code: HttpStatus.OK,
+                    data: { user, nive }
+                })
             } else if (IS_Communit) {
                 const keyName = await divineKeyCompose(web.CHAT_CHAHE_COMMUNIT_CALL, communit.uid)
                 return await divineResolver({
+                    message: '查询成功',
                     code: HttpStatus.OK,
                     data: {
                         communit: await this.redisService.getStore(headers, { key: keyName, defaultValue: [], logger: false })
                     }
-                }) 
+                })
             }
-        })
+        } catch (e) {
+            return await divineResolver({
+                message: e.message,
+                code: e.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+                data: { message: e.message }
+            })
+        }
     }
 }
