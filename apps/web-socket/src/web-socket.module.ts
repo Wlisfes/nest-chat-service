@@ -5,7 +5,6 @@ import { RedisModule } from '@/modules/redis.module'
 import { DatabaseModule } from '@/modules/database.module'
 import { RabbitmqModule } from '@/modules/rabbitmq.module'
 import { WebSocketController } from '@web-socket/web-socket.controller'
-import { WebSocketMessageService } from '@web-socket/services/web-socket.message.service'
 import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { WebSocketCommonService } from '@web-socket/services/web-socket.common.service'
@@ -15,13 +14,6 @@ import { WebSocketEventGateway } from '@web-socket/web-socket.gateway'
 @Module({
     imports: [LoggerModule.forRoot({ name: 'web-socket' }), ConfigerModule, RedisModule, DatabaseModule, RabbitmqModule],
     controllers: [WebSocketController],
-    providers: [
-        WebSocketMessageService,
-        WebSocketDataBaseService,
-        WebSocketClientService,
-        WebSocketCommonService,
-        WebSocketService,
-        WebSocketEventGateway
-    ]
+    providers: [WebSocketDataBaseService, WebSocketClientService, WebSocketCommonService, WebSocketService, WebSocketEventGateway]
 })
 export class WebSocketModule {}

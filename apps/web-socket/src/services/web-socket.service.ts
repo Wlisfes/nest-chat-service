@@ -2,8 +2,8 @@ import { Injectable, HttpStatus } from '@nestjs/common'
 import { LoggerService, Logger } from '@/services/logger.service'
 import { RedisService } from '@/services/redis/redis.service'
 import { RabbitmqService } from '@/services/rabbitmq.service'
+import { MessagerService } from '@/services/messager.service'
 import { WebSocketDataBaseService } from '@web-socket/services/web-socket.database.service'
-import { WebSocketMessageService } from '@web-socket/services/web-socket.message.service'
 import { WebSocketClientService } from '@web-socket/services/web-socket.client.service'
 import { divineResolver, divineHandler, divineKeyCompose, divineParameter } from '@/utils/utils-common'
 import { divineCatchWherer } from '@/utils/utils-plugin'
@@ -16,9 +16,9 @@ export class WebSocketService extends LoggerService {
     constructor(
         private readonly webSocketClientService: WebSocketClientService,
         private webSocketDataBaseService: WebSocketDataBaseService,
-        private readonly webSocketMessageService: WebSocketMessageService,
         private readonly rabbitmqService: RabbitmqService,
-        private readonly redisService: RedisService
+        private readonly redisService: RedisService,
+        private readonly messagerService: MessagerService
     ) {
         super()
     }
@@ -42,7 +42,7 @@ export class WebSocketService extends LoggerService {
     @Logger
     public async httpSocketCustomizeMessager(headers: env.Headers, userId: string, scope: env.BodyCheckCustomizeMessager) {
         try {
-            const node = await this.webSocketMessageService.httpCommonCustomizeMessager(headers, userId, {
+            const node = await this.messagerService.httpCommonCustomizeMessager(headers, userId, {
                 ...scope,
                 referrer: entities.EnumMessagerReferrer.socket
             })
@@ -215,11 +215,7 @@ export class WebSocketService extends LoggerService {
             await divineCatchWherer(IS_Communit && !scope.contactId, {
                 message: '社群ID必填'
             })
-            const data = (await this.webSocketMessageService.httpCheckSessionBinder(
-                headers,
-                userId,
-                scope.sid
-            )) as env.Omix<entities.SessionEntier>
+            const data = (await this.messagerService.httpCheckSessionBinder(headers, userId, scope.sid)) as env.Omix<entities.SessionEntier>
             const contact = data.contact as env.Omix<entities.ContactEntier>
             const communit = data.communit as env.Omix<entities.CommunitEntier>
             if (IS_Contact) {
