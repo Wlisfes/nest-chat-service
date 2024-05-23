@@ -66,7 +66,10 @@ export class WebSocketEventGateway implements OnGatewayConnection, OnGatewayDisc
     @UseGuards(WebSocketGuard)
     @SubscribeMessage('socket-session-column-messager')
     @Logger
-    public async SubscribeSocketSessionColumnMessager(@ConnectedSocket() socket: env.AuthSocket, scope: env.QuerySessionColumnMessager) {
+    public async SubscribeSocketSessionColumnMessager(
+        @ConnectedSocket() socket: env.AuthSocket,
+        @MessageBody() scope: env.QuerySessionColumnMessager
+    ) {
         return await this.webSocketService.httpSocketSessionColumnMessager(socket.handshake.headers, socket.user.uid, scope)
     }
 

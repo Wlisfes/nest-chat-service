@@ -37,6 +37,8 @@ export class MessagerService extends LoggerService {
     public async httpCheckSessionBinder(headers: env.Headers, userId: string, sessionId: string) {
         return await this.customService.divineBuilder(this.customService.tableSession, async qb => {
             qb.leftJoinAndMapOne('t.contact', entities.ContactEntier, 'contact', 'contact.uid = t.contactId')
+            qb.leftJoinAndMapOne('contact.user', entities.UserEntier, 'user', 'user.uid = contact.userId')
+            qb.leftJoinAndMapOne('contact.nive', entities.UserEntier, 'nive', 'nive.uid = contact.niveId')
             qb.leftJoinAndMapOne('t.communit', entities.CommunitEntier, 'communit', 'communit.uid = t.communitId')
             qb.leftJoinAndMapOne(
                 'communit.member',
