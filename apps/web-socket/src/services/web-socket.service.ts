@@ -91,6 +91,15 @@ export class WebSocketService extends LoggerService {
         }
     }
 
+    /**查询会话消息列表**/
+    public async httpSocketSessionColumnMessager(headers: env.Headers, userId: string, scope: env.QuerySessionColumnMessager) {
+        return await divineResolver({
+            message: '请求成功',
+            code: HttpStatus.OK,
+            data: await this.messagerService.httpSessionColumnMessager(headers, userId, scope)
+        })
+    }
+
     /**Socket推送消息至客户端**/
     @Logger
     public async httpSocketPushCustomizeMessager(headers: env.Headers, scope: env.Omix<env.BodySocketPushCustomizeMessager>) {
