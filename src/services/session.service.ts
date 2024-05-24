@@ -76,7 +76,10 @@ export class SessionService extends LoggerService {
                                         { userId: userId }
                                     )
                                     qb.select(divineSelection('t', ['sid', 'sessionId', 'source', 'status', 'userId']))
-                                    qb.where('t.sessionId = :sessionId AND read.sid IS NULL', { sessionId: item.sid })
+                                    qb.where('t.sessionId = :sessionId AND read.sid IS NULL AND t.status = :status', {
+                                        sessionId: item.sid,
+                                        status: entities.EnumMessagerStatus.delivered
+                                    })
                                     return await qb.getMany()
                                 })
                             })
@@ -142,7 +145,10 @@ export class SessionService extends LoggerService {
                             userId: userId
                         })
                         qb.select(divineSelection('t', ['sid', 'sessionId', 'source', 'status', 'userId']))
-                        qb.where('t.sessionId = :sessionId AND read.sid IS NULL', { sessionId: node.sid })
+                        qb.where('t.sessionId = :sessionId AND read.sid IS NULL AND t.status = :status', {
+                            sessionId: node.sid,
+                            status: entities.EnumMessagerStatus.delivered
+                        })
                         return await qb.getMany()
                     })
                 })
