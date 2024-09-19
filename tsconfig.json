@@ -18,6 +18,7 @@
             "@web-alter/*": ["apps/web-alter/src/*"],
             "@web-peer/*": ["apps/web-peer/src/*"]
         },
+        "types": ["node"],
         "incremental": true,
         "skipLibCheck": true,
         "strictNullChecks": false,
